@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>半桥 LLC 1600W 设计书 · R02</title>
+<style>
+:root{
+  --ink:#1a1a1a; --ink2:#3d3d3d; --ink3:#6b6b6b;
+  --line:#e2e2e0; --line2:#cfcfcb;
+  --bg:#fdfcf9; --panel:#f6f4ee; --panel2:#efece2;
+  --accent:#8a4b2a; --accent2:#1f4e5f; --warn:#8c2f1f; --ok:#2f5d3a;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Songti SC","Source Han Serif SC","Noto Serif CJK SC",Georgia,"Times New Roman",serif;
+  font-size:16px; line-height:1.85;
+}
+.wrap{max-width:880px; margin:0 auto; padding:0 32px 120px}
+code,.mono{font-family:"SF Mono",Consolas,"Cascadia Mono",Menlo,monospace; font-size:.88em}
+
+/* cover */
+.cover{padding:76px 0 40px; border-bottom:3px double var(--line2); margin-bottom:44px}
+.cover .kicker{font-size:12px; letter-spacing:.32em; color:var(--accent); text-transform:uppercase; margin-bottom:18px}
+.cover h1{font-size:40px; line-height:1.3; margin:0 0 10px; font-weight:600; letter-spacing:.02em}
+.cover h2{font-size:17px; font-weight:400; color:var(--ink2); margin:0 0 28px; line-height:1.7}
+.cover .meta{font-size:13px; color:var(--ink3); font-family:"SF Mono",Consolas,monospace; line-height:2}
+.cover .meta b{color:var(--ink2); font-weight:500}
+
+h2.ch{font-size:23px; margin:64px 0 6px; padding-top:26px; border-top:1px solid var(--line); font-weight:600; letter-spacing:.01em}
+h2.ch .num{color:var(--accent); font-family:"SF Mono",Consolas,monospace; font-size:15px; margin-right:14px; vertical-align:2px}
+h3{font-size:17.5px; margin:38px 0 10px; font-weight:600; color:var(--ink)}
+h4{font-size:15px; margin:24px 0 8px; font-weight:600; color:var(--accent2); letter-spacing:.04em}
+p{margin:12px 0}
+.lead{color:var(--ink2); font-size:16.5px}
+ul,ol{margin:12px 0; padding-left:24px}
+li{margin:7px 0}
+b,strong{font-weight:600; color:#000}
+em{font-style:normal; background:linear-gradient(transparent 62%, #f0e2c8 62%); padding:0 1px}
+
+/* callouts */
+.box{margin:22px 0; padding:18px 22px; background:var(--panel); border-left:3px solid var(--accent2); border-radius:2px}
+.box .tag{display:block; font-family:"SF Mono",Consolas,monospace; font-size:11px; letter-spacing:.16em; color:var(--accent2); margin-bottom:6px}
+.box.why{border-left-color:var(--accent)}
+.box.why .tag{color:var(--accent)}
+.box.warn{border-left-color:var(--warn); background:#fbf1ee}
+.box.warn .tag{color:var(--warn)}
+.box.ok{border-left-color:var(--ok); background:#f1f6f1}
+.box.ok .tag{color:var(--ok)}
+.box p:first-of-type{margin-top:0}
+.box p:last-child{margin-bottom:0}
+
+/* key numbers */
+.keys{display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:1px; background:var(--line2); border:1px solid var(--line2); margin:24px 0}
+.keys div{background:#fff; padding:14px 16px}
+.keys .v{font-family:"SF Mono",Consolas,monospace; font-size:21px; color:var(--accent); line-height:1.3}
+.keys .l{font-size:12px; color:var(--ink3); margin-top:3px; letter-spacing:.04em}
+
+/* formula */
+.f{margin:20px 0; padding:16px 20px; background:#fff; border:1px solid var(--line); border-radius:2px; font-family:"SF Mono",Consolas,monospace; font-size:14px; line-height:2.1; overflow-x:auto}
+.f .cm{color:var(--ink3); font-family:inherit; font-size:12.5px}
+.f em{background:none; color:var(--accent); font-style:italic; font-family:Georgia,serif}
+
+/* tables */
+table{width:100%; border-collapse:collapse; margin:20px 0; font-size:13.5px; background:#fff}
+th,td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:right; font-variant-numeric:tabular-nums}
+th{background:var(--panel2); font-weight:600; font-size:12.5px; color:var(--ink2); text-align:right; letter-spacing:.03em}
+th:first-child,td:first-child{text-align:left}
+td{font-family:"SF Mono",Consolas,monospace; font-size:12.5px}
+td.t{font-family:inherit; font-size:13.5px}
+table:has(td.t) th, table:has(td.t) td{text-align:left}
+tr.hi td{background:#fbf4ea}
+tr.fail td{color:var(--warn)}
+table caption{caption-side:top; text-align:left; font-size:12.5px; color:var(--ink3); padding-bottom:8px}
+.tbl-wrap{overflow-x:auto}
+
+/* flow */
+.flow{margin:26px 0; font-size:14px}
+.flow .row{display:flex; align-items:stretch; gap:0; margin-bottom:2px}
+.flow .step{flex:1; background:#fff; border:1px solid var(--line2); padding:12px 14px; position:relative}
+.flow .step b{display:block; font-size:13px; color:var(--accent2); font-family:"SF Mono",Consolas,monospace; letter-spacing:.08em; margin-bottom:3px}
+.flow .step span{color:var(--ink2); font-size:13px; line-height:1.6}
+.flow .step span b{display:inline; font-size:inherit; color:inherit; font-family:inherit; letter-spacing:0; margin:0}
+.flow .arrow{width:22px; display:flex; align-items:center; justify-content:center; color:var(--line2); font-size:16px}
+
+/* chart */
+.chart-box{margin:26px 0; background:#fff; border:1px solid var(--line); padding:16px}
+.chart-box canvas{width:100%; height:auto; display:block}
+.chart-box .cap{font-size:12.5px; color:var(--ink3); margin-top:10px; line-height:1.7}
+
+/* misc */
+.hr{height:1px; background:var(--line); margin:48px 0}
+.note{font-size:13px; color:var(--ink3); line-height:1.75}
+.tagline{font-family:"SF Mono",Consolas,monospace; font-size:11.5px; letter-spacing:.1em; color:var(--ink3)}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+@media(max-width:720px){.two{grid-template-columns:1fr}.wrap{padding:0 18px 80px}.cover h1{font-size:30px}}
+@media print{
+  body{background:#fff; font-size:11pt}
+  .wrap{max-width:none; padding:0}
+  h2.ch{page-break-before:always; break-before:page}
+  h2.ch:first-of-type{page-break-before:avoid}
+  .box,table,.f,.chart-box{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="cover">
+  <div class="kicker">Design Book · R02 Platform</div>
+  <h1>半桥 LLC 1600W 设计书</h1>
+  <h2>从规格到寄存器：一台 30–60V / 30A / 1600W 充电机的完整设计推导<br>——每一步给出判据、公式、本机实际值，以及改版后的重算路径</h2>
+  <div class="meta">
+    <b>对象</b>　R02_LLC_APP_V1.1.8 量产固件 · 1600W 后级 LLC（第一版原理图）<br>
+    <b>依据</b>　2-后级LLC 原理图 · 5_LLC控制 原理图 · HwConfig.h / mathR02.c / ConsoleFast.c · LLC1600_PSM_519.plecs<br>
+    <b>状态</b>　设计值已与固件常量交叉验证，未决项集中列于第 1 章 UNK 表<br>
+    <b>日期</b>　2026-11-13
+  </div>
+</div>
+
+<p class="lead">这份设计书和你手上那两份计算书不是一类东西。那两份是"先假定一个设计，再把它写成计算书"；这一份是"从你板子上的丝印和固件里的常量出发，把设计反推出来，再把反推过程整理成可以重复使用的设计流程"。</p>
+
+<div class="box warn">
+  <span class="tag">先划清界限</span>
+  <p>那两份计算书（<code>半桥LLC充电机计算书</code> / <code>半桥LLC设计证据链计算书</code>）的前提是：<b>2.5kW、55A、母线跟随、K=7、母线地板 360V</b>。你这台机器是 <b>1600W、30A、固定母线、k=6.67</b>。前提不同，里面的每一个数字都不能直接用。</p>
+  <p>唯一可以借用的是它们的<b>结构</b>——章节划分和证据分级的思路是好的。所以本册保留了"证据等级"这个概念，但所有数值全部重算。</p>
+</div>
+
+<h2 class="ch"><span class="num">00</span>怎么用这本设计书</h2>
+
+<p>三种读法，对应三个目的：</p>
+<ul>
+  <li><b>想知道这台机器为什么是这样</b> → 读第 2、3、4 章。核心只有一条曲线和一个地板值。</li>
+  <li><b>想学会自己设计</b> → 读第 6、7、8 章。那是三个自由度的决策过程，每一步都有判据和取舍。</li>
+  <li><b>想改参数、换规格</b> → 直接翻第 13 章的改版重算清单，十二行，改哪几个数、影响什么、重算哪一节。</li>
+</ul>
+
+<p>全册的数据来源分四级，凡是关键数字我都标了等级。你以后自己写计算书，也建议照这个来——<b>不标来源的数字等于没算</b>。</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 0-1　证据等级（本册通用）</caption>
+<thead><tr><th style="width:70px">等级</th><th style="text-align:left">来源</th><th style="text-align:left">可信度</th><th style="text-align:left">例子</th></tr></thead>
+<tbody>
+<tr><td>A</td><td class="t">原理图丝印 / BOM</td><td class="t">实物，最高</td><td class="t">L7 = 12µH，T2A = 16T:4T+4T</td></tr>
+<tr><td>B</td><td class="t">固件常量（已量产验证）</td><td class="t">高，是行为的直接证据</td><td class="t">Plv 限幅 60k–250k，39.0V 门限</td></tr>
+<tr><td>C</td><td class="t">开环仿真模型</td><td class="t">中，参数可能与实物不符</td><td class="t">PSM 模型 Cr = 200nF（≠ 实物 136nF）</td></tr>
+<tr><td>D</td><td class="t">推导 / 估算</td><td class="t">取决于假设，必须标假设</td><td class="t">Ae = 190mm² 时的 Bmax</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 class="ch"><span class="num">01</span>规格冻结：先把"要设计什么"钉死</h2>
+
+<p>设计 LLC 最贵的错误不是算错公式，是<b>规格没冻结就开始算</b>。你这台机器有三套规格在打架，先把它们分开。</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 1-1　三套规格，分别对应三个来源</caption>
+<thead><tr><th style="text-align:left">项目</th><th>硬件额定<br><span class="note">原理图</span></th><th>固件限值<br><span class="note">HwConfig.h</span></th><th>你的实际工况<br><span class="note">本次补充</span></th></tr></thead>
+<tbody>
+<tr><td class="t">输出电压</td><td>30–60 V</td><td>—</td><td>30–60 V</td></tr>
+<tr><td class="t">输出电流</td><td>35 A</td><td>30 A</td><td>30–40V 段仅数 A</td></tr>
+<tr><td class="t">输出功率</td><td>1600 W</td><td>1650 W</td><td>≤1600 W</td></tr>
+<tr><td class="t">母线电压</td><td>PFC 输出，约 360–410 V</td><td>—</td><td>同</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>三套规格取交集，得到<b>真正要设计的负载线</b>。这张表是全册的地基，后面每一处计算都从它出发：</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 1-2　负载剖面（设计输入，冻结）</caption>
+<thead><tr><th style="text-align:left">输出电压区间</th><th style="text-align:left">限制量</th><th>电流</th><th>功率</th><th style="text-align:left">物理含义</th></tr></thead>
+<tbody>
+<tr class="hi"><td class="t">30 – 40 V</td><td class="t">用户限定</td><td>3 A</td><td>90–120 W</td><td class="t">深放电段，只补少量电</td></tr>
+<tr><td class="t">40 – 53.3 V</td><td class="t">恒流 CC</td><td>30 A</td><td>1200–1600 W</td><td class="t">主充电段</td></tr>
+<tr><td class="t">53.3 – 60 V</td><td class="t">恒功率 CP</td><td>30→26.7 A</td><td>1600 W</td><td class="t">功率封顶段</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box why">
+  <span class="tag">30–40V 段不是靠 PFM 做的</span>
+  <p>如果用 LLC 的变频控制去硬算，40V/3A 需要 737kHz——确实不可能。但这台机器不走那条路：<b>30–40V 段是 80kHz 定频 + 对称占空比调制的硬开关区</b>，增益由 Duty 决定而不是频率。第 5 章用代码级证据说明这一点。</p>
+  <p>所以"30–40V 只要几 A"不是放松条件，它<b>换了一套控制机制</b>：从谐振变频换成硬开关 PWM。</p>
+</div>
+
+<h3>1.1　未决项登记</h3>
+<p>以下四项我在资料里无法确定，它们会直接改变结论。打样前必须关闭：</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 1-3　UNK 表</caption>
+<thead><tr><th style="width:78px;white-space:nowrap">编号</th><th style="text-align:left">未决项</th><th style="text-align:left">为什么要紧</th><th style="text-align:left">怎么关闭</th></tr></thead>
+<tbody>
+<tr><td>UNK-1</td><td class="t">两只 68nF 是并联还是串联</td><td class="t">决定 fr 是 124.6k 还是 249k，直接决定 60V 满载能不能做到</td><td class="t">看 PCB 走线；或 LCR 表测谐振腔总电容</td></tr>
+<tr><td>UNK-2</td><td class="t">母线是否跟随输出电压</td><td class="t">若跟随，第 5 章的整个结论都会变松</td><td class="t">看 PFC 电压环给定是否随 Vo 变化</td></tr>
+<tr><td>UNK-3</td><td class="t">变压器 Ae 与材质牌号</td><td class="t">决定 60V 满载角点磁通是否超标</td><td class="t">查磁芯规格书；或绕 16T 测电感反算 Al</td></tr>
+<tr><td>UNK-4</td><td class="t">死区实测值</td><td class="t">影响 ZVS 与轻载效率</td><td class="t">示波器测 Vds 与 Vgs 交叠</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 class="ch"><span class="num">02</span>反推：从丝印上读出五个数</h2>
+
+<p>你没有计算书，但你有板子。板子上的丝印就是计算书的答案，只是被打散了。这一章把它们拼回来——这也是你以后接手任何一台陌生电源都能用的方法。</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 2-1　从原理图读出的原始数据（等级 A）</caption>
+<thead><tr><th style="text-align:left">位号</th><th style="text-align:left">丝印</th><th style="text-align:left">读出的量</th></tr></thead>
+<tbody>
+<tr><td class="t">T2A</td><td class="t">TW-PQ4035-80µH（0.1×160×16T）</td><td class="t">原边 16T，Lm = 80µH</td></tr>
+<tr><td class="t">T2A 副边</td><td class="t">（0.3×22×4T）×2</td><td class="t">副边 4T + 4T，中心抽头</td></tr>
+<tr><td class="t">L7</td><td class="t">PQ2625 12µH（0.1×160×15T）</td><td class="t">Lr = 12µH</td></tr>
+<tr><td class="t">C44 / C50</td><td class="t">68nF / 630V</td><td class="t">谐振电容，合计待定（UNK-1）</td></tr>
+<tr><td class="t">Q7 / Q11</td><td class="t">RX65T050WT4HB</td><td class="t">原边半桥，650V 级</td></tr>
+<tr><td class="t">Q8–Q13</td><td class="t">CRST113N20NZ</td><td class="t">副边同步整流，200V 级</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>四个数直接读出来：<b>n = 16/4 = 4</b>，<b>Lr = 12µH</b>，<b>Lm = 80µH</b>，<b>k = Lm/Lr = 6.67</b>。第五个数 Cr 读不出来，因为两只电容既可能并联也可能串联，而这两种接法差 4 倍。</p>
+
+<h3>2.1　用"60V 满载能不能做到"来判定 Cr</h3>
+
+<p>这是本册最关键的一次推理。判据不是"猜"，而是<b>物理可达性</b>：在 60V / 1600W / 最低母线 380V 这个角点上，增益曲线必须够得着。</p>
+
+<div class="f">
+所需增益　M = 2n·Vo / Vin = 2×4×60 / 380 = <em>1.263</em><br>
+归一化负载　Q = Z0 / Rac，　Rac = 8n²Vo² / (π²Po) = 8×16×3600 / (9.87×1600) = 29.2 Ω<br>
+<span class="cm">峰值增益 Mpk 必须 ≥ 1.263，否则这个角点物理上不存在</span>
+</div>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 2-2　四种 Cr 取值下的可达性（k = 6.67 固定）</caption>
+<thead><tr><th style="text-align:left">Cr 取值</th><th>fr</th><th>Z0</th><th>Q @60V/1600W</th><th>Mpk</th><th>需要 1.263</th></tr></thead>
+<tbody>
+<tr class="hi"><td class="t">136 nF（2×68nF 并联）</td><td>124.6 k</td><td>9.39</td><td>0.322</td><td>1.433</td><td style="color:#2f5d3a">可达，余量 13%</td></tr>
+<tr class="fail"><td class="t">68 nF（单只）</td><td>176.2 k</td><td>13.28</td><td>0.455</td><td>1.147</td><td>不可达</td></tr>
+<tr class="fail"><td class="t">34 nF（2×68nF 串联）</td><td>249.2 k</td><td>18.79</td><td>0.644</td><td>1.042</td><td>不可达</td></tr>
+<tr><td class="t">200 nF（仿真模型）</td><td>102.7 k</td><td>7.75</td><td>0.265</td><td>1.677</td><td style="color:#2f5d3a">可达，余量 33%</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="tag">结论（等级 A+D）</span>
+  <p><b>实物只能是两只 68nF 并联，Cr = 136nF。</b>串联 34nF 和单只 68nF 都无法在 380V 母线下做到 60V/1600W——不是余量不足，是峰值增益 1.042 / 1.147 根本低于所需的 1.263，曲线够不着。</p>
+  <p>这条推理的价值不在结论，在方法：<b>当参数读不出来时，用"某个极端角点是否可达"去反证它</b>。你以后遇到任何不确定的磁件或电容，都可以这么判。</p>
+</div>
+
+<div class="box warn">
+  <span class="tag">模型与实物不一致，必须改</span>
+  <p>仿真模型 <code>LLC1600_PSM_519.plecs</code> 里 <code>C22 = 200nF</code>，实物是 136nF，差 1.47 倍，fr 差 21%。n、Lr、Lm 三项都和实物一致（16:4、12µH、80µH），唯独这个电容不一样。</p>
+  <p>你拿模型对 FHA 曲线时，如果不同步这个值，会得到"仿真比理论高 20%"的假结论。要么把模型改成 136nF，要么在对比时按 fr 归一化。<b>先改模型，这是最省事的。</b></p>
+</div>
+
+<h3>2.2　五个数定稿</h3>
+<div class="keys">
+  <div><div class="v">n = 4</div><div class="l">16T : 4T+4T</div></div>
+  <div><div class="v">Lr = 12 µH</div><div class="l">PQ2625 15T</div></div>
+  <div><div class="v">Lm = 80 µH</div><div class="l">PQ4035 16T</div></div>
+  <div><div class="v">k = 6.67</div><div class="l">Lm / Lr</div></div>
+  <div><div class="v">Cr = 136 nF</div><div class="l">2 × 68nF 并联</div></div>
+  <div><div class="v">fr = 124.6 kHz</div><div class="l">1 / 2π√(Lr·Cr)</div></div>
+  <div><div class="v">Z0 = 9.39 Ω</div><div class="l">√(Lr / Cr)</div></div>
+</div>
+
+<h2 class="ch"><span class="num">03</span>增益曲线：你真正只需要理解这一张图</h2>
+
+<p>LLC 所有的"玄学"都收敛到一条曲线。看懂它，剩下的都是查表和算术；看不懂它，背一百个公式也没用。</p>
+
+<h3>3.1　一个式子</h3>
+
+<p>用基波近似（FHA），把方波输入只取基波、把整流桥和负载等效成一个电阻，整个谐振腔就是一个分压网络：</p>
+
+<div class="f">
+M(fn) = 1 / | 1 + (1/k)(1 − 1/fn²) + j·Q·(fn − 1/fn) |<br>
+<span class="cm">fn = fsw / fr　归一化频率　　k = Lm/Lr　　Q = Z0/Rac　　Rac = 8n²Vo²/(π²Po)</span>
+</div>
+
+<p>三个量，各管一件事，记住这个对应关系就不会乱：</p>
+<ul>
+  <li><b>fn</b> 管"现在在哪"——低于 1 是升压区（增益 &gt;1），高于 1 是降压区（增益 &lt;1），等于 1 时增益恰好 = 1，与负载无关。</li>
+  <li><b>k</b> 管"能升多高、能降多低"——k 小则峰值高、地板低；k 大则相反。</li>
+  <li><b>Q</b> 管"负载轻重"——Q 大是重载（曲线矮而宽），Q 小是轻载（曲线高而尖）。</li>
+</ul>
+
+<div class="chart-box" id="chart">
+  <canvas id="cv" width="1600" height="900"></canvas>
+  <div class="cap">图 3-1　本机增益曲线（k = 6.67）。横轴归一化频率 fn，纵轴增益 M。四条曲线对应四个负载：Q = 0.05（极轻载参考）、0.322（60V/1600W）、0.475（45.7V/30A）、1.0（重载参考）。虚线是 <b>增益地板 k/(k+1) = 0.870</b>，它下面是一片"任何频率都到不了"的死区。</div>
+</div>
+
+<h3>3.2　地板：一条曲线里最容易被忽略、又最致命的东西</h3>
+
+<p>把 M(fn) 里的 Q 取 0（空载），式子塌缩成一个极简形式：</p>
+
+<div class="f">
+M(fn) |<sub>Q→0</sub> = k / ( k + 1 − 1/fn² )　　→　　fn → ∞ 时　M → <em>k / (k+1)</em><br>
+<span class="cm">代入 k = 6.67：　M_min = 6.67 / 7.67 = 0.870</span>
+</div>
+
+<div class="box why">
+  <span class="tag">为什么会有地板</span>
+  <p>物理上：频率越高，Lr 的阻抗越大，它把电流"掐"得越小。但 Lm 是和负载并联的——负载再轻，Lm 始终在分流。当频率无穷高时，Lr 把电流掐到几乎为零，而这点残余电流全部流过 Lm，不流向负载。此时的分压比就是 Lm 与 (Lr+Lm) 的分压：<b>Lm/(Lr+Lm) = k/(k+1)</b>。</p>
+  <p>换句话说，<b>空载时 LLC 的最低输出电压，被 k 锁死了</b>。频率再高也没用，因为能量根本过不去。</p>
+</div>
+
+<p>这条地板线的后果非常具体：你这台机器的 k = 6.67，地板 0.870，而 M = 2n·Vo/Vin = 8Vo/Vin。所以</p>
+
+<div class="f">
+Vo_floor = 0.870 × Vin / 8 = 0.1087 × Vin<br>
+Vin = 360 V → <em>39.1 V</em>　　Vin = 380 V → 41.3 V　　Vin = 400 V → 43.5 V
+</div>
+
+<p>记住 39.1 这个数。下一章你会发现它就在你的固件里，一个字节都没差。</p>
+
+<h2 class="ch"><span class="num">04</span>39V 不是拍脑袋：固件里的数字从哪来</h2>
+
+<p><code>mathR02.c</code> 的 <code>OvLoadPFM</code> 分支里有这么一段：</p>
+
+<div class="f">
+if (ADSample_Info.vOut_Bat_adc &lt; 39.0f) {<br>
+&nbsp;&nbsp;time++;<br>
+&nbsp;&nbsp;if (time &gt; 400) { DrvH = 0; DrvL = 0; SynDrv = 0; ... 回到 Charging 状态 }<br>
+} else time = 0;
+</div>
+
+<p>写这段代码的人没有随便挑 39。它正好是第 3 章算出来的地板电压：<b>0.870 × 360 / 8 = 39.1 V</b>。</p>
+
+<p>含义是：母线最低 360V 时，空载能把输出压到的最低值就是 39.1V。再往下，PFM 无论怎么提高频率都压不住，输出会被"顶"在 39V 以上。所以代码只能这样处理——<b>掉到 39V 以下就说明已经失控了，关机重来</b>。</p>
+
+<div class="box ok">
+  <span class="tag">这条证据链的价值</span>
+  <p>它同时证明了三件事：① 我对 k = 6.67 的反推是对的；② 母线地板确实是 360V；③ 这台机器的软件是在"物理边界"上做保护的，不是拍的余量。</p>
+  <p>更重要的是，它给了你一个<b>可迁移的判据</b>：以后看到任何 LLC 固件里的低压门限，先算 k/(k+1)×Vin_min/(2n)，对得上就说明设计者懂；对不上就说明那个门限是别的原因（比如电池欠压保护），别混为一谈。</p>
+</div>
+
+<h3>4.1　k 一动，门限就得跟着动</h3>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 4-1　k 对增益地板和低压门限的影响（n = 4 固定）</caption>
+<thead><tr><th>k = Lm/Lr</th><th>增益地板</th><th>门限 @360V</th><th>门限 @400V</th><th style="text-align:left">代价</th></tr></thead>
+<tbody>
+<tr><td>5.0</td><td>0.833</td><td>37.5 V</td><td>41.7 V</td><td class="t">Lm 小，励磁环流大，效率低</td></tr>
+<tr><td>6.0</td><td>0.857</td><td>38.6 V</td><td>42.9 V</td><td class="t">—</td></tr>
+<tr class="hi"><td>6.67</td><td>0.870</td><td>39.1 V</td><td>43.5 V</td><td class="t">本机取值</td></tr>
+<tr><td>8.0</td><td>0.889</td><td>40.0 V</td><td>44.4 V</td><td class="t">峰值增益下降，60V 角点吃紧</td></tr>
+<tr><td>10.0</td><td>0.909</td><td>40.9 V</td><td>45.5 V</td><td class="t">峰值增益明显不够，60V 做不到</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>所以 k 不是一个"调效率"的参数，它同时决定了<b>最低输出电压</b>。你要 30V 输出，k 就必须小到地板 ≤ 30×8/360 = 0.667，即 <b>k ≤ 2</b>——但那会让 Lm 极小、环流极大，效率崩掉。这就是宽输出 LLC 的根本矛盾，第 5 章正面处理它。</p>
+
+<div class="box why">
+  <span class="tag">两个门限，分工不同</span>
+  <p>固件里其实有<b>两个</b>和地板有关的数字，很容易混成一个：</p>
+  <p><b>39.0V</b> —— PFM 区里的<b>失控保护</b>。<code>OvLoadPFM</code> 状态下，Vo 掉到 39V 以下持续 400 周期，关驱动、回 Charging 重启。它防的是"频率已经拉到上限、输出还是压不住"。</p>
+  <p><b>40.2V</b> —— 硬开关区到谐振区的<b>交接门限</b>。Vo 涨到 40.2V 持续 400 周期，收窄 Duty、等电流降到 1A、再切 PFM。它防的是"还没到地板就把控制权交出去"。</p>
+  <p>两者差 1.2V，正好是一个滞环。这个设计是对的——但 40.2V 这个值只在母线 370V 附近才落在真正的边界上，第 5.6 节会展开。</p>
+</div>
+
+<h2 class="ch"><span class="num">05</span>30–40V 段根本不在 LLC 谐振区</h2>
+
+<p>这一章是上一版的<b>修正</b>。上一版我把 30–40V 当成 LLC 的稳态工作点，套 FHA 增益曲线，算出"40V/3A 需要 990kHz，物理不可行"。你指出这段是<b>对称发波、全程硬开</b>——这个纠正把整章的前提推翻了。回去读代码，确实如此，而且证据很硬。</p>
+
+<div class="box why">
+  <span class="tag">一句话结论</span>
+  <p>30–40V 段走的是 <b>80kHz 定频 + 对称占空比调制 + 容性区硬开关</b>，它的增益由 <b>D</b> 决定，不由 fn 决定。FHA 增益曲线在这段<b>不适用</b>，所以"990kHz 不可行"这个结论本身就问错了问题。</p>
+  <p>这一段不是缺口，是架构分工：PFM 管 42–60V，硬开关 PWM 管 30–42V，两者在 40.2V 交接。</p>
+</div>
+
+<h3>5.1　发波机制：两组 CMP 公式，两种拓扑</h3>
+
+<p>全部答案在 <code>ConsoleFast.c:163–204</code> 的 <code>SHRTIMERdrive()</code> 里。它只有两条分支，差别不在频率，而在<b>CMP1–CMP4 怎么写</b>：</p>
+
+<div class="f">
+<span class="cm">// PFM 分支：CtrMode == OvLoadPFM</span><br>
+CMP1 = LLC_DEADTIME　　　　CMP2 = half − LLC_DEADTIME<br>
+CMP3 = half + LLC_DEADTIME　CMP4 = pre − LLC_DEADTIME<br>
+<span class="cm">→ 上下管各占 50%，相位严格互补，只改 PER 变频</span><br><br>
+<span class="cm">// PWM 分支：其余所有状态</span><br>
+temp = pre / 4　　bemp = pre − temp　　duty = half × Duty<br>
+CMP1 = temp − duty　　CMP2 = temp + duty<br>
+CMP3 = bemp − duty　　CMP4 = bemp + duty<br>
+<span class="cm">→ 两路脉冲<b>等宽</b>（宽度 = pre × Duty），分别居中于周期的 25% 与 75%，相位差 180°</span>
+</div>
+
+<p>这就是你说的"对称发波"：<b>两路占空比相等、对称分布在半周期两侧</b>，中间留出 50%−D 的间隔。它不是 LLC 的变频控制，而是一个<b>定频的、占空比控制的半桥</b>，只是恰好接着 LLC 的谐振腔在用。</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 5-1　两种发波模式的完整对比</caption>
+<thead><tr><th style="text-align:left">项目</th><th style="text-align:left">PFM 区（OvLoadPFM）</th><th style="text-align:left">PWM 区（SoftStar / ConVolt / ConCurPWM）</th></tr></thead>
+<tbody>
+<tr><td class="t">频率</td><td>60–250 kHz 可变（<code>flvOut</code>）</td><td>固定：40k / 80k / 120k</td></tr>
+<tr><td class="t">调节量</td><td>周期 PER</td><td>占空比 Duty（0.01–0.4）</td></tr>
+<tr><td class="t">桥臂波形</td><td>50% 方波，幅值 ±Vin/2</td><td>窄脉冲，宽度 = T × Duty</td></tr>
+<tr><td class="t">谐振腔状态</td><td>fn 0.5–2，正弦电流</td><td>fn 0.32 / 0.64，<b>容性</b></td></tr>
+<tr><td class="t">开关方式</td><td>ZVS（设计目标）</td><td><b>硬开关</b>，Coss 全耗散</td></tr>
+<tr><td class="t">同步整流</td><td><code>SynDrv</code> 由 <code>Sr_Handle_N</code> 查表给</td><td><code>SynDrv = 0</code>，体二极管整流</td></tr>
+<tr><td class="t">控制量</td><td>电流环 → 频率</td><td>电流环 → 占空比</td></tr>
+<tr><td class="t">覆盖电压</td><td>约 42–60 V</td><td>约 4–60 V（受 Duty 限幅）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>5.2　状态机：40.2V 是交接点，不是保护点</h3>
+
+<p><code>ConCurPWM</code> 这个状态（<code>mathR02.c:50–118</code>）内部还有三级 <code>psmSwitch</code>，它才是 30–40V 段的真正执行者：</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 5-2　ConCurPWM 的三级切换（<code>psmSwitch</code>）</caption>
+<thead><tr><th>级</th><th>条件</th><th>发波</th><th style="text-align:left">作用</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>进入本状态</td><td>80 kHz，Duty = 电流环输出（0.02–0.4）</td><td class="t"><b>30–40V 恒流段，硬开关</b></td></tr>
+<tr><td>1</td><td>Vo ≥ 40.2V 持续 400 周期</td><td>80 kHz，Duty 固定 0.02</td><td class="t">收窄到最小，等电流降到 1A 以下</td></tr>
+<tr><td>2</td><td>Io &lt; 1A 持续 40 周期</td><td>250 kHz（<code>POW_MAX_PLV</code>）</td><td class="t">切 <code>Transition</code> → <code>OvLoadPFM</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>所以整条链路是：<b>预充（40kHz 开环）→ 恒流硬开关 PWM（80kHz 闭环）→ 40.2V 收窄 → 250kHz 交接 → PFM 稳态</b>。40.2V 是"硬开关区"和"谐振区"的<b>交接点</b>，不是保护阈值。保护阈值是 39.0V，那是另一回事（第 4 章）。</p>
+
+<h3>5.3　为什么 80kHz 一定是硬开关</h3>
+
+<p>不是"代码没做 ZVS"，是<b>物理上做不到</b>。判据是谐振腔在开关频率下的等效阻抗性质——容性则硬开关，感性才可能 ZVS：</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 5-3　四个实际使用频率下的谐振腔阻抗性质（Lr=12µH, Lm=80µH, Cr=136nF）</caption>
+<thead><tr><th>频率</th><th>fn</th><th>Lr–Cr 串联电抗</th><th>Lm 电抗</th><th>并联等效</th><th style="text-align:left">性质</th></tr></thead>
+<tbody>
+<tr><td>40 kHz（预充）</td><td>0.321</td><td>−26.2 Ω</td><td>+20.1 Ω</td><td>+86.0 Ω</td><td class="t" style="color:#2f5d3a">感性，尚可 ZVS</td></tr>
+<tr class="fail"><td>80 kHz（恒流段）</td><td>0.642</td><td>−8.6 Ω</td><td>+40.2 Ω</td><td>−10.9 Ω</td><td class="t">容性，<b>硬开关</b></td></tr>
+<tr class="fail"><td>120 kHz（ConVolt）</td><td>0.963</td><td>−0.7 Ω</td><td>+60.3 Ω</td><td>−0.7 Ω</td><td class="t">容性，临界</td></tr>
+<tr><td>250 kHz（交接）</td><td>2.007</td><td>+14.2 Ω</td><td>+125.7 Ω</td><td>+12.7 Ω</td><td class="t" style="color:#2f5d3a">感性，可 ZVS</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>注意 40kHz 那一行：<b>预充段反而是感性的</b>（+86Ω）。因为频率够低，Lm 的电抗小于 Cr 的容抗，整体被 Lm 拉回感性。而 80kHz 正好落在两者交叉的容性区里——这就是为什么 30–40V 恒流段必须硬开，不是选择，是位置决定的。</p>
+
+<h3>5.4　这段的增益由 Duty 决定，不由 fn 决定</h3>
+
+<p>对称 PWM 下，桥臂输出的基波幅值被 <code>sin(πD)</code> 削掉，所以总增益近似为：</p>
+
+<div class="f">
+M_total ≈ M_FHA(fn) × sin(πD)<br>
+<span class="cm">M_FHA 是谐振腔在 80kHz（fn=0.642）的固有增益，轻载约 1.27、满载约 1.08；sin(πD) 是占空比对基波的削减</span><br>
+Vo = M_total × Vin / (2n) = M_total × Vin / 8
+</div>
+
+<p>代入这台机器的数，得到一张能解释固件限幅的表：</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 5-4　Duty 与输出电压的对应（80kHz，Vin=400V；近似估算，用于看趋势与量级）</caption>
+<thead><tr><th>Duty</th><th>sin(πD)</th><th>Vo @ 3A</th><th>Vo @ 30A</th><th style="text-align:left">说明</th></tr></thead>
+<tbody>
+<tr><td>0.02</td><td>0.063</td><td>4.0 V</td><td>3.4 V</td><td class="t">代码下限，脉宽只剩 250ns</td></tr>
+<tr><td>0.05</td><td>0.156</td><td>9.9 V</td><td>8.4 V</td><td class="t">预充段常用档</td></tr>
+<tr><td>0.10</td><td>0.309</td><td>19.6 V</td><td>16.6 V</td><td class="t"></td></tr>
+<tr><td>0.15</td><td>0.454</td><td>28.8 V</td><td>24.4 V</td><td class="t">接近 30V</td></tr>
+<tr class="hi"><td>0.20</td><td>0.588</td><td>37.3 V</td><td>31.6 V</td><td class="t"><b>30–40V 段的工作区</b></td></tr>
+<tr><td>0.25</td><td>0.707</td><td>44.9 V</td><td>38.0 V</td><td class="t">已进入 PFM 覆盖区</td></tr>
+<tr><td>0.40</td><td>0.951</td><td>60.4 V</td><td>51.1 V</td><td class="t">代码上限，对应最高压</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>这张表解释了一件原先看着很随意的事：<b>为什么 <code>iParamPid.output</code> 的限幅偏偏是 0.02 和 0.4</b>。因为 0.02 对应约 4V、0.4 对应约 60V——这两个数不是拍脑袋，是<b>照着 0–60V 的输出范围反推出来的</b>。你要的 30–40V，落在 Duty ≈ 0.16–0.22。</p>
+
+<div class="box warn">
+  <span class="tag">这个模型的边界</span>
+  <p><code>sin(πD)</code> 是基波近似，忽略了谐波、死区、以及容性区的电流畸变，所以表 5-4 只能看趋势和量级，<b>不能当设计公式用</b>。真实对应关系必须在样机上扫 Duty–Vo 曲线标定。但它足以回答"30–40V 做不做得到"——做得到，Duty 在 0.2 附近。</p><p style="margin-top:10px">标定用的工具已经做好了：<a href="duty-vo-calibration.html" style="color:#1f4e5f;text-decoration:none;border-bottom:1px solid #9dbcc6"><b>duty-vo-calibration.html</b></a>。填入实测点，它会自动算每点偏差、反推 M_FHA 有效值，并判断模型是"结构对系数偏"还是"近似已失效"。第 4 节还能直接算交接点该不该改。</p>
+</div>
+
+<h3>5.5　这段真正的约束（不是增益曲线，是这四条）</h3>
+
+<div class="flow">
+  <div class="row">
+    <div class="step"><b>约束 1</b><span><b>死区吃掉脉宽</b><br>Duty=0.02 时脉宽 250ns，死区 176ns，<b>有效导通只剩 74ns</b>。这就是 0.02 成为硬下限的原因：再往下就没有脉冲了。</span></div>
+    <div class="step"><b>约束 2</b><span><b>Coss 全部耗散</b><br>容性区开通，Coss 储能全在 MOS 内部烧掉。按 Coss≈0.5–1nF、400V、80kHz 估算，这部分损耗约 <b>3–13W</b>，与输出功率无关，是纯固定损耗。</span></div>
+  </div>
+  <div class="row">
+    <div class="step"><b>约束 3</b><span><b>同步整流关闭</b><br><code>ConCurrHandle</code> 里 <code>SynDrv = 0</code>，副边走体二极管。几 A 时压降损耗尚可（2×0.7V×3A≈4W），但这段<b>不能带大电流</b>，30A 会烧。</span></div>
+    <div class="step"><b>约束 4</b><span><b>偏磁风险</b><br>对称发波理论上伏秒平衡，但死区、驱动延时不对称会累积直流偏磁。硬开关段电流小、励磁弱，<b>抗偏磁能力比 PFM 段差</b>，这是长时工作的隐性风险。</span></div>
+  </div>
+</div>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 5-5　脉宽与死区的实际占比（80kHz，pre=8500 counts，死区 120 counts = 176ns）</caption>
+<thead><tr><th>Duty</th><th>脉宽</th><th>死区占比</th><th>有效导通</th><th style="text-align:left">判定</th></tr></thead>
+<tbody>
+<tr class="fail"><td>0.02</td><td>250 ns</td><td>71 %</td><td>74 ns</td><td class="t">极限，几乎发不出有效脉冲</td></tr>
+<tr><td>0.05</td><td>625 ns</td><td>28 %</td><td>449 ns</td><td class="t">预充段，可用</td></tr>
+<tr><td>0.10</td><td>1250 ns</td><td>14 %</td><td>1074 ns</td><td class="t">正常</td></tr>
+<tr class="hi"><td>0.20</td><td>2500 ns</td><td>7 %</td><td>2324 ns</td><td class="t">30–40V 工作区，健康</td></tr>
+<tr><td>0.40</td><td>5000 ns</td><td>4 %</td><td>4824 ns</td><td class="t">上限</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>5.6　一个需要你实测确认的疑点</h3>
+
+<p>把 40.2V 这个交接点代回增益地板，会发现它<b>只在特定母线电压下成立</b>：</p>
+
+<div class="f">
+PFM 最低可调电压 = (k/(k+1)) × Vin / (2n) = 0.8696 × Vin / 8<br>
+<span class="cm">Vin=360V → 39.1V　　Vin=370V → 40.2V　　Vin=380V → 41.3V</span><br>
+<span class="cm">Vin=400V → 43.5V　　Vin=410V → 44.6V</span>
+</div>
+
+<p>40.2V 正好对应 <b>Vin=370V</b>。也就是说：</p>
+
+<ul>
+  <li>如果 PFC 母线在低压输入时确实掉到 370V 附近，这个门限是对的；</li>
+  <li>如果母线稳在 400V，那么切进 PFM 的瞬间，<b>PFM 的最低可调电压是 43.5V，高于 40.2V</b>，输出会往上跳 3V 左右，电流环再把它拉回来——表现为交接点的一次电压台阶。</li>
+</ul>
+
+<p>这是<b>推断，不是结论</b>。验证方法很简单：在交接瞬间抓 <code>vOut_Bat_adc</code> 和 <code>Chrgr_LlcFreq</code> 的 CAN 波形，看电压有没有台阶、频率是不是一步跳到低频端。如果有台阶，说明门限该按实际母线重算（<code>Vo_th ≈ 0.87 × Vin / 8</code>），这属于一个<b>可以靠改一个常量解决的调参问题</b>，不是设计缺陷。</p>
+
+<div class="box why">
+  <span class="tag">所以，30–40V 到底要不要做 burst？</span>
+  <p><b>不需要。</b>上一版说"burst 是唯一出路"是错的，因为当时没看到这条 80kHz 硬开关通路。现在的事实是：<b>这条路已经能覆盖 30–42V 恒流</b>，代价是效率低、SR 关闭、不能带大电流——而这三点恰好与"只要几 A"的工况匹配。</p>
+  <p>真正该做的不是补 burst，而是三件小事：① 实测 Duty–Vo 曲线，把 0.02–0.4 的限幅标定准；② 确认交接点不跳变（5.6）；③ 如果这段要长时间工作，量一下 MOS 壳温，确认那 3–13W 硬开关损耗撑得住。</p>
+</div>
+
+<h2 class="ch"><span class="num">06</span>正向设计（一）：匝比 n 怎么定</h2>
+
+<p>从这里开始是"如果让你从零设计，该怎么走"。三个自由度：<b>n、k、fr（或 Z0）</b>。顺序不能反，因为后一个依赖前一个。</p>
+
+<h3>6.1　判据：让 M = 1 落在工作区的中点</h3>
+
+<p>M = 1 对应 fn = 1，也就是"刚好在谐振点"。这是 LLC 效率最高、波形最干净的点，应该让它落在<b>最常工作、功率最大</b>的电压上。</p>
+
+<div class="f">
+n = Vin_nom / (2 × Vo_center)<br>
+<span class="cm">本机：Vin_nom = 400V，Vo_center = 50V（30–60V 的中点，也是额定功率点附近）</span><br>
+n = 400 / (2 × 50) = <em>4.0</em>　→　取 16T : 4T+4T
+</div>
+
+<p>为什么中心取 50V 而不是 45V 或 55V？因为 50V 时 M=1，效率最高；而 45.7V 是 1600W 恒功率的起点，正好在 M=1 附近偏一点（M=1.000 @50V，0.914 @45.7V）。如果取 45V 为中心，50–60V 段就要长期工作在 M&gt;1 的升压区，环流大、效率低。</p>
+
+<div class="box why">
+  <span class="tag">一个容易踩的坑</span>
+  <p>很多人按 Vo_max 定 n，理由是"最高电压要能做到"。这是反的。按 Vo_max 定 n 会让整个工作区偏向升压侧，长期在低 fn 运行，励磁环流大、效率低，而且峰值增益余量被吃掉。</p>
+  <p>正确做法：<b>按中心电压定 n，用 k 去保证 Vo_max 够得着</b>。n 管"工作在哪"，k 管"能到多高"。</p>
+</div>
+
+<h2 class="ch"><span class="num">07</span>正向设计（二）：k 怎么定</h2>
+
+<p>k 是四个判据互相拉扯的结果，不是一个公式能算出来的。这也是为什么它最容易被拍脑袋定错。</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 7-1　k 的四条判据（本机 n = 4、Cr = 136nF、Vin_min = 360V）</caption>
+<thead><tr><th style="text-align:left">判据</th><th style="text-align:left">要求</th><th style="text-align:left">k 小</th><th style="text-align:left">k 大</th></tr></thead>
+<tbody>
+<tr><td class="t">① 峰值增益够</td><td class="t">Mpk ≥ 2n·Vo_max/Vin_min = 1.333</td><td class="t">容易满足</td><td class="t">做不到</td></tr>
+<tr><td class="t">② 增益地板低</td><td class="t">k/(k+1) ≤ 2n·Vo_min/Vin_max</td><td class="t">好</td><td class="t">差</td></tr>
+<tr><td class="t">③ 励磁环流小</td><td class="t">ΔIm = Vin/(4·Lm·f) 小</td><td class="t">环流大、效率差</td><td class="t">好</td></tr>
+<tr><td class="t">④ 磁件体积</td><td class="t">Lm 大 → 磁芯大</td><td class="t">小</td><td class="t">大</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>①和②是硬约束，③④是软成本。把它们画在一起，可行域就是一条窄带：</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 7-2　k 的可行域扫描（本机参数）</caption>
+<thead><tr><th>k</th><th>Lm</th><th>Mpk @Q=0.322</th><th>够 1.333？</th><th>地板</th><th>ΔIm @60V/72k</th></tr></thead>
+<tbody>
+<tr><td>4.0</td><td>48 µH</td><td>1.848</td><td style="color:#2f5d3a">够，余量 39%</td><td>0.800</td><td>27.5 A</td></tr>
+<tr><td>5.0</td><td>60 µH</td><td>1.645</td><td style="color:#2f5d3a">够，余量 23%</td><td>0.833</td><td>22.0 A</td></tr>
+<tr class="hi"><td>6.67</td><td>80 µH</td><td>1.433</td><td style="color:#2f5d3a">够，余量 7.5%</td><td>0.870</td><td>16.5 A</td></tr>
+<tr class="fail"><td>8.0</td><td>96 µH</td><td>1.322</td><td>不够（−0.8%）</td><td>0.889</td><td>13.8 A</td></tr>
+<tr class="fail"><td>10.0</td><td>120 µH</td><td>1.211</td><td>不够（−9%）</td><td>0.909</td><td>11.0 A</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box why">
+  <span class="tag">为什么最后落在 6.67</span>
+  <p>k = 6.67 是"峰值增益刚好够用、励磁环流尽量小"的交点。往下走（k=5）余量更足但环流多 33%；往上走（k=8）峰值增益已经不够 360V/60V 这个角点。</p>
+  <p>而 80µH 这个数还有个现实原因：<b>PQ4035 骨架绕 16 圈、气隙调到 80µH，是磁芯厂的标准做法</b>。设计到 96µH 需要更大气隙，边缘磁通损耗上升。工程上的"最优"经常是这样被器件库拉过去的，不丢人。</p>
+</div>
+
+<h2 class="ch"><span class="num">08</span>正向设计（三）：fr、Z0 与 Q</h2>
+
+<h3>8.1　Q 选在哪个区间</h3>
+
+<p>Q = Z0/Rac 是"谐振腔阻抗"和"负载折算阻抗"的比值。它决定了曲线是尖还是平：</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 8-1　Q 的取舍</caption>
+<thead><tr><th>Q 范围</th><th style="text-align:left">曲线形态</th><th style="text-align:left">后果</th></tr></thead>
+<tbody>
+<tr><td>0.1 – 0.25</td><td class="t">很尖，峰值高</td><td class="t">峰值余量足，但轻载时频率范围极宽，环路难调</td></tr>
+<tr class="hi"><td>0.3 – 0.5</td><td class="t">适中</td><td class="t">主流取值。本机满载 Q = 0.32（60V）～0.48（45.7V）</td></tr>
+<tr><td>0.6 – 1.0</td><td class="t">平缓，峰值低</td><td class="t">峰值余量不足，重载时可能掉出感性区</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>注意 Q 不是常数——它随负载和输出电压变。<b>设计时看的是满载最大功率点的 Q</b>，本机是 60V/1600W 的 Q = 0.322（此时 Rac 最大、Q 最小），以及 45.7V/1600W 的 Q = 0.475。两个都要校核。</p>
+
+<h3>8.2　由 Z0 反解 Cr 和 Lr</h3>
+
+<div class="f">
+Z0 = √(Lr/Cr) = 9.39 Ω　　　fr = 1/(2π√(Lr·Cr)) = 124.6 kHz<br>
+<span class="cm">两式联立：</span><br>
+Cr = 1/(2π·fr·Z0) = 1/(2π×124.6e3×9.39) = <em>136 nF</em><br>
+Lr = Z0/(2π·fr) = 9.39/(2π×124.6e3) = <em>12.0 µH</em>
+</div>
+
+<p>正向设计时顺序是反的：先定 fr（受磁芯损耗和驱动能力约束，一般 100–150kHz 对 1600W 合适），再定 Z0（由选定的 Q 和 Rac 反推），然后才算出 Cr 和 Lr。本机是从 12µH / 136nF 反推出 fr = 124.6k，结果落在合理区间，说明原设计者的思路是对的。</p>
+
+<h3>8.3　为什么 fr 不能随便选</h3>
+<ul>
+  <li><b>fr 太低（&lt;100kHz）</b>：60V 满载角点会撞到 60kHz 下限，磁通也上去了。本机如果 fr 降到 100k，60V/360V 角点只有 52kHz，磁通 0.56T，直接饱和。</li>
+  <li><b>fr 太高（&gt;180kHz）</b>：45.7V 满载角点会超过 250kHz 上限，而且开关损耗、驱动损耗上升，SR 时序窗口变窄（你的 <code>M_ArHigh</code> 表到 250kHz 就到头了，这不是巧合）。</li>
+  <li><b>124.6kHz 的好处</b>：60V 角点 65–83kHz，45.7V 角点 118–174kHz，42V 角点 153–205kHz，整个 PFM 区间 65–205kHz 落在固件 60–250kHz 限幅内，两侧都有余量。</li>
+</ul>
+
+<h2 class="ch"><span class="num">09</span>工作点全表：设计的最终交付物</h2>
+
+<p>前面所有推导的落脚点就是这张表。它告诉你：在任何一个 (Vo, Io, Vin) 组合下，开关频率应该是多少。<b>这张表就是你写代码时的频率给定依据，也是你验证仿真时的对照表。</b></p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 9-1　全角点工作频率（n=4, k=6.67, Cr=136nF, fr=124.6kHz；电流按固件 30A / 1600W 限值。30–40V 段<b>不进入 PFM</b>，单列于表尾）</caption>
+<thead><tr><th>Vo</th><th>Io</th><th>Po</th><th>Vin</th><th>M</th><th>Q</th><th>fn</th><th>fsw</th></tr></thead>
+<tbody>
+<tr class="hi"><td>60</td><td>26.7</td><td>1600</td><td>360</td><td>1.333</td><td>0.322</td><td>0.524</td><td>65.2 k</td></tr>
+<tr><td>60</td><td>26.7</td><td>1600</td><td>380</td><td>1.263</td><td>0.322</td><td>0.576</td><td>71.8 k</td></tr>
+<tr><td>60</td><td>26.7</td><td>1600</td><td>400</td><td>1.200</td><td>0.322</td><td>0.633</td><td>78.9 k</td></tr>
+<tr><td>60</td><td>26.7</td><td>1600</td><td>410</td><td>1.171</td><td>0.322</td><td>0.664</td><td>82.8 k</td></tr>
+<tr><td>55</td><td>29.1</td><td>1600</td><td>360</td><td>1.222</td><td>0.383</td><td>0.557</td><td>69.4 k</td></tr>
+<tr><td>55</td><td>29.1</td><td>1600</td><td>400</td><td>1.100</td><td>0.383</td><td>0.745</td><td>92.8 k</td></tr>
+<tr><td>53.3</td><td>30.0</td><td>1599</td><td>360</td><td>1.184</td><td>0.408</td><td>0.579</td><td>72.2 k</td></tr>
+<tr><td>53.3</td><td>30.0</td><td>1599</td><td>400</td><td>1.066</td><td>0.408</td><td>0.812</td><td>101.1 k</td></tr>
+<tr class="hi"><td>50</td><td>30.0</td><td>1500</td><td>400</td><td>1.000</td><td>0.435</td><td>1.000</td><td>124.6 k</td></tr>
+<tr><td>50</td><td>30.0</td><td>1500</td><td>360</td><td>1.111</td><td>0.435</td><td>0.696</td><td>86.7 k</td></tr>
+<tr><td>45.7</td><td>30.0</td><td>1371</td><td>360</td><td>1.016</td><td>0.475</td><td>0.949</td><td>118.2 k</td></tr>
+<tr><td>45.7</td><td>30.0</td><td>1371</td><td>400</td><td>0.914</td><td>0.475</td><td>1.311</td><td>163.3 k</td></tr>
+<tr><td>45.7</td><td>30.0</td><td>1371</td><td>410</td><td>0.892</td><td>0.475</td><td>1.399</td><td>174.2 k</td></tr>
+<tr><td>42</td><td>30.0</td><td>1260</td><td>360</td><td>0.933</td><td>0.517</td><td>1.226</td><td>152.7 k</td></tr>
+<tr><td>42</td><td>30.0</td><td>1260</td><td>400</td><td>0.840</td><td>0.517</td><td>1.568</td><td>195.3 k</td></tr>
+<tr><td>42</td><td>30.0</td><td>1260</td><td>410</td><td>0.820</td><td>0.517</td><td>1.648</td><td>205.4 k</td></tr>
+<tr class="hi"><td>40</td><td>3.0</td><td>120</td><td colspan="4" class="t" style="text-align:left">不走 PFM：80kHz 对称 PWM，D≈0.21（§5.4）</td><td>80 k</td></tr>
+<tr class="hi"><td>35</td><td>3.0</td><td>105</td><td colspan="4" class="t" style="text-align:left">同上，D≈0.18</td><td>80 k</td></tr>
+<tr class="hi"><td>30</td><td>3.0</td><td>90</td><td colspan="4" class="t" style="text-align:left">同上，D≈0.16</td><td>80 k</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="tag">这张表和固件对上了</span>
+  <p>PFM 有效工作区是 <b>65kHz ～ 205kHz</b>，覆盖 42–60V。固件限幅 <code>POW_MIN_PLV = 60000</code>、<code>POW_MAX_PLV = 250000</code>，即 <b>60k–250k</b>。表尾三行是 30–40V 段，<b>它们不在 PFM 表里，走的是 80kHz 硬开关 PWM</b>，频率固定、只调 Duty。</p>
+  <p>低频端留 5kHz（8%）余量，用于母线跌落和负载突变；高频端留 45kHz，用于 42V 以下和轻载瞬态。这个余量分配是合理的——<b>说明限幅值不是随手写的，是从工作点表推出来的</b>。</p>
+</div>
+
+<h2 class="ch"><span class="num">10</span>器件应力与磁通校核</h2>
+
+<p>频率算完只是"能工作"，还要确认"不会烧"。这一章只做四项校核，都是打样前必须过的。</p>
+
+<h3>10.1　原边电流</h3>
+<div class="f">
+负载分量　I_load,rms = (π/2√2)·(Io/n) = 1.111 × 26.7/4 = 7.40 A<br>
+励磁分量　ΔIm = Vin/(4·Lm·f) = 380/(4×80µ×71.8k) = 16.5 A(p-p)　→　Im,rms = 4.77 A<br>
+合成　　　Ipri,rms ≈ √(7.40² + 4.77²) = <em>8.8 A</em>
+</div>
+
+<p>注意 60V 满载时励磁分量占了一半以上——因为频率低（71.8k）、Lm 只有 80µH。这是宽输出 LLC 的典型特征：<b>高压输出段靠"大环流"换增益</b>，效率在这里最差。这也是为什么 60V 段要重点看温升。</p>
+
+<h3>10.2　谐振电容电压</h3>
+<div class="f">
+直流分量　Vcr,dc = Vin/2 = 200 V<br>
+基波分量　Vcr,1 = I1/(ωCr) ≈ 8.0/(2π×124.6k×136n) = 75 V<br>
+峰值　　　Vcr,pk ≈ 200 + 75 = <em>275 V</em>　（电容额定 630V，余量 2.3 倍）
+</div>
+<p>余量充足。这也是为什么用 630V 而不是 450V——不是算出来的，是选型时留的降额。</p>
+
+<h3>10.3　副边同步整流</h3>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th style="text-align:left">项目</th><th>数值</th><th style="text-align:left">说明</th></tr></thead>
+<tbody>
+<tr><td class="t">单管平均电流</td><td>13.3 A</td><td class="t">Io/2，中心抽头全波</td></tr>
+<tr><td class="t">单管有效值</td><td>18.9 A</td><td class="t">Io/√2</td></tr>
+<tr><td class="t">反向耐压</td><td>120 V</td><td class="t">2Vo，60V 输出时</td></tr>
+<tr><td class="t">选型</td><td>200 V</td><td class="t">CRST113N20NZ，余量 1.67 倍，合理</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>10.4　磁通密度：最紧的一项</h3>
+
+<div class="f">
+Bmax = Vin / (4 · Np · Ae · f)<br>
+<span class="cm">半桥：原边承受 ±Vin/2，半周期伏秒 = (Vin/2)·(1/2f)</span><br>
+Vin = 400V, Np = 16, Ae = 190mm², f = 78.9kHz　→　Bmax = <em>0.417 T</em><br>
+Vin = 360V, f = 65.2kHz（最恶劣角点）　→　Bmax = <em>0.454 T</em>
+</div>
+
+<div class="box warn">
+  <span class="tag">这一项必须找硬件同事确认</span>
+  <p>按 PQ4035 的 Ae ≈ 190mm² 估算，<b>60V 满载角点的磁通在 0.42–0.45T</b>。铁氧体在 100°C 时的饱和点通常 0.39–0.45T（PC95 约 0.39T，3C95 约 0.45T）。这个角点已经贴边，甚至可能超。</p>
+  <p>我无法确定实际 Ae 和材质，所以这条标 <b>等级 D，必须实测/查规格书</b>。三种可能：① 实际 Ae 更大（比如 250mm²），没问题；② 材质是高 Bs 的，勉强过；③ 确实超了，那 60V 满载在实物上是靠降额或提高 fr 规避的。</p>
+  <p>验证方法：绕 16T 测电感得 Al，反算 Ae；或直接看磁芯规格书。如果确实超，两条路——提高 fr（减 Cr 或 Lr，但会改变整个频率窗口）或增加 Np（改变 n，等于重新设计）。<b>先确认，别先改。</b></p>
+</div>
+
+<h2 class="ch"><span class="num">11</span>从频率到寄存器：软件怎么落地</h2>
+
+<p>这一章是你作为软件工程师的优势区，但有一个地方容易理解错，值得单独说。</p>
+
+<h3>11.1　量纲</h3>
+<div class="f">
+preA = SHRTIMER_PLV / DriverPwm.Plv　　　SHRTIMER_PLV = 680,000,000<br>
+<span class="cm">680MHz = 170MHz × 4（HRTIM 高分辨率倍频）。所以 preA 是计数值，Plv 是频率（Hz）。</span><br>
+fsw = 680e6 / preA　　→　fsw = 60kHz 时 preA = 11333，250kHz 时 preA = 2720
+</div>
+
+<p>关键是 PI 的输出量纲：</p>
+<div class="f">
+Ctrl_interFace.flvOut = out * 50000.0f;　→　限幅 60000 ～ 250000　→　DriverPwm.Plv<br>
+<span class="cm">PI 的输出直接就是频率（Hz）。这是 LLC 和 Buck 最本质的区别——Buck 调占空比，LLC 调频率。</span>
+</div>
+
+<p>所以你的 PI 参数、积分限幅、抗饱和，全都要按"频率"这个量纲来理解。比如积分项 <code>piStructInter.integral = POW_MAX_PLV * 0.00002f</code>，意思是"积分器预置在 250kHz 对应的位置"，这是抗饱和处理，不是随便写的数。</p>
+
+<h3>11.2　死区</h3>
+<div class="f">
+LLC_DEADTIME = 120 counts　→　120 / 680e6 = <em>176 ns</em><br>
+<span class="cm">注释写的是 300ns，已经过期。以实际值为准。</span>
+</div>
+<p>176ns 对 650V 器件、160pF 级 Coss 是合理的（ZVS 换流时间约 20–50ns，留 3–8 倍余量）。仿真模型里 <code>dt = 150n</code>，与实物接近，可以直接对比。</p>
+
+<h3>11.3　频率窗口的映射</h3>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th style="text-align:left">工况</th><th>fsw</th><th>preA</th><th style="text-align:left">对应的寄存器</th></tr></thead>
+<tbody>
+<tr><td class="t">60V/1600W/360V</td><td>65.2 k</td><td>10429</td><td class="t">接近下限 60k，余量 8%</td></tr>
+<tr><td class="t">50V/1500W/400V</td><td>124.6 k</td><td>5457</td><td class="t">谐振点</td></tr>
+<tr><td class="t">42V/1260W/410V</td><td>205.4 k</td><td>3311</td><td class="t">接近上限 250k，余量 22%</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 class="ch"><span class="num">12</span>两个开环模型怎么用</h2>
+
+<p>模型是别人给的，参数和你板子不完全一致（Cr 差 1.47 倍），但结构对。用对了能省几周时间，用错了会得到假结论。</p>
+
+<h3>12.1　LLC1600_PSM_519.plecs —— 扫频模型</h3>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th style="text-align:left">参数</th><th style="text-align:left">模型值</th><th style="text-align:left">实物</th><th style="text-align:left">是否一致</th></tr></thead>
+<tbody>
+<tr><td class="t">匝比 n</td><td class="t">16 : 4+4</td><td class="t">16 : 4+4</td><td class="t" style="color:#2f5d3a">一致</td></tr>
+<tr><td class="t">Lr</td><td class="t">12 µH（L6）</td><td class="t">12 µH（L7）</td><td class="t" style="color:#2f5d3a">一致</td></tr>
+<tr><td class="t">Lm</td><td class="t">80 µH（L7）</td><td class="t">80 µH（T2A）</td><td class="t" style="color:#2f5d3a">一致</td></tr>
+<tr><td class="t">Cr</td><td class="t">200 nF（C22）</td><td class="t">136 nF</td><td class="t" style="color:#8c2f1f">差 1.47 倍</td></tr>
+<tr><td class="t">Vin</td><td class="t">350 V</td><td class="t">360–410 V</td><td class="t" style="color:#8a4b2a">偏低，可改</td></tr>
+<tr><td class="t">死区</td><td class="t">150 ns</td><td class="t">176 ns</td><td class="t">接近</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><b>怎么用</b>：把 C22 改成 136nF、V_dc2 改成 380V，然后把频率从 60k 扫到 250k，记录每个频率下的 Vo/Io，画出实测增益曲线，和第 3 章的 FHA 曲线叠在一起。</p>
+
+<p>两条曲线应该在中段吻合，在两端分叉：<b>低频端仿真会偏低</b>（FHA 忽略了高次谐波，而增益接近峰值时高次谐波贡献大），<b>高频端仿真会偏高</b>（FHA 假设纯正弦，实际电流断续）。这两个分叉的方向是固定的，记住它，你就知道什么时候该信仿真、什么时候该信计算。</p>
+
+<h3>12.2　LLC1600_PWM.plecs —— 定频模型</h3>
+<p>这个模型是定频 150kHz + 可调占空比（<code>TriangleGenerator</code> f=150k，DutyCycle=0.5；<code>DT</code> 子系统做死区）。它对应固件里 <code>ConVolt</code> / <code>ConCurPWM</code> 那几个分支（40k/80k/120k 定频、Duty 0.02–0.4）。</p>
+
+<p><b>它的价值不是验证 LLC，而是验证"为什么这台机器要有两套控制律"</b>。跑一遍你会看到：定频调占空比时，占空比从 0.5 降到 0.1，输出确实能降下来，但原边电流波形严重不对称、变压器偏磁、效率明显下降。所以它只能用在预充和过渡段，不能做主充电环路。</p>
+
+<div class="box why">
+  <span class="tag">这一步的意义</span>
+  <p>你现在能解释固件里"为什么有两套控制律"了：<b>不是因为写代码的人喜欢复杂，是因为 30–60V 的宽范围逼出了两套机制</b>。PFM 覆盖 42–60V（ZVS、高效）；80kHz 对称 PWM 覆盖 30–42V（硬开关、效率低但能降压）；40kHz 开环 PWM 只管继电器预充。三者是接力关系，不是冗余。</p>
+  <p>能把这套逻辑讲清楚，你就不再是"看代码的人"，而是"能评价这套代码的人"。这是从 L3 走向 L2 的标志。</p>
+</div>
+
+<h2 class="ch"><span class="num">13</span>改版重算清单</h2>
+
+<p>原理图会改，参数会变。这张表告诉你：改一个数，影响什么，重算哪几节。</p>
+
+<div class="tbl-wrap">
+<table>
+<caption>表 13-1　参数变更影响矩阵</caption>
+<thead><tr><th style="text-align:left">改什么</th><th style="text-align:left">直接影响</th><th style="text-align:left">连带影响</th><th style="text-align:left">重算</th></tr></thead>
+<tbody>
+<tr><td class="t">Cr（68nF → 136nF 等）</td><td class="t">fr、Z0、Q</td><td class="t">整个频率窗口平移；60V 角点可达性</td><td class="t">§2.1、§8、§9</td></tr>
+<tr><td class="t">Lr（12µH → ?）</td><td class="t">fr、Z0、k</td><td class="t">k 变则地板变，低压门限变</td><td class="t">§2、§4、§9</td></tr>
+<tr><td class="t">Lm（80µH → ?）</td><td class="t">k、峰值增益、地板</td><td class="t">39V 门限、励磁环流、磁芯气隙</td><td class="t">§4、§7、§10.1</td></tr>
+<tr><td class="t">Np（16T → ?）</td><td class="t">n、Lm、磁通</td><td class="t">全部工作点、SR 耐压</td><td class="t">全册</td></tr>
+<tr><td class="t">母线范围</td><td class="t">M 范围</td><td class="t">频率窗口、磁通、峰值余量</td><td class="t">§9、§10.4</td></tr>
+<tr><td class="t">输出规格</td><td class="t">Rac、Q</td><td class="t">曲线形状、ZVS 边界</td><td class="t">§6、§8、§9</td></tr>
+<tr><td class="t">死区</td><td class="t">ZVS 换流、轻载效率</td><td class="t">不影响增益</td><td class="t">§11.2</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>配套的 <code>llc-gain-curve.html</code> 已经把默认参数改成这台机器的实际值（n=4、Lr=12µH、Lm=80µH、Cr=136nF、Vo=50V、Po=1600W）。改参数时直接用那个工具，改完回这张表看影响面。</p>
+
+<p>有一个小差异要知道：计算器按你填的 Po 直接算 Rac，本册表格按固件的 30A 限流算。50V 时 1600W 需要 32A，超过 30A 限值，所以两边差 3–4%（计算器给 83.2kHz，表 9-1 给 86.7kHz）。<b>不影响结论，但对比数字时要知道差在哪。</b></p>
+
+<h2 class="ch"><span class="num">14</span>现在开始做的五件事</h2>
+
+<p>设计书看完了，接下来按这个顺序动手。前两件本周就能做完，不需要任何仪器。</p>
+
+<ol>
+  <li><b>改仿真模型，让它等于你的板子。</b>把 <code>C22</code> 改成 136nF、<code>V_dc2</code> 改成 380V。这一步 10 分钟，但不做，后面所有对比都是错的。</li>
+  <li><b>跑一条增益曲线，和 FHA 叠在一起。</b>扫 60k–250k，记录 Vo。看两条曲线在哪里分叉、分叉方向对不对。这是你第一次"用仿真验证理论"。</li>
+  <li><b>用 LCR 表实测三件事</b>：Lr（拆下 L7 测）、Lm（副边开路测原边）、Cr（两只 68nF 是并是串，看 PCB 走线就能定）。测完把实际值填进计算器，看频率窗口有没有偏移。<b>偏移多少，就是你对这台机器的理解误差。</b></li>
+  <li><b>确认 60V 满载的磁通。</b>查 PQ4035 的 Ae 和材质 Bs，代进 §10.4 的式子。这是全机最紧的一项，也是最可能出问题的一项。</li>
+  <li><b>30–40V 段不用做 burst。</b>80kHz 硬开关通路已经覆盖它（§5）。要做的是三件小事：① 扫 Duty–Vo 曲线，标定 0.02–0.4 的限幅；② 确认 40.2V 交接点有没有电压台阶（§5.6）；③ 量硬开关段 MOS 壳温，确认 3–13W 的 Coss 损耗撑得住。</li>
+</ol>
+
+<div class="hr"></div>
+
+<div class="box">
+  <span class="tag">最后一句</span>
+  <p>你这台机器的设计其实很干净：n=4 让 M=1 落在 50V，k=6.67 在"峰值够用"和"环流可接受"之间取平衡，fr=124.6k 让整个工作区落在 65–205kHz，固件用 60–250k 把它框住。每一处都能对上，没有拍脑袋的地方。</p>
+  <p>你要学的不是"再算一遍这些数"，而是<b>这套判断是怎么做出来的</b>——尤其是"用极端角点的可达性反证参数"和"用增益地板解释固件门限"这两个动作。这两个动作会跟着你一辈子，比任何一个具体数字都值钱。</p>
+</div>
+
+<p class="note" style="margin-top:40px">本册所有数值由 FHA 基波近似计算，未含高次谐波、死区效应、器件压降。用于设计与校核，不替代样机实测。标注 UNK 的四项必须在打样前关闭。</p>
+
+</div>
+
+<script>
+(function(){
+  var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  var W=1600,H=900, dpr=1;
+  cv.width=W*dpr; cv.height=H*dpr;
+  cv.style.width='100%'; cv.style.height='auto';
+  ctx.scale(dpr,dpr);
+
+  var padL=110,padR=48,padT=48,padB=90;
+  var x0=padL,x1=W-padR,y0=padT,y1=H-padB;
+  var fnMin=0.35,fnMax=2.2, mMin=0.4,mMax=2.2;
+  var k=6.667;
+
+  function M(fn,q){
+    var A=1+(1/k)*(1-1/(fn*fn)), B=q*(fn-1/fn);
+    return 1/Math.hypot(A,B);
+  }
+  function X(fn){return x0+(fn-fnMin)/(fnMax-fnMin)*(x1-x0);}
+  function Y(m){return y1-(m-mMin)/(mMax-mMin)*(y1-y0);}
+
+  // grid
+  ctx.strokeStyle='#ecebe6'; ctx.lineWidth=1;
+  for(var m=0.4;m<=2.2001;m+=0.2){
+    ctx.beginPath();ctx.moveTo(x0,Y(m));ctx.lineTo(x1,Y(m));ctx.stroke();
+  }
+  for(var f=0.4;f<=2.2001;f+=0.2){
+    ctx.beginPath();ctx.moveTo(X(f),y0);ctx.lineTo(X(f),y1);ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle='#b9b7ae'; ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0,y1);ctx.lineTo(x1,y1);ctx.stroke();
+
+  // labels
+  ctx.fillStyle='#6b6b6b'; ctx.font='22px Consolas,monospace'; ctx.textAlign='center';
+  for(var f2=0.4;f2<=2.2001;f2+=0.2){
+    ctx.fillText(f2.toFixed(1),X(f2),y1+34);
+  }
+  ctx.textAlign='right';
+  for(var m2=0.4;m2<=2.2001;m2+=0.2){
+    ctx.fillText(m2.toFixed(1),x0-14,Y(m2)+7);
+  }
+  ctx.textAlign='center'; ctx.fillStyle='#3d3d3d'; ctx.font='24px serif';
+  ctx.fillText('归一化频率  fn = fsw / fr',(x0+x1)/2,y1+72);
+  ctx.save();ctx.translate(40,(y0+y1)/2);ctx.rotate(-Math.PI/2);
+  ctx.fillText('增益  M = 2n·Vo / Vin',0,0);ctx.restore();
+
+  var fl=k/(k+1);
+
+  // operating band (under everything)
+  var bx0=X(0.524), bx1=X(1.648);
+  ctx.fillStyle='rgba(31,78,95,0.055)';
+  ctx.fillRect(bx0,y0,bx1-bx0,y1-y0);
+
+  // sub-floor dead zone
+  ctx.fillStyle='rgba(140,47,31,0.05)';
+  ctx.fillRect(x0,Y(fl),x1-x0,y1-Y(fl));
+
+  // fn = 1
+  ctx.setLineDash([4,7]); ctx.strokeStyle='#c8b89a'; ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(X(1),y0);ctx.lineTo(X(1),y1);ctx.stroke();
+
+  // gain floor
+  ctx.setLineDash([12,7]); ctx.strokeStyle='#8c2f1f'; ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(x0,Y(fl));ctx.lineTo(x1,Y(fl));ctx.stroke();
+  ctx.setLineDash([]);
+
+  // text with halo
+  function tag(txt,x,y,align,color,font){
+    ctx.font=font||'21px Consolas,monospace';
+    ctx.textAlign=align||'left';
+    var w=ctx.measureText(txt).width;
+    var px = align==='right' ? x-w : (align==='center' ? x-w/2 : x);
+    ctx.fillStyle='rgba(255,255,255,0.88)';
+    ctx.fillRect(px-7,y-21,w+14,29);
+    ctx.fillStyle=color||'#3d3d3d';
+    ctx.fillText(txt,x,y);
+  }
+
+  // curves
+  var curves=[
+    {q:1.0,  c:'#a8a49a', w:2.5, lab:'Q=1.0（重载参考）'},
+    {q:0.475,c:'#1f4e5f', w:3.5, lab:'Q=0.475（45.7V/30A）'},
+    {q:0.322,c:'#8a4b2a', w:4.0, lab:'Q=0.322（60V/1600W）'},
+    {q:0.05, c:'#b8873a', w:3.0, lab:'Q=0.05（极轻载参考）'}
+  ];
+  curves.forEach(function(c){
+    ctx.beginPath(); var started=false;
+    for(var fn=fnMin;fn<=fnMax;fn+=0.002){
+      var m=M(fn,c.q);
+      if(m>mMax||m<mMin){started=false;continue;}
+      if(!started){ctx.moveTo(X(fn),Y(m));started=true;}
+      else ctx.lineTo(X(fn),Y(m));
+    }
+    ctx.strokeStyle=c.c; ctx.lineWidth=c.w; ctx.lineJoin='round'; ctx.stroke();
+  });
+
+  // legend
+  var lx=x1-500, ly=y0+30;
+  ctx.fillStyle='rgba(253,252,249,0.95)';
+  ctx.fillRect(lx-20,ly-24,500,176);
+  ctx.strokeStyle='#e2e2e0';ctx.lineWidth=1;ctx.strokeRect(lx-20,ly-24,500,176);
+  ctx.font='20px Consolas,monospace'; ctx.textAlign='left';
+  curves.slice().reverse().forEach(function(c,i){
+    var yy=ly+16+i*38;
+    ctx.strokeStyle=c.c;ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(lx,yy-6);ctx.lineTo(lx+44,yy-6);ctx.stroke();
+    ctx.fillStyle='#3d3d3d';ctx.fillText(c.lab,lx+58,yy);
+  });
+
+  // annotations
+  tag('增益地板  k/(k+1) = '+fl.toFixed(3), x0+18, Y(fl)+40, 'left', '#8c2f1f');
+  tag('地板以下：任何频率都到不了', x0+18, y1-14, 'left', '#8c2f1f', '20px serif');
+  tag('fn = 1', X(1)+12, y0+26, 'left', '#a08a5f', '20px Consolas,monospace');
+  tag('实际 PFM 工作带　65k – 205k', (bx0+bx1)/2, y0+96, 'center', '#1f4e5f', '21px serif');
+
+  // key points
+  function dot(fn,q,label,dx,dy,al){
+    var m=M(fn,q), px=X(fn), py=Y(m);
+    ctx.beginPath();ctx.arc(px,py,9,0,Math.PI*2);ctx.fillStyle='#8a4b2a';ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,16,0,Math.PI*2);ctx.strokeStyle='rgba(138,75,42,0.28)';ctx.lineWidth=3;ctx.stroke();
+    tag(label, px+dx, py+dy, al||'left', '#3d3d3d', '20px Consolas,monospace');
+  }
+  dot(1.0,0.435,'M=1（50V/400V 谐振点）',22,-26,'left');
+  dot(0.524,0.322,'60V/360V → 65k',24,-30,'left');
+  dot(1.648,0.517,'42V/410V → 205k',-26,46,'right');
+})();
+</script>
+</body>
+</html>

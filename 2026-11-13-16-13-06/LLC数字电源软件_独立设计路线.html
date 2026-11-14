@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>半桥 LLC 数字电源软件 · 独立设计路线</title>
+<style>
+:root{
+  --ink:#0f172a; --ink2:#475569; --ink3:#94a3b8;
+  --line:#e2e8f0; --bg:#f8fafc; --bg2:#fbfcfe;
+  --blue:#185fa5; --blue-l:#e6f1fb; --teal:#0f6e56; --teal-l:#e1f5ee;
+  --amber:#854f0b; --amber-l:#fdf6ec; --amber-b:#f0d9b5;
+  --red:#a32d2d; --red-l:#fcebeb;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);
+  font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;
+  font-size:14.5px;line-height:1.75}
+.wrap{max-width:1000px;margin:0 auto;padding:44px 28px 90px}
+h1{font-size:26px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.lead{color:var(--ink2);font-size:14px;margin:0 0 6px}
+.meta{color:var(--ink3);font-size:12.5px;margin:0 0 34px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+h2{font-size:18px;font-weight:600;margin:52px 0 6px;padding-top:14px;border-top:1px solid var(--line)}
+h2 .num{color:var(--blue);font-weight:600;margin-right:8px;font-variant-numeric:tabular-nums}
+h2+.sub{color:var(--ink2);font-size:13.5px;margin:0 0 22px}
+h3{font-size:15px;font-weight:600;margin:28px 0 8px}
+p{margin:0 0 12px}
+.keybox{background:var(--blue-l);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0}
+.keybox p{margin:0 0 8px}
+.keybox p:last-child{margin:0}
+.keybox b{color:var(--blue)}
+.warnbox{background:var(--amber-l);border:1px solid var(--amber-b);border-radius:10px;padding:14px 18px;margin:18px 0;color:var(--amber)}
+.warnbox b{color:#633806}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0 18px}
+th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink3);font-weight:400;font-size:12.5px;background:var(--bg)}
+tbody tr:hover{background:var(--bg2)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+code{background:var(--bg);padding:1.5px 5px;border-radius:4px;
+  font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px;color:var(--blue)}
+pre{background:#0f172a;color:#e2e8f0;padding:16px 18px;border-radius:10px;overflow-x:auto;
+  font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px;line-height:1.65;margin:12px 0 18px}
+pre .c{color:#7d8fa9}
+pre .k{color:#93c5fd}
+pre .s{color:#86efac}
+.prompt{background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--teal);
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0 20px;
+  font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px;line-height:1.7;color:#1e293b;white-space:pre-wrap}
+.prompt .ph{color:var(--blue);background:#dbeafe;border-radius:3px;padding:0 3px}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:4px;margin-right:5px;white-space:nowrap}
+.t-ok{background:var(--teal-l);color:var(--teal)}
+.t-half{background:var(--amber-l);color:var(--amber);border:1px solid var(--amber-b)}
+.t-no{background:var(--red-l);color:var(--red)}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:#fff}
+.card h4{margin:0 0 8px;font-size:14px;font-weight:600}
+.card p{font-size:13.5px;color:var(--ink2);margin:0}
+.footnote{color:var(--ink3);font-size:12.5px;margin-top:40px;padding-top:18px;border-top:1px solid var(--line)}
+.big{font-size:15px;font-weight:600;color:var(--ink)}
+.sprint{border-left:2px solid var(--line);padding-left:20px;margin:0 0 22px;position:relative}
+.sprint:before{content:"";position:absolute;left:-6px;top:9px;width:10px;height:10px;border-radius:50%;background:var(--blue)}
+.sprint h4{margin:0 0 4px;font-size:14.5px;font-weight:600}
+.sprint .wk{color:var(--ink3);font-size:12.5px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>半桥 LLC 数字电源软件 · 独立设计路线</h1>
+<p class="lead">基于 R02_LLC_APP_V1.1.8 量产工程与 XP 机器人充电器 SOR 的实测反推</p>
+<p class="meta">工程路径：D:\Work\1600W\合包\20261029\R02_LLC_APP_V1.1.8_1029　·　平台：STM32G4 + HRTIM　·　目标：能独立设计一台半桥 LLC 的数字电源软件</p>
+
+<div class="keybox">
+<p><b>一句话结论：你不该从零学 LLC，你该从你手上这套代码反推 LLC。</b></p>
+<p>你的 L3（数字实现层）已经很强——HRTIM 高分辨率发波、增益调度 PI、SR 时序表、三级保护，这些是绝大多数电源工程师反而不会的。你缺的是 L1（物理直觉）和 L2（建模与计算书）。而这两层，恰好可以从你的代码里<b>倒着推出来</b>，而且比看书快得多。</p>
+<p>所以这份路线不是"学完再做"，而是"边推边建"：用代码当教材，用计算书当考卷。</p>
+</div>
+
+<h2><span class="num">01</span>体检：这套固件到底是什么</h2>
+<p class="sub">先把你手上的东西看清楚。不了解现状就排学习计划，等于闭眼开车。</p>
+
+<h3>1.1 分层结构</h3>
+<table>
+<thead><tr><th>目录 / 文件</th><th>职责</th><th class="n">行数</th></tr></thead>
+<tbody>
+<tr><td><code>Core/Src/main.c</code></td><td>HAL 初始化、HRTIM/ADC/TIM 外设配置、主循环调度</td><td class="n">1459</td></tr>
+<tr><td><code>AppUser/mathR02.c</code></td><td><b>控制核心</b>：PFM 状态机、PI 补偿器、软启动、预充、滤波</td><td class="n">666</td></tr>
+<tr><td><code>AppUser/Sr_Handle_N.c</code></td><td><b>增益调度表 + SR 时序表</b>：Kp/Ki 随 fsw 查表插值</td><td class="n">96</td></tr>
+<tr><td><code>AppUser/ConsoleFast.c</code></td><td><b>发波</b>：Plv → HRTIM PERxR / CMPxR、快环保护、继电器/放电控制</td><td class="n">237</td></tr>
+<tr><td><code>AppUser/operateStatus.c</code></td><td>整机状态机（6 状态，函数表注册）</td><td class="n">392</td></tr>
+<tr><td><code>AppUser/ProtectionLLC.c</code></td><td>保护参数表、延时/重试/恢复逻辑、OTP 分级</td><td class="n">421</td></tr>
+<tr><td><code>AppUser/CAN_Control_2800W.c</code></td><td>CAN/CANFD 协议、BMS/PMS 握手、充电指令解析</td><td class="n">731</td></tr>
+<tr><td><code>AppUser/user_sample.c</code></td><td>ADC 采样与滤波、温度换算</td><td class="n">177</td></tr>
+</tbody>
+</table>
+<p>应用层合计约 <b>4200 行</b>。真正和 LLC 控制相关的，只有 <code>mathR02.c</code> + <code>Sr_Handle_N.c</code> + <code>ConsoleFast.c</code> 三个文件，约 <b>1000 行</b>。其余是通讯、OTA、存储、状态上报。</p>
+<div class="warnbox"><b>第一个结论：</b>你不需要读 4200 行。读那 1000 行就够了，剩下 3200 行对理解 LLC 没有任何帮助。这是 5 小时/周能不能走通的关键。</div>
+
+<h3>1.2 真实的控制链路（这是全篇最重要的一段）</h3>
+<p>从 CAN 指令到功率管栅极，一共 6 步。每一步我都标了代码位置：</p>
+<pre><span class="c">// ① CAN 指令 → 目标电流（mathR02.c:139）</span>
+CurrentMax = PM S_ChrgReqCur * 0.1f;
+<span class="c">// ② 限功率/限温降额（mathR02.c:144-156）</span>
+err = ACinVolRms * 7.2f;  out = err / vOut_Bat;   <span class="c">// 输入功率上限折算成电流</span>
+<span class="c">// ③ 电流给定斜坡（mathR02.c:157）每拍 ±0.0002A，防止阶跃冲击</span>
+<span class="c">// ④ 一阶滤波 + PI（mathR02.c:161-163）</span>
+firOut = OneOrderForm(iOut - Curr_REF, &amp;kFilterOne);
+out    = Compensator_Pid(&amp;piStructInter, firOut);
+<span class="c">// ⑤ 归一化频率 → Hz（mathR02.c:164）</span>
+flvOut = out * 50000.0f;        <span class="c">// out 的单位就是 fs/50kHz</span>
+<span class="c">// ⑥ 限幅 → 写 HRTIM 周期（ConsoleFast.c:168）</span>
+preA = 680000000 / DriverPwm.Plv;   <span class="c">// 680MHz 计数时钟</span>
+PERxR = preA &amp; 0xfffc;              <span class="c">// 低两位清零</span></pre>
+<p>看懂这条链，你就看懂了 80% 的数字电源软件。<b>PI 的输出直接就是开关频率</b>——这是 LLC 和 Buck 最本质的区别：Buck 调占空比，LLC 调频率。所以 PI 的输出量纲不是"电压"也不是"占空比"，而是"频率"。</p>
+
+<h3>1.3 四个你必须知道的实现细节</h3>
+<table>
+<thead><tr><th>细节</th><th>代码位置</th><th>为什么这么写</th></tr></thead>
+<tbody>
+<tr>
+<td><b>增益调度 PI</b><br><code>M_CoeffiFp[14]</code></td>
+<td><code>Sr_Handle_N.c:10</code><br><code>mComputer()</code></td>
+<td>Kp 随 fsw 从 0.0018 变到 0.24，<b>差 130 倍</b>。因为 LLC 的小信号增益 dVo/dfs 在不同工作点差几十倍，固定 PI 必然在某个工况失稳。</td>
+</tr>
+<tr>
+<td><b>SR 时序查表</b><br><code>mathTimeHandle()</code></td>
+<td><code>Sr_Handle_N.c:65</code></td>
+<td>同步整流的开通/关断窗口随 fsw 变（60k–250k 分 9 档）。fsr 附近窗口窄，远高于谐振时窗口宽。</td>
+</tr>
+<tr>
+<td><b>周期寄存器对齐</b><br><code>pre &amp; 0xfffc</code></td>
+<td><code>ConsoleFast.c:169</code></td>
+<td>低 2 位清零 = 周期必须是 4 的倍数。因为 CMP1/2/3/4 用 <code>pre&gt;&gt;2</code> 和 <code>pre-pre&gt;&gt;2</code> 定位，不整除会破坏对称性。</td>
+</tr>
+<tr>
+<td><b>两套控制律并存</b></td>
+<td><code>mathR02.c</code> 全文</td>
+<td>见下节。这是历史包袱，也是你要理解的第一个"设计决策"。</td>
+</tr>
+</tbody>
+</table>
+
+<h3>1.4 两套控制律并存：这是历史包袱，也是最好的教材</h3>
+<p>你的固件里同时存在两种调制方式，靠 <code>CtrMode</code> 切换：</p>
+<div class="two">
+<div class="card">
+<h4>定频 + 调占空比</h4>
+<p><code>Plv</code> 固定为 40k / 80k / 120kHz，<code>Duty</code> 在 0.02–0.4 之间变。<br>
+用于：<code>SoftStar</code>、<code>BmsStar</code>、<code>ConVolt</code>、<code>ConCurPWM</code>。</p>
+<p style="margin-top:8px;color:var(--amber)">本质：预充 / 过渡期的限流手段。不是正规 LLC 调制。</p>
+</div>
+<div class="card">
+<h4>PFM（Duty = 0.5）</h4>
+<p><code>Plv</code> 在 60k–250k 之间变，<code>Duty</code> 恒为 0.5。<br>
+用于：<code>OvLoadPFM</code>（<code>mathR02.c:137</code>）。</p>
+<p style="margin-top:8px;color:var(--teal)">本质：这才是真正的 LLC 闭环。名字叫"过载 PFM"，其实是主充电环路。</p>
+</div>
+</div>
+<p style="margin-top:14px">为什么要有定频调占空比这一段？因为输出要在 30–60V 之间连续可调，预充阶段输出电容是空的，直接上 PFM 会瞬间灌爆。<b>占空比调制在这里被当成"限流阀"用</b>——这是个工程妥协，不是教科书做法。</p>
+<p>你要学的不是"照抄这个妥协"，而是<b>理解它为什么存在，然后在新设计里用更干净的方式解决同一个问题</b>（比如：PFM + 频率斜坡 + 输出电流环限幅）。</p>
+
+<h3>1.5 代码里的债（这些正是你的练习题）</h3>
+<table>
+<thead><tr><th>现象</th><th>位置</th><th>问题</th></tr></thead>
+<tbody>
+<tr><td>宏定义互相矛盾</td><td><code>HwConfig.h:50-51</code></td><td><code>SHRTIMER_MIN_PREIOD=4500</code> 对应 151kHz，但代码实际用到 250kHz（周期 2720）。这两个宏是死的，没人用也没人删。</td></tr>
+<tr><td>功率/电流常量与 SOR 不符</td><td><code>HwConfig.h:20-21</code></td><td><code>OUTPUT_POW_MAX=1650W</code>、<code>OUTPUT_CUR_MAX=30A</code>，而 SOR 要求 2.5kW / 55A。<b>这个工程大概率是 1.5kW（10A 插头）版本</b>，不是 2.5kW 版本。</td></tr>
+<tr><td>OTP 逻辑被整段注释</td><td><code>ProtectionLLC.c:307-417</code></td><td>110 行温度保护全部注释掉，只剩 <code>TIM1-&gt;CCR1=499</code> 这种莫名其妙的风扇满速操作混在里面。</td></tr>
+<tr><td>魔法数字</td><td><code>mathR02.c</code> 全文</td><td><code>Duty=0.035f</code>、<code>vRly&gt;25.0f</code>、<code>time&gt;400</code>……没有一处注释说明来源。</td></tr>
+<tr><td>状态机不可达分支</td><td><code>mathR02.c:191-208</code></td><td><code>OvLoadPFM</code> 里判断 <code>vOut&lt;39.0</code> 超时后跳回 <code>NoSelect</code>，但同一段前面已经把 <code>CtrMode</code> 改成 <code>Transition</code>，逻辑重叠。</td></tr>
+</tbody>
+</table>
+<div class="warnbox"><b>第二个结论：</b>你手上这套代码不是"标准答案"，是"经过三年现场修补的答案"。学它可以，但<b>不要把它当规范</b>。它的价值在于：每一个丑陋的地方，背后都有一个真实的工程约束。找到那个约束，你就学会了。</div>
+
+<h2><span class="num">02</span>反推：从 SOR 规格倒算这台机器的真实参数</h2>
+<p class="sub">你没有计算书。但规格书 + 一颗 LCR 表 + 一张增益曲线，就能把计算书重建出来。</p>
+
+<h3>2.1 从 SOR 提取的硬指标</h3>
+<table>
+<thead><tr><th>项目</th><th class="n">数值</th><th>备注</th></tr></thead>
+<tbody>
+<tr><td>额定输出功率</td><td class="n">2.5 kW / 1.5 kW</td><td>16A 插座 2.5kW（13A 限流）／10A 插座 1.5kW（8A 限流）</td></tr>
+<tr><td>输入电压范围</td><td class="n">90–264 VAC</td><td>45–65Hz，PF ≥ 0.99</td></tr>
+<tr><td>输出电压范围</td><td class="n">30–60 VDC</td><td>连续可调，额定 46.6V</td></tr>
+<tr><td>最大输出电流</td><td class="n">≥55 A</td><td>35–45V 区间</td></tr>
+<tr><td>满载效率</td><td class="n">≥94 %</td><td>@额定负载 @46.6V</td></tr>
+<tr><td>输出纹波</td><td class="n">≤3 % Vp-p</td><td>全输入范围</td></tr>
+<tr><td>输出电压精度</td><td class="n">≤±1 %</td><td>—</td></tr>
+</tbody>
+</table>
+<p>假设前级 PFC 输出母线 380–410V（典型 400V）。<b>30–60V 的输出范围意味着 LLC 要覆盖 2:1 的增益跨度</b>——这是整个设计最硬的约束，后面所有取舍都由它决定。</p>
+
+<h3>2.2 反推结果（我用 FHA 模型算的，可复核）</h3>
+<p>匝比按谐振点对齐额定输出：<code>n = Vin / (2·Vo) = 400 / (2×46.6) = 4.292</code></p>
+<table>
+<thead><tr><th>工况</th><th class="n">Vo</th><th class="n">Vin</th><th class="n">所需增益 M</th></tr></thead>
+<tbody>
+<tr><td>最低输出 / 最高母线</td><td class="n">30 V</td><td class="n">410 V</td><td class="n">0.628</td></tr>
+<tr><td>额定</td><td class="n">46.6 V</td><td class="n">400 V</td><td class="n">1.000</td></tr>
+<tr><td><b>最恶劣（最高输出 / 最低母线）</b></td><td class="n">60 V</td><td class="n">380 V</td><td class="n"><b>1.355</b></td></tr>
+</tbody>
+</table>
+<p>增益跨度 <b>0.628 → 1.355</b>，比值 2.16。这就是为什么 k（=Lm/Lr）不能取大：k 越大，峰值增益越低，60V/低压输入这一点就顶不上去。</p>
+
+<h3>2.3 一组可用的主参数</h3>
+<table>
+<thead><tr><th>参数</th><th class="n">取值</th><th>怎么来的</th></tr></thead>
+<tbody>
+<tr><td>谐振频率 fr1</td><td class="n">120 kHz</td><td>与固件主用频点一致</td></tr>
+<tr><td>k = Lm/Lr</td><td class="n">4.0</td><td>峰值增益 1.543，对 1.355 留 14% 余量</td></tr>
+<tr><td>Q（满载 @46.6V）</td><td class="n">0.40</td><td>兼顾峰值增益与轻载效率</td></tr>
+<tr><td>特征阻抗 Z0</td><td class="n">5.19 Ω</td><td>Z0 = Rac × Q</td></tr>
+<tr><td>Lr</td><td class="n">6.88 µH</td><td>Z0 / (2π·fr1)</td></tr>
+<tr><td>Lm</td><td class="n">27.52 µH</td><td>k × Lr</td></tr>
+<tr><td>Cr</td><td class="n">256 nF</td><td>1 / (2π·fr1·Z0)</td></tr>
+<tr><td>fr2</td><td class="n">53.7 kHz</td><td>1 / (2π√((Lr+Lm)·Cr))</td></tr>
+</tbody>
+</table>
+
+<h3>2.4 算出来的频率范围，和你固件的限幅对上了</h3>
+<table>
+<thead><tr><th>工况</th><th class="n">Q</th><th class="n">M</th><th class="n">fn</th><th class="n">fsw</th></tr></thead>
+<tbody>
+<tr><td>380V / 60V / 满载</td><td class="n">0.24</td><td class="n">1.355</td><td class="n">0.682</td><td class="n"><b>81.9 kHz</b>（最低）</td></tr>
+<tr><td>410V / 60V / 满载</td><td class="n">0.24</td><td class="n">1.256</td><td class="n">0.730</td><td class="n">87.6 kHz</td></tr>
+<tr><td>380V / 30V / 满载</td><td class="n">0.97</td><td class="n">0.678</td><td class="n">1.587</td><td class="n">190.4 kHz</td></tr>
+<tr><td>410V / 30V / 满载</td><td class="n">0.97</td><td class="n">0.628</td><td class="n">1.710</td><td class="n"><b>205.1 kHz</b>（最高）</td></tr>
+<tr><td>410V / 30V / 轻载</td><td class="n">0.10</td><td class="n">0.628</td><td class="n">—</td><td class="n"><b>超范围</b></td></tr>
+</tbody>
+</table>
+<div class="keybox">
+<p><b>交叉验证成功。</b>算出来的满载频率范围是 <b>82–205 kHz</b>，而你固件里的限幅是 <code>POW_MIN_PLV=60kHz</code> / <code>POW_MAX_PLV=250kHz</code>——两侧各留了约 20% 余量。这说明我这组参数和你们硬件的真实参数<b>在同一个量级上</b>，反推方法成立。</p>
+<p>但更重要的发现是最后一行：<b>30V 轻载时，PFM 已经调不下来了</b>。增益曲线在这个点的下限高于 0.628，无论频率多高都拿不到这么低的增益。这就是为什么必须有 <code>Burst</code> 模式——不是"为了省电"，是<b>物理上必须</b>。</p>
+</div>
+<p>如果你能亲手算出这张表，并且用 LCR 表实测的 Lr/Lm/Cr 复现出同样的数字，你就已经具备"独立设计"的核心能力了。剩下的都是外围。</p>
+
+<h2><span class="num">03</span>能力地图：独立设计一台 LLC 数字电源软件，到底要会什么</h2>
+<p class="sub">12 项能力，分 4 层。右边那列是我根据你的代码判断的现状。</p>
+
+<h3>L1 · 物理层——不懂就永远在猜</h3>
+<table>
+<thead><tr><th>能力</th><th>判定标准（能做什么）</th><th style="width:96px">现状</th></tr></thead>
+<tbody>
+<tr><td><b>1. 谐振腔时域波形</b></td><td>能在纸上画出 4 个开关状态的电流路径，说清 ZVS 靠什么实现</td><td><span class="tag t-half">有代码无直觉</span></td></tr>
+<tr><td><b>2. 增益曲线与工作区</b></td><td>能手算 5 个点画出曲线，标出容性区边界，说清为什么不能越过峰值</td><td><span class="tag t-no">缺</span></td></tr>
+<tr><td><b>3. 器件应力</b></td><td>能算出 Vds 峰值、谐振电流峰值、整流管反向恢复损耗</td><td><span class="tag t-no">缺</span></td></tr>
+</tbody>
+</table>
+
+<h3>L2 · 建模层——"会调"和"会设计"的分水岭</h3>
+<table>
+<thead><tr><th>能力</th><th>判定标准</th><th style="width:96px">现状</th></tr></thead>
+<tbody>
+<tr><td><b>4. 规格 → 主参数</b></td><td>给一份 SOR，能独立出计算书：n、k、Q、Lr、Lm、Cr、fsw 范围</td><td><span class="tag t-no">缺</span></td></tr>
+<tr><td><b>5. 小信号模型</b></td><td>能说明 Gvf(s) 的形状，能定穿越频率和相位裕度目标</td><td><span class="tag t-no">缺</span></td></tr>
+<tr><td><b>6. 增益调度原理</b></td><td><b>能解释你代码里 Kp 表为什么在 102kHz 取最小值</b></td><td><span class="tag t-half">有表不知因</span></td></tr>
+</tbody>
+</table>
+
+<h3>L3 · 数字实现层——你的强项，别人反而不会</h3>
+<table>
+<thead><tr><th>能力</th><th>判定标准</th><th style="width:96px">现状</th></tr></thead>
+<tbody>
+<tr><td><b>7. HRTIM 高分辨率发波</b></td><td>PER/CMP 映射、影子寄存器、死区插入、周期对齐约束</td><td><span class="tag t-ok">已具备</span></td></tr>
+<tr><td><b>8. ADC 采样时序</b></td><td>触发点选在计数顶点/底点，避开开关噪声；采样窗口与环路周期匹配</td><td><span class="tag t-half">有但未验证</span></td></tr>
+<tr><td><b>9. PFM 环路离散化</b></td><td>PI → 差分方程、抗积分饱和、输出限幅、给定斜坡</td><td><span class="tag t-ok">已具备</span></td></tr>
+<tr><td><b>10. 同步整流时序</b></td><td>SR 窗口随 fsw 变化、超前关断余量、轻载截止、防倒灌</td><td><span class="tag t-ok">已具备</span></td></tr>
+<tr><td><b>11. 保护体系</b></td><td>三级分层：硬件比较器/TZ → 软件快环 → 慢环；阈值×延时×重试×恢复矩阵</td><td><span class="tag t-half">有但散乱</span></td></tr>
+</tbody>
+</table>
+
+<h3>L4 · 系统层</h3>
+<table>
+<thead><tr><th>能力</th><th>判定标准</th><th style="width:96px">现状</th></tr></thead>
+<tbody>
+<tr><td><b>12. 状态机与软启动</b></td><td>预充→软启斜坡→无缝切闭环→Burst→故障恢复，全路径可走通且无死锁</td><td><span class="tag t-half">有但包袱重</span></td></tr>
+</tbody>
+</table>
+
+<div class="keybox">
+<p><b>第三个结论：你的短板集中在 L1/L2 共 5 项，全是"纸面能力"。</b>好消息是——这 5 项<b>不需要上电、不需要买板子、不需要仪器</b>，一支笔、一台电脑、一个仿真模型就够。这也是为什么我坚持让你先别买开发板。</p>
+<p>而 L3 那 5 项你已经有了，说明你的路径不是"从零学"，是"给已有的东西补上为什么"。</p>
+</div>
+
+<h2><span class="num">04</span>AI 辅助工作流：五个具体用法</h2>
+<p class="sub">AI 在这里的正确角色是"生成候选 + 交叉校验 + 解释现象"，不是"替你判断"。凡是涉及安全边界和器件应力的结论，必须自己复核。</p>
+
+<h3>W1 · 计算书生成与复核（用在 L2-4）</h3>
+<p>让 AI 先算一遍，你再用工具复核。两边对不上，那个分歧点就是你要学的地方。</p>
+<div class="prompt"><span class="ph">[给 AI 的输入]</span>
+半桥 LLC，全桥整流。Vin=380~410V（标称 400V），Vo=30~60V 连续可调，
+额定 46.6V/2.5kW，最大 55A，fr1 目标 120kHz。
+请按以下顺序出计算书，每一步都写出公式和代入的数值：
+1) 匝比 n（按谐振点对齐额定输出）
+2) 各角点的所需增益 M，列出最大/最小
+3) 选定 k=Lm/Lr 与满载 Q，说明取舍理由，并给出峰值增益与余量
+4) 计算 Z0、Lr、Lm、Cr、fr2
+5) 列出 8 个角点（Vin_min/max × Vo_min/max × 满载/10%）的 fn 与 fsw
+6) 指出哪些角点 PFM 无法覆盖，需要什么补偿手段
+最后单独说明：FHA 在这个设计里最可能低估/高估什么。</div>
+<p><b>复核方式：</b>把 AI 给的 Lr/Lm/Cr 填进 <code>llc-gain-curve.html</code>，看曲线和你手算的 5 个点是否重合。误差 &gt;10% 就回去找分歧。</p>
+
+<h3>W2 · 代码考古（用在 L1/L2，这是你最该先做的）</h3>
+<p>把一段固件丢给 AI，让它还原出"设计意图"，然后你去验证它说得对不对。</p>
+<div class="prompt"><span class="ph">[给 AI 的输入]</span>
+下面是一段量产 LLC 固件的 PI 增益调度表。索引是开关频率（Hz），
+Kp 和 Ki 是对应值：
+
+fsw: 60000,70000,80000,90000,102000,110000,120000,130000,140000,160000,180000,200000,250000,300000
+Kp : 0.00377,0.00359,0.00258,0.00189,0.00182,0.00240,0.00566,0.01033,0.0210,0.0580,0.0860,0.1130,0.1600,0.2400
+Ki : 19.11,30.99,35.36,46.92,71.63,88.23,114.29,156.46,300.11,710.1,965.1,1208.0,1500.0,2000.0
+
+请回答：
+1) Kp 在 102kHz 附近取到最小值，这在物理上对应什么？（提示：与被控对象
+   的直流增益 dVo/dfs 有关）
+2) Kp 从 102kHz 到 300kHz 涨了 130 倍，说明对象的增益在这段变化了多少倍？
+   方向是什么？
+3) 据此推断这台机器的谐振频率 fr1 大概在什么区间，理由是什么？
+4) 如果我要把这套表移植到一台 fr1=120kHz、k=4 的新机器上，应该按什么
+   规则重新标定？（给出可操作的步骤，不要给具体数字）</div>
+
+<h3>W3 · 波形判读（用在阶段 4 上电之后）</h3>
+<p>拍一张 Vds + 驱动 + 谐振电流的示波器截图，连同工作点参数一起给 AI。</p>
+<div class="prompt"><span class="ph">[给 AI 的输入 + 截图]</span>
+半桥 LLC 实测波形，通道1=下管 Vds（差分），通道2=下管驱动，
+通道3=谐振电流（电流探头），通道4=输出电压。
+工作点：Vin=400V，Vo=46.6V，Io=30A，fsw=132kHz，死区 120 计数（约 176ns）。
+
+请判断：
+1) 是否实现了 ZVS？依据是开通前 Vds 是否已降到接近 0，还是有一个
+   明显的米勒平台/尖峰？
+2) 死区是否过长或过短？判断依据是什么？如果过长，会在波形上看到什么？
+3) 谐振电流波形是否为正弦？如果出现平顶或畸变，最可能是哪三个原因？
+4) 有没有进入容性区的迹象？容性区在 Vds 波形上的特征是什么？
+请只依据波形能看出的信息回答，看不出来的直接说看不出来。</div>
+
+<h3>W4 · 状态机审计（用在 L4-12）</h3>
+<p>把你 <code>CtrMode</code> 的 8 个状态和迁移条件贴给 AI，让它找不可达状态和死锁。</p>
+<div class="prompt"><span class="ph">[给 AI 的输入]</span>
+下面是 LLC 控制的 8 个状态及其迁移条件（NoSelect / SoftStar / BmsStar /
+SoftCurSt / ConVolt / ConCurPWM / Transition / OvLoadPFM），
+以及每个状态下的输出（DrvH、DrvL、SynDrv、Duty、Plv）……
+
+请做三件事：
+1) 画出完整的状态迁移图（用文字描述有向边，标注触发条件）
+2) 找出不可达状态、没有出口的状态、以及两个状态互相等待的死锁
+3) 找出所有"进入某状态但忘记复位某个变量"的地方（例如 Curr_REF、
+   piStructInter.integral、DriverPwm.Sr_Dtime）
+最后按危险程度排序，指出哪一条最可能导致现场炸机或无法恢复。</div>
+
+<h3>W5 · 保护矩阵生成（用在 L3-11）</h3>
+<p>把 <code>SysProPara</code> 表和故障位定义给 AI，让它生成"阈值×延时×重试×动作×恢复"矩阵，然后你逐条对照硬件能力核。</p>
+<div class="prompt"><span class="ph">[给 AI 的输入]</span>
+下面是一个 LLC 充电机的 8 条保护参数（ID、使能、比较方向、阈值A/B、
+延时A、重试次数、重启间隔、恢复条件…）和 24 个故障位定义。
+
+请生成一张保护矩阵，列为：故障名 / 检测量 / 阈值 / 延时 / 重试次数 /
+触发动作 / 恢复条件 / 是否可自恢复 / 危险等级（1=可降额 2=停机重试
+3=锁死需断电）。
+
+然后回答：
+1) 哪些保护是"软件慢环"，哪些必须由硬件比较器 + HRTIM Fault 异步封锁？
+   给出判断依据（保护对象的时间常数）。
+2) 哪些保护之间存在覆盖或冲突（例如过压与短路同时触发时谁先动作）？
+3) 如果要把这套矩阵做成代码里的表驱动结构，表项应该怎么设计？</div>
+
+<div class="warnbox"><b>用 AI 的纪律：</b>凡是 AI 给出的具体数值（Lr、Cr、阈值、Kp），一律当作"待验证的候选"，不要直接写进代码。凡是 AI 给出的物理解释，一律用你自己的波形或计算去验证。做到这两条，AI 会把你 5 小时/周的效率放大 3 倍；做不到，它会让你在错误的方向上跑得更快。</div>
+
+<h2><span class="num">05</span>24 周执行表</h2>
+<p class="sub">每周 5 小时。四个 sprint，每个 sprint 一个硬交付物。交付物做不出来，不进下一个 sprint。</p>
+
+<div class="sprint">
+<h4>Sprint 1（第 1–6 周）：把代码变成一张图</h4>
+<div class="wk">目标：不再"看不懂"，而是"能画出控制律"</div>
+<ul>
+<li><b>W1</b>　只读三个文件：<code>mathR02.c</code>、<code>Sr_Handle_N.c</code>、<code>ConsoleFast.c</code>。手抄控制链路 6 步。</li>
+<li><b>W2</b>　把 <code>CtrMode</code> 8 个状态画成迁移图，标出每个状态的输出。</li>
+<li><b>W3</b>　搞清 <code>Plv → preA → PERxR → CMP1..4</code> 的换算，手算 fsw=120kHz 时四个比较值是多少。</li>
+<li><b>W4</b>　画 4 个开关状态的电流路径（纸笔），对照仿真波形验证。</li>
+<li><b>W5</b>　跑 W2 的代码考古 prompt，让 AI 解释 Kp 表，你去验证。</li>
+<li><b>W6</b>　产出：<b>《LLC 控制律一页图》</b>——一张 A4，左边控制链路，右边状态机，底部关键参数表。</li>
+</ul>
+</div>
+
+<div class="sprint">
+<h4>Sprint 2（第 7–12 周）：反推你自己的计算书</h4>
+<div class="wk">目标：把第 02 章那张表，用自己的手算和实测复现一遍</div>
+<ul>
+<li><b>W7</b>　学 FHA 的两个假设，能说清"为什么方波可以只取基波"。</li>
+<li><b>W8</b>　手算 5 个点（fn=0.6/0.8/0.9/1.0/1.2），画在方格纸上。</li>
+<li><b>W9</b>　用 <code>llc-gain-curve.html</code> 对齐手算点，理解 k 和 Q 各改什么。</li>
+<li><b>W10</b>　LCR 表实测：副边开路测 Lr+Lm，副边短路测 Lr；读 Cr；低压交流测匝比。</li>
+<li><b>W11</b>　用实测值重算 fsw 范围，和固件的 60k–250k 对比，解释偏差。</li>
+<li><b>W12</b>　产出：<b>《LLC 主参数计算书》3–5 页</b>，格式照 AN-4151。</li>
+</ul>
+</div>
+
+<div class="sprint">
+<h4>Sprint 3（第 13–18 周）：小信号与增益调度</h4>
+<div class="wk">目标：能解释 Kp 表为什么长那个形状，并能自己重新标定</div>
+<ul>
+<li><b>W13</b>　推导 Gvf(s)：从 fs 扰动到 Vo 响应，理解为什么它在不同 fn 差几十倍。</li>
+<li><b>W14</b>　用增益曲线斜率反推"对象增益"，和你代码里 Kp 表倒数对比。</li>
+<li><b>W15</b>　在仿真里做扫频（或阶跃），量出实际穿越频率。</li>
+<li><b>W16</b>　定目标：穿越频率取 fsw/10，相位裕度 &gt;45°，增益裕度 &gt;6dB。</li>
+<li><b>W17</b>　把 PI 离散化，写差分方程，验证抗饱和和限幅。</li>
+<li><b>W18</b>　产出：<b>《增益调度标定方法》一页</b>——给定任何一台新机器，怎么标 Kp/Ki 表。</li>
+</ul>
+</div>
+
+<div class="sprint">
+<h4>Sprint 4（第 19–24 周）：纸上设计一台新机器</h4>
+<div class="wk">目标：从零走一遍完整流程，不上电，但每个数字都要有出处</div>
+<ul>
+<li><b>W19</b>　选一个不同的规格（比如 3.3kW / 200–450V 输出），自己定 n 和 k。</li>
+<li><b>W20</b>　出完整计算书，包含器件应力（Vds、Irms、整流管）。</li>
+<li><b>W21</b>　在开环仿真里搭出这台机器，验证增益曲线。</li>
+<li><b>W22</b>　写控制代码骨架：状态机 + PFM 环路 + SR 时序表 + 保护矩阵。</li>
+<li><b>W23</b>　用 W4/W5 的 prompt 让 AI 审计你的状态机和保护矩阵。</li>
+<li><b>W24</b>　产出：<b>《LLC 数字电源软件设计包》</b>——计算书 + 仿真 + 代码骨架 + 保护矩阵。</li>
+</ul>
+</div>
+
+<h2><span class="num">06</span>三件别做的事</h2>
+<table>
+<thead><tr><th>别做</th><th>原因</th></tr></thead>
+<tbody>
+<tr><td>别通读 4200 行</td><td>3200 行是通讯、OTA、存储。读它们不会让你更懂 LLC，只会让你在第 3 周放弃。</td></tr>
+<tr><td>别把量产代码当规范</td><td>它是三年现场修补的结果。定频调占空比、110 行注释掉的 OTP、互相矛盾的宏——学它的约束，不学它的形式。</td></tr>
+<tr><td>别在没算过之前上电</td><td>你需要先知道这台机器的容性边界在哪。算不出来就上电，等于闭眼开车。</td></tr>
+</tbody>
+</table>
+
+<div class="keybox" style="margin-top:36px">
+<p><b>如果只做一件事：</b>第 10 周那天，用 LCR 表测出 Lr、Lm、Cr、匝比，填进计算器，看它算出的 fsw 范围能不能对上你固件里的 60k–250k。</p>
+<p>对上了，你就完成了从"会用"到"会设计"的跨越。对不上，那个差值就是你接下来三个月要研究的东西——而且它是具体的、可验证的，不是"我还没学会 LLC"这种模糊的焦虑。</p>
+</div>
+
+<p class="footnote">
+本文档的规格数据来自《机器人充电器技术要求》（XP-SOR，V1.0 2025/11/25）；参数与代码位置来自 R02_LLC_APP_V1.1.8_1029 工程实测；增益计算使用 FHA 基波近似，已用独立数值校验（fn=1 时增益精确为 1.000）。<br>
+配套工具：<code>llc-gain-curve.html</code>（已预置本文 2.3 节参数，双击打开即用）。
+</p>
+
+</div>
+</body>
+</html>

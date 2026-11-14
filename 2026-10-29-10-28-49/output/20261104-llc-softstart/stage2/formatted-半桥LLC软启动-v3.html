@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="docx-page-size" content="A4">
+<title>半桥 LLC 软启动新论：中点浮空、增益自限与两种发波的真实边界</title>
+<style>
+  :root{
+    --page-content-width: 15.6cm;
+    --ff-body: "宋体", SimSun, serif;
+    --ff-head: "黑体", SimHei, sans-serif;
+    --ff-mono: "Consolas", "Courier New", monospace;
+    --fs-body: 12pt;
+    --fs-h1: 19pt;
+    --fs-h2: 13.5pt;
+    --fs-h3: 12pt;
+    --fs-table: 9.5pt;
+    --fs-code: 9pt;
+    --fs-inline: 9.5pt;
+    --fs-cover: 30pt;
+    --fs-coversub: 15pt;
+    --fs-eyebrow: 10pt;
+    --fs-toc: 11pt;
+    --fs-toc2: 10.5pt;
+    --fs-quote: 11pt;
+    --fs-meta: 10pt;
+    --color-primary: #14375E;
+    --color-text: #1a1a1a;
+    --color-muted: #7a8a9a;
+    --color-sub: #3d5a78;
+    --color-border: #c8d0da;
+    --color-hr: #dde3ea;
+    --color-bg: #ffffff;
+    --color-th-bg: #eaf1f8;
+    --color-code-bg: #f7f9fb;
+    --color-inline-bg: #f0f3f7;
+    --color-inline-fg: #0b4f8a;
+    --color-quote-bg: #f2f5f9;
+    --color-quote-fg: #33475b;
+    --color-accent: #2E75B6;
+    --spacing-paragraph: 0.55em;
+    --spacing-block: 0.95em;
+    --spacing-section: 1.6em;
+    --spacing-small: 0.28em;
+    --spacing-mid: 0.7em;
+    --spacing-list: 2.2em;
+    --spacing-tocsub: 1.8em;
+    --spacing-pad-code: 8px 10px;
+    --spacing-pad-cell: 5px 7px;
+    --spacing-pad-quote: 9px 12px;
+    --spacing-pb-h1: 0.22em;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--ff-body);font-size:var(--fs-body);line-height:1.75;color:var(--color-text);
+       background:var(--color-bg);max-width:var(--page-content-width);margin-left:auto;margin-right:auto;padding:0}
+  p{font-family:var(--ff-body);font-size:var(--fs-body);line-height:1.75;color:var(--color-text);
+    text-indent:2em;text-align:justify;margin-bottom:var(--spacing-paragraph)}
+  h1{font-family:var(--ff-head);font-size:var(--fs-h1);font-weight:700;color:var(--color-primary);
+     line-height:1.35;margin-top:var(--spacing-section);margin-bottom:var(--spacing-mid);
+     border-bottom:1.5px solid var(--color-primary);padding-bottom:var(--spacing-pb-h1)}
+  h2{font-family:var(--ff-head);font-size:var(--fs-h2);font-weight:700;color:var(--color-primary);
+     line-height:1.4;margin-top:var(--spacing-section);margin-bottom:var(--spacing-paragraph)}
+  h3{font-family:var(--ff-head);font-size:var(--fs-h3);font-weight:700;color:var(--color-text);
+     line-height:1.4;margin-top:var(--spacing-mid);margin-bottom:var(--spacing-small)}
+  ul,ol{padding-left:var(--spacing-list);margin-bottom:var(--spacing-mid)}
+  li{font-family:var(--ff-body);font-size:var(--fs-body);line-height:1.7;margin-bottom:var(--spacing-small)}
+  strong{font-family:var(--ff-head);font-weight:700;color:var(--color-primary)}
+  table{border-collapse:collapse;width:100%;margin:var(--spacing-paragraph) 0 var(--spacing-block) 0;
+        font-family:var(--ff-body);font-size:var(--fs-table)}
+  th,td{border:0.5px solid var(--color-border);padding:var(--spacing-pad-cell);text-align:left;
+        vertical-align:top;line-height:1.5}
+  th{background:var(--color-th-bg);font-weight:700;color:var(--color-primary)}
+  pre.cb{font-family:var(--ff-mono);font-size:var(--fs-code);line-height:1.5;
+         background:var(--color-code-bg);border-left:3px solid var(--color-accent);
+         padding:var(--spacing-pad-code);margin:var(--spacing-paragraph) 0 var(--spacing-block) 0;
+         white-space:pre-wrap;color:var(--color-text);text-indent:0}
+  code.ic{font-family:var(--ff-mono);font-size:var(--fs-inline);color:var(--color-inline-fg);
+          background:var(--color-inline-bg)}
+  p.quote{border-left:3px solid var(--color-accent);background:var(--color-quote-bg);
+          padding:var(--spacing-pad-quote);text-indent:0;font-size:var(--fs-quote);
+          color:var(--color-quote-fg);line-height:1.7;margin:var(--spacing-block) 0}
+  p.hr{border-bottom:0.5px solid var(--color-hr);margin:var(--spacing-section) 0}
+  .c-eyebrow{text-align:center;text-indent:0;font-family:var(--ff-head);font-size:var(--fs-eyebrow);
+             color:var(--color-muted);margin-top:var(--spacing-section);margin-bottom:var(--spacing-mid)}
+  .c-title{text-align:center;text-indent:0;font-family:var(--ff-head);font-size:var(--fs-cover);
+           font-weight:700;color:var(--color-primary);line-height:1.3;margin-bottom:var(--spacing-small)}
+  .c-sub{text-align:center;text-indent:0;font-family:var(--ff-head);font-size:var(--fs-coversub);
+         color:var(--color-sub);line-height:1.5;margin-bottom:var(--spacing-section)}
+  table.c-meta{width:68%;margin:0 auto;font-size:var(--fs-meta)}
+  table.c-meta td{border:none;border-bottom:0.5px solid var(--color-hr);padding:var(--spacing-pad-cell)}
+  table.c-meta td.k{color:var(--color-muted);width:32%}
+  .doc-toc{padding:0;background:transparent}
+  .toc-title{text-align:center;text-indent:0;font-family:var(--ff-head);font-size:var(--fs-h2);
+             color:var(--color-primary);margin-bottom:var(--spacing-mid)}
+  .toc-list,.toc-list ol{list-style:none;list-style-type:none;padding-left:0;margin:0}
+  .toc-list>li{font-family:var(--ff-head);font-size:var(--fs-toc);font-weight:700;
+               color:var(--color-primary);line-height:1.95;margin-bottom:0;text-indent:0}
+  .toc-list ol{padding-left:var(--spacing-tocsub)}
+  .toc-list ol li{font-family:var(--ff-body);font-size:var(--fs-toc2);font-weight:400;
+                  color:var(--color-text);line-height:1.75;margin-bottom:0;text-indent:0}
+  .toc-list a{color:inherit;text-decoration:none}
+  @page { @bottom-center { content: counter(page); } }
+  @page cover { @bottom-center { content: none; } }
+  section[role="cover"] { page: cover; }
+</style>
+</head>
+<body>
+<section role="cover">
+<p class="c-eyebrow">电 力 电 子 · 设 计 笔 记</p>
+<p class="c-title">半桥 LLC 软启动新论</p>
+<p class="c-sub">中点浮空、增益自限与两种发波的真实边界</p>
+<table class="c-meta"><tbody>
+<tr><td class="k">文档类型</td><td>技术原理与工程实践</td></tr>
+<tr><td class="k">目标读者</td><td>从事数字控制 LLC 的电源工程师</td></tr>
+<tr><td class="k">前置知识</td><td>半桥拓扑、谐振腔、PI 调节器、STM32 高分辨率定时器</td></tr>
+<tr><td class="k">样本工程</td><td>1600 W 充电机，1650 W/30 A，输出 0~58 V</td></tr>
+<tr><td class="k">版本</td><td>新论（模型校核后重建）</td></tr>
+<tr><td class="k">编制日期</td><td>2026 年 11 月</td></tr>
+</tbody></table>
+</section>
+<section role="cover">
+<nav class="doc-toc" aria-label="文档目录">
+<p class="toc-title">目 录</p>
+<ol class="toc-list">
+<li><a href="#section-1">序 一次被模型推翻的重建</a><ol>
+<li><a href="#s-1-1">0.1 旧结论错在哪一行</a></li>
+<li><a href="#s-1-2">0.2 八条旧结论的判决</a></li>
+<li><a href="#s-1-3">0.3 新理论的三句话</a></li>
+</ol></li>
+<li><a href="#section-2">第一部分 地基：三条约束</a></li>
+<li><a href="#section-3">第 1 章 约束一：Cr 隔直，锁死了 v_ab 的均值</a><ol>
+<li><a href="#s-3-1">1.1 从一条大家都背过的式子开始</a></li>
+<li><a href="#s-3-2">1.2 为什么 LLC 的占空比不等于 Buck 的占空比</a></li>
+<li><a href="#s-3-3">1.3 均值是被约束的，不是自由变量</a></li>
+</ol></li>
+<li><a href="#section-4">第 2 章 约束二：中点不是开关，是电容节点</a><ol>
+<li><a href="#s-4-1">2.1 被默认掉的那个假设</a></li>
+<li><a href="#s-4-2">2.2 一个可以直接算的时间常数</a></li>
+<li><a href="#s-4-3">2.3 两个时间尺度在竞争</a></li>
+<li><a href="#s-4-4">2.4 三种波形形态</a></li>
+</ol></li>
+<li><a href="#section-5">第 3 章 约束三：脉宽、死区与最小可分辨时间</a><ol>
+<li><a href="#s-5-1">3.1 三个时间尺度</a></li>
+<li><a href="#s-5-2">3.2 1% 占空比：一个不存在的波形</a></li>
+<li><a href="#s-5-3">3.3 还有一条更隐蔽的：脉宽 &lt; t_slew</a></li>
+</ol></li>
+<li><a href="#section-6">第二部分 定理：两种发波的数学</a></li>
+<li><a href="#section-7">第 4 章 定理一（均值定理）</a><ol>
+<li><a href="#s-7-1">4.1 对称发波：恒为 Vin/2</a></li>
+<li><a href="#s-7-2">4.2 互补发波：等于 d·Vin</a></li>
+<li><a href="#s-7-3">4.3 实测</a></li>
+<li><a href="#s-7-4">4.4 推论：Cr 停在哪</a></li>
+<li><a href="#s-7-5">4.5 一条被误传很久的说法</a></li>
+</ol></li>
+<li><a href="#section-8">第 5 章 定理二（互补基波定律）</a><ol>
+<li><a href="#s-8-1">5.1 推导</a></li>
+<li><a href="#s-8-2">5.2 实测：误差 &lt; 1%，且与负载无关</a></li>
+<li><a href="#s-8-3">5.3 为什么它是"干净旋钮"</a></li>
+<li><a href="#s-8-4">5.4 三笔账</a></li>
+</ol></li>
+<li><a href="#section-9">第 6 章 定理三（对称发波是一个闭环）</a><ol>
+<li><a href="#s-9-1">6.1 波形真相</a></li>
+<li><a href="#s-9-2">6.2 基波是电流的函数</a></li>
+<li><a href="#s-9-3">6.3 自限回路</a></li>
+<li><a href="#s-9-4">6.4 可调范围只有 0.47~1.00</a></li>
+<li><a href="#s-9-5">6.5 为什么 d≥0.2 就饱和</a></li>
+</ol></li>
+<li><a href="#section-10">第 7 章 定理四（ZVS 是 U 形）</a><ol>
+<li><a href="#s-10-1">7.1 判据应该看电荷，不看时间</a></li>
+<li><a href="#s-10-2">7.2 两端失效的机理完全不同</a></li>
+<li><a href="#s-10-3">7.3 数据</a></li>
+<li><a href="#s-10-4">7.4 一条可以手算的余量</a></li>
+<li><a href="#s-10-5">7.5 对设计的含义</a></li>
+</ol></li>
+<li><a href="#section-11">第 8 章 定理五（范围不对称 = 选型判据）</a></li>
+<li><a href="#section-12">第三部分 推论：软启动怎么设计</a></li>
+<li><a href="#section-13">第 9 章 软启动要压的三个量</a><ol>
+<li><a href="#s-13-1">9.1 冲击一：Cr 的充电电流（最主要）</a></li>
+<li><a href="#s-13-2">9.2 冲击二：磁通</a></li>
+<li><a href="#s-13-3">9.3 冲击三：第一次硬开关</a></li>
+</ol></li>
+<li><a href="#section-14">第 10 章 三条路径与它们的边界</a><ol>
+<li><a href="#s-14-1">10.1 路径一：纯扫频（PFM）</a></li>
+<li><a href="#s-14-2">10.2 路径二：互补爬坡（PWM）</a></li>
+<li><a href="#s-14-3">10.3 路径三：对称爬坡</a></li>
+<li><a href="#s-14-4">10.4 对比矩阵</a></li>
+</ol></li>
+<li><a href="#section-15">第 11 章 30% 交接为什么振荡：一个诊断</a><ol>
+<li><a href="#s-15-1">11.1 台阶算准了只有 0.7%</a></li>
+<li><a href="#s-15-2">11.2 真正的三个原因</a></li>
+<li><a href="#s-15-3">11.3 三个波形判据</a></li>
+</ol></li>
+<li><a href="#section-16">第 12 章 设计方程</a><ol>
+<li><a href="#s-16-1">12.1 Mmin：量程下限</a></li>
+<li><a href="#s-16-2">12.2 fmax 上限：ZVS 的硬墙</a></li>
+<li><a href="#s-16-3">12.3 交接点：唯一正确的选法</a></li>
+<li><a href="#s-16-4">12.4 斜率：由 Cr 的充电电流定</a></li>
+<li><a href="#s-16-5">12.5 一个诊断：A 段在哪结束</a></li>
+</ol></li>
+<li><a href="#section-17">第 13 章 验证清单</a></li>
+<li><a href="#section-18">附录 A 模型与复现</a></li>
+<li><a href="#section-19">附录 B 推导</a><ol>
+<li><a href="#s-19-1">B.1 均值定理（对称）</a></li>
+<li><a href="#s-19-2">B.2 互补基波</a></li>
+<li><a href="#s-19-3">B.3 ZVS 频率上限</a></li>
+<li><a href="#s-19-4">B.4 中点漂移时间</a></li>
+</ol></li>
+<li><a href="#section-20">附录 C 已知局限</a></li>
+<li><a href="#section-21">结语</a></li>
+</ol></nav>
+</section>
+<section role="body" data-page-restart="1">
+<p class="quote">&nbsp;&nbsp;这不是对前一版的修订。前一版错在一个假设上——<strong>默认半桥的中点是一个理想开关</strong>。这个假设一倒，从基波公式到选型判据全部要重写。本文先用时域模型把旧结论逐条判死，再从三条物理约束重新推一遍，最后落到可以直接代数的设计方程。文中每个数字都来自可复现的仿真用例，附录 A 给了复现方法。</p>
+<h1 id="section-1">序 一次被模型推翻的重建</h1>
+<h2 id="s-1-1">0.1 旧结论错在哪一行</h2>
+<p>前一版算对称发波的基波时，写了这样一行：</p>
+<pre class="cb">b1 = (2/T)·[ ∫₀^{dT} sin(ωt)dt − ∫_{T/2}^{T/2+dT} sin(ωt)dt ]
+   = (4/π)·sin²(πd)</pre>
+<p>第二个积分在 <code class="ic">[T/2, T]</code> 区间里 <code class="ic">sin(ωt)</code> 是负的，所以它等于 <strong><code class="ic">−(T/2π)(1−cos2πd)</code></strong>。方括号里是两个<strong>相同的数相减</strong>，恒等于 0。公式里的 <code class="ic">sin²</code> 是凭空多出来的。</p>
+<p>但把这个负号改对，只能得到"基波为零"这个荒谬结果——因为 <code class="ic">d=0.5</code> 时输出不可能为零。<strong>真正的问题不在代数，在建模</strong>：这行式子假设了"管子一关断，中点就回到 0"。真实的半桥里，空档期两个管子都关断，中点<strong>悬空</strong>，它在对谐振电流做积分。</p>
+<p>所以这次不是改一个符号，是把地基换掉。</p>
+<h2 id="s-1-2">0.2 八条旧结论的判决</h2>
+<table><thead><tr><th>#</th><th>旧结论</th><th>新结论</th><th>证据</th></tr></thead><tbody><tr><td>1</td><td>对称发波基波 ∝ <code class="ic">sin²(πd)</code></td><td>波形由谐振电流积分决定，<code class="ic">d</code> 只决定"多久重新钳位一次"</td><td>用例 11.3</td></tr><tr><td>2</td><td>体二极管把空档填平，所以 <code class="ic">d≥0.35</code> 退化成 50/50</td><td>不是"填平"，是中点按 <code class="ic">∫i dt / C</code> 漂移；<code class="ic">d</code> 大时空档短、漂不完，才接近方波</td><td>波形采样，2.4 节</td></tr><tr><td>3</td><td>对称发波是 0→1 的增益旋钮</td><td>范围只有 <strong>0.47~1.00</strong>，且下限随负载浮动</td><td>用例 11.4</td></tr><tr><td>4</td><td>对称和互补是两个模式，需要"切换"</td><td>不是模式，是两类不同的电压波形。<code class="ic">d=0.45</code> 对称 ≈ 0.50 互补（差 0.3%），但 <code class="ic">d=0.05</code> 差 2.6 倍</td><td>用例 3、11.4</td></tr><tr><td>5</td><td>小占空比会直流偏磁、饱和烧管</td><td><code class="ic">Cr</code> 隔直，稳态伏秒必然平衡；真代价是电流不对称 37.6%</td><td>用例 4</td></tr><tr><td>6</td><td>对称发波丢 ZVS，脉宽越窄越严重</td><td>是 <strong>U 形</strong>：两端都丢，中间 <code class="ic">d≈0.25~0.40</code> 才保住</td><td>用例 11.5</td></tr><tr><td>7</td><td>30% 交接振荡是增益台阶造成的</td><td>台阶只有 0.7%，主因是<strong>频率没有余量</strong></td><td>用例 5</td></tr><tr><td>8</td><td>软启动要慢是为了散热</td><td>10 ms 只有 0.16 J，热从来不是约束；慢是为了限住 <code class="ic">Cr</code> 的充电电流</td><td>用例 6</td></tr></tbody></table>
+<h2 id="s-1-3">0.3 新理论的三句话</h2>
+<p><strong>第一句：<code class="ic">v_ab</code> 的均值不是自由变量。</strong> 它被 <code class="ic">Cr</code> 的电荷平衡锁死——对称发波恒为 <code class="ic">Vin/2</code>，互补发波恒为 <code class="ic">d·Vin</code>。这一条决定了 <code class="ic">Cr</code> 停在哪，也决定了"改占空比"到底在改什么。</p>
+<p><strong>第二句：<code class="ic">v_ab</code> 的形状不是栅极决定的，是电流决定的。</strong> 空档期中点浮空，<code class="ic">dv/dt = i/C_node</code>。栅极只做一件事：周期性把它拽回 0 或 <code class="ic">Vin</code>。</p>
+<p><strong>第三句：所以两种发波的地位不对称。</strong> 互补发波是开环的（波形只由 <code class="ic">d</code> 定），对称发波是闭环的（波形由增益反过来决定自己）。开环的能当旋钮，闭环的不能。</p>
+<p class="hr"></p>
+<h1 id="section-2">第一部分 地基：三条约束</h1>
+<p>这三条约束不需要任何近似，它们是拓扑本身的性质。后面所有定理都是它们的推论。反过来说，任何一份 LLC 分析，只要违反了其中一条，结论必然是错的——不管它推导得多漂亮。</p>
+<p>任何 LLC 的分析都必须同时满足三条约束。旧文档只用了第一条，漏了后两条，这就是全部错误的来源。</p>
+<h1 id="section-3">第 1 章 约束一：Cr 隔直，锁死了 v_ab 的均值</h1>
+<h2 id="s-3-1">1.1 从一条大家都背过的式子开始</h2>
+<p>谐振腔的电压方程：</p>
+<pre class="cb">v_ab = v_Cr + v_Lr + v_p</pre>
+<p>对两边取一个开关周期的平均。<code class="ic">v_Lr = Lr·di/dt</code>，稳态下 <code class="ic">i_Lr</code> 是周期的，所以 <code class="ic">mean(v_Lr) = 0</code>。<code class="ic">v_p</code> 是变压器原边电压，稳态下磁通不能一直走，所以 <code class="ic">mean(v_p) = 0</code>。于是：</p>
+<pre class="cb">mean(v_ab) = V_Cr</pre>
+<p><strong>这就是全部的关键。</strong> <code class="ic">v_ab</code> 的均值不是"你想要多少就是多少"，它必须等于 <code class="ic">Cr</code> 上的直流电压。而 <code class="ic">V_Cr</code> 又由另一条约束定死：<code class="ic">Cr</code> 的电荷平衡要求 <code class="ic">mean(i_Lr) = 0</code>。</p>
+<h2 id="s-3-2">1.2 为什么 LLC 的占空比不等于 Buck 的占空比</h2>
+<p>在 Buck 里，占空比 <code class="ic">d</code> 直接给出 <code class="ic">Vout = d·Vin</code>，因为电感电流的直流分量就是负载电流，<code class="ic">d</code> 是唯一能调它的东西。</p>
+<p>在 LLC 里，<code class="ic">Cr</code> 串在谐振腔里，它把直流分量<strong>全部吃掉</strong>。所以 <code class="ic">d</code> 不是在调"平均电压"，而是在调"<code class="ic">Cr</code> 停在哪"。这一点区别，导致后面所有的结论都和直觉相反。</p>
+<h2 id="s-3-3">1.3 均值是被约束的，不是自由变量</h2>
+<p>由此可以立刻排除一类错误说法：<strong>"占空比 30% 时 <code class="ic">v_ab</code> 的平均值是 <code class="ic">0.3·Vin</code>"——这句话只对互补发波成立，对对称发波完全不成立。</strong></p>
+<p>对称发波下 <code class="ic">v_ab</code> 的均值恒为 <code class="ic">Vin/2</code>，跟 <code class="ic">d</code> 一点关系都没有。证明在第 4 章。</p>
+<h1 id="section-4">第 2 章 约束二：中点不是开关，是电容节点</h1>
+<h2 id="s-4-1">2.1 被默认掉的那个假设</h2>
+<p>教科书画半桥，习惯把中点画成一个单刀双掷开关：打上去是 <code class="ic">Vin</code>，打下来是 0。这个画法在<strong>连续导通</strong>的工况下没问题，因为总有一个管子接着。</p>
+<p>但 LLC 的软启动恰恰工作在<strong>两个管子都关断</strong>的状态——空档、死区。这时中点既不接 <code class="ic">Vin</code> 也不接 0，它是<strong>悬空</strong>的。悬空的节点电压由它自己的电容和流进去的电流决定：</p>
+<pre class="cb">C_node · dv_ab/dt = −i_Lr</pre>
+<p>其中 <code class="ic">C_node ≈ 2·Coss</code>（两个管子的输出电容在中点处并联）。</p>
+<p><strong><code class="ic">i_Lr</code> 不能突变</strong>（串联电感），所以在整个空档期里，<code class="ic">i_Lr</code> 就是一个已知的、连续变化的电流源，硬往 <code class="ic">C_node</code> 上灌。中点只能按 <code class="ic">dv/dt = i/C_node</code> 匀速漂。</p>
+<h2 id="s-4-2">2.2 一个可以直接算的时间常数</h2>
+<p>从 0 漂到 <code class="ic">Vin</code>（或反过来）需要多久？把电流近似成常数：</p>
+<pre class="cb">t_slew = 2·Coss·Vin / |i_Lr|</pre>
+<p>这一个小式子，解释了旧文档里所有说不通的地方。代入本文参数（<code class="ic">Coss=1.5nF</code>、<code class="ic">Vin=400V</code>）：</p>
+<table><thead><tr><th>原边电流</th><th><code class="ic">t_slew</code></th><th>占周期比 @200 kHz</th></tr></thead><tbody><tr><td>1.2 A</td><td>1000 ns</td><td>20%</td></tr><tr><td>3.0 A</td><td>400 ns</td><td>8%</td></tr><tr><td>10.0 A</td><td>120 ns</td><td>2.4%</td></tr></tbody></table>
+<p><strong>电流越小，中点越"赖着不走"。</strong> 而软启动初期电流本来就小。</p>
+<h2 id="s-4-3">2.3 两个时间尺度在竞争</h2>
+<p>中点能不能在下一个管子开通前走到位，取决于两个时间的比值：</p>
+<ul><li><strong>空档长度</strong> <code class="ic">T_gap = (0.5 − d)·T</code></li><li><strong>漂移时间</strong> <code class="ic">t_slew = 2·Coss·Vin/|i|</code></li></ul>
+<p>这个比值决定了波形长什么样，也决定了 ZVS 保不保得住。第 7 章会看到，它是 U 形的根源。</p>
+<h2 id="s-4-4">2.4 三种波形形态</h2>
+<table><thead><tr><th>条件</th><th>形态</th><th>增益由谁决定</th><th>ZVS</th></tr></thead><tbody><tr><td><code class="ic">T_gap ≫ t_slew</code></td><td>方波（中点很快走到位并停住）</td><td>满增益</td><td>保</td></tr><tr><td><code class="ic">T_gap ≈ t_slew</code></td><td>梯形</td><td>介于两者之间</td><td>勉强</td></tr><tr><td><code class="ic">T_gap ≪ t_slew</code></td><td>三角/斜坡（中点一直在漂）</td><td><strong>由电流决定</strong></td><td>丢</td></tr></tbody></table>
+<p>实测波形可以印证。<code class="ic">f=200 kHz</code>、对称发波、<code class="ic">d=0.02</code>，单周期采样（<code class="ic">t/T</code> 为归一化时间，<code class="ic">v</code> 为 <code class="ic">v_ab/Vin</code>）：</p>
+<pre class="cb">t/T  0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875
+v     0.86  0.66  1.00  0.50  0.14  0.33  0.00  0.51</pre>
+<p>栅极脉冲只在 <code class="ic">t/T = 0.24~0.26</code> 开了一下（宽 2%）。<code class="ic">v</code> 在 <code class="ic">0.25</code> 处<strong>突然跳到</strong> 1.00（此前它一直在往下漂），然后一路慢慢滑到 0.14，又被 <code class="ic">t=0.75</code> 的第二个脉冲<strong>跳</strong>回 0。</p>
+<p><strong>两个跳变发生在脉冲起点，脉冲宽度只决定"多久重新钳位一次"。</strong> 中间那段长斜坡，就是中点在自由积分。</p>
+<h1 id="section-5">第 3 章 约束三：脉宽、死区与最小可分辨时间</h1>
+<h2 id="s-5-1">3.1 三个时间尺度</h2>
+<p>软启动的低占空比端，有三个时间必须同时满足：</p>
+<table><thead><tr><th>符号</th><th>含义</th><th><code class="ic">f=200k</code> 时的值</th></tr></thead><tbody><tr><td><code class="ic">T_pulse = d·T</code></td><td>栅极高电平宽度</td><td><code class="ic">d=1%</code> → 50 ns</td></tr><tr><td><code class="ic">T_dead</code></td><td>死区（防直通）</td><td>150 ns</td></tr><tr><td><code class="ic">t_slew</code></td><td>中点走完全摆幅的时间</td><td>400~1000 ns</td></tr></tbody></table>
+<h2 id="s-5-2">3.2 1% 占空比：一个不存在的波形</h2>
+<p><code class="ic">d=1%</code>、<code class="ic">f=200k</code>，脉宽 50 ns，死区 150 ns。<strong>上管的可用导通窗口是负的</strong>——它在死区结束前就该关断了。实际发生的是：上管根本没开通，那个"脉冲"被死区完全吃掉。</p>
+<p>仿真给出 <code class="ic">Vout = 0.000 V</code>。这不是"增益很低"，是<strong>没有波形</strong>。</p>
+<p class="quote">&nbsp;&nbsp;这里有个陷阱：如果模型里不建死区，50 ns 的脉冲会正常出现、输出也正常。<strong>仿真会骗你。</strong> 做这类验证，死区必须建模，而且必须和真实驱动器的传输延迟对齐。</p>
+<h2 id="s-5-3">3.3 还有一条更隐蔽的：脉宽 &lt; t_slew</h2>
+<p>即使脉宽大于死区，还有第二个门槛：<strong>脉宽必须大于 <code class="ic">t_slew</code></strong>，否则中点还没走到位，下一个管子就开通了，剩下的摆幅由栅极硬拽过去——这就是硬开关。</p>
+<p><code class="ic">f=200k</code>、<code class="ic">t_slew=400 ns</code> 时，<code class="ic">d</code> 必须大于 8% 才能保证每个脉冲都把中点走完。<strong>这是软启动占空比下限的第二个来源，比死区更严。</strong></p>
+<p class="hr"></p>
+<h1 id="section-6">第二部分 定理：两种发波的数学</h1>
+<p>下面五条定理，前三条讲电压（均值、互补基波、对称基波），后两条讲边界（ZVS、可调范围）。每一条都配了实测验证，你可以拿自己的机器去证伪。如果哪一条在你的机器上不成立，先怀疑模型，再怀疑参数，最后才怀疑定理。</p>
+<p>有了三条约束，下面五条定理都可以直接推出来。每条都给了实测验证。</p>
+<h1 id="section-7">第 4 章 定理一（均值定理）</h1>
+<h2 id="s-7-1">4.1 对称发波：恒为 Vin/2</h2>
+<p><strong>定理</strong>：对称驱动（两个脉冲等宽、分别居中于 <code class="ic">T/4</code> 与 <code class="ic">3T/4</code>）下，稳态 <code class="ic">mean(v_ab) = Vin/2</code>，与 <code class="ic">d</code> 无关。</p>
+<p><strong>证明</strong>：考察变换 <code class="ic">t → t + T/2</code>。这个变换把第一个脉冲的位置映射到第二个脉冲的位置，也就是<strong>把 Q1 的驱动换给 Q2</strong>。电路的拓扑在这个变换下满足 <code class="ic">v_ab → Vin − v_ab</code>。稳态解唯一，所以</p>
+<pre class="cb">v_ab(t + T/2) = Vin − v_ab(t)</pre>
+<p>两边取周期平均：<code class="ic">mean = Vin − mean</code>，故 <code class="ic">mean = Vin/2</code>。∎</p>
+<p>这个证明不依赖 <code class="ic">d</code>、不依赖负载、不依赖 <code class="ic">Coss</code>。它是一个<strong>结构性</strong>结论。</p>
+<h2 id="s-7-2">4.2 互补发波：等于 d·Vin</h2>
+<p><strong>定理</strong>：互补驱动下 <code class="ic">mean(v_ab) = d·Vin</code>。</p>
+<p><strong>证明</strong>：<code class="ic">v_ab</code> 在一个周期内高电平持续 <code class="ic">d·T</code>、低电平持续 <code class="ic">(1−d)T</code>，直接取平均即可。∎</p>
+<h2 id="s-7-3">4.3 实测</h2>
+<table><thead><tr><th><code class="ic">d</code></th><th>对称 <code class="ic">mean/Vin</code></th><th>互补 <code class="ic">mean/Vin</code></th><th>对称 <code class="ic">Vout</code></th><th>互补 <code class="ic">Vout</code></th></tr></thead><tbody><tr><td>0.03</td><td><strong>0.500</strong></td><td><strong>0.000</strong></td><td>3.13 V</td><td>0.00 V</td></tr><tr><td>0.05</td><td><strong>0.499</strong></td><td><strong>0.051</strong></td><td>3.55 V</td><td>1.38 V</td></tr><tr><td>0.10</td><td><strong>0.501</strong></td><td><strong>0.099</strong></td><td>4.77 V</td><td>2.58 V</td></tr><tr><td>0.20</td><td><strong>0.500</strong></td><td><strong>0.198</strong></td><td>6.15 V</td><td>4.38 V</td></tr><tr><td>0.30</td><td><strong>0.501</strong></td><td><strong>0.298</strong></td><td>6.24 V</td><td>5.40 V</td></tr><tr><td>0.45</td><td><strong>0.499</strong></td><td><strong>0.449</strong></td><td>6.27 V</td><td>6.23 V</td></tr></tbody></table>
+<p>对称列全部落在 0.500±0.001，互补列精确等于 <code class="ic">d</code>。误差在数值精度内。</p>
+<h2 id="s-7-4">4.4 推论：Cr 停在哪</h2>
+<p><code class="ic">V_Cr = mean(v_ab)</code>，所以：</p>
+<ul><li><strong>对称发波</strong>：<code class="ic">Cr</code> 永远停在 <code class="ic">Vin/2</code>。<strong>没有直流偏置，没有充电瞬态。</strong> 这是它唯一一个、但确实是真的优点。</li><li><strong>互补发波</strong>：<code class="ic">Cr</code> 停在 <code class="ic">d·Vin</code>。改 <code class="ic">d</code> 就是改 <code class="ic">Cr</code> 的工作点，每次改都要搬电荷 <code class="ic">ΔQ = Cr·ΔV</code>。</li></ul>
+<h2 id="s-7-5">4.5 一条被误传很久的说法</h2>
+<p>"小占空比会产生直流偏磁，导致变压器饱和烧管"——<strong>在稳态下不成立。</strong></p>
+<p><code class="ic">Cr</code> 就在谐振腔里，它天然是隔直电容。稳态下 <code class="ic">mean(i_Lr)=0</code> 是电荷平衡强制的，<code class="ic">mean(v_p)=0</code> 是磁通平衡强制的。两者都不需要你操心占空比。</p>
+<p>实测：互补 <code class="ic">d=0.30</code> 时 <code class="ic">Cr</code> 平均电压 <strong>118.5 V</strong>（理论 <code class="ic">0.30×400 = 120 V</code>），伏秒自动平衡。</p>
+<p>真正的代价是另一件事：<code class="ic">i_Lr</code> 正峰 3.48 A、负峰 −2.17 A，<strong>不对称度 37.6%</strong>。两个管子的电流应力和损耗严重不均——一个热、一个不热。这才是 <code class="ic">d≠0.5</code> 的真实代价。</p>
+<h1 id="section-8">第 5 章 定理二（互补基波定律）</h1>
+<h2 id="s-8-1">5.1 推导</h2>
+<p>互补发波是标准方波：高电平 <code class="ic">Vin</code> 持续 <code class="ic">dT</code>，低电平 0 持续 <code class="ic">(1−d)T</code>。去掉直流分量 <code class="ic">d·Vin</code> 后，基波幅度是方波的经典结果：</p>
+<pre class="cb">|V1| = (2·Vin/π)·sin(π·d)</pre>
+<p><code class="ic">d=0.5</code> 时退化为 <code class="ic">2Vin/π = 0.637·Vin</code>，就是标准 50% 方波。<code class="ic">d→0</code> 时线性趋零。<strong>没有任何饱和、没有任何拐点。</strong></p>
+<h2 id="s-8-2">5.2 实测：误差 &lt; 1%，且与负载无关</h2>
+<table><thead><tr><th><code class="ic">d</code></th><th>重载 <code class="ic">|V1|/Vin</code></th><th>中载</th><th>轻载</th><th><code class="ic">(2/π)sin(πd)</code></th><th>偏差</th></tr></thead><tbody><tr><td>0.05</td><td>0.100</td><td>0.099</td><td>0.100</td><td>0.100</td><td>+0.1%</td></tr><tr><td>0.10</td><td>0.195</td><td>0.195</td><td>0.197</td><td>0.197</td><td>−1.0%</td></tr><tr><td>0.20</td><td>0.370</td><td>0.372</td><td>0.374</td><td>0.374</td><td>−1.0%</td></tr><tr><td>0.30</td><td>0.512</td><td>0.513</td><td>0.515</td><td>0.515</td><td>−0.6%</td></tr><tr><td>0.45</td><td>0.627</td><td>0.628</td><td>0.628</td><td>0.629</td><td>−0.2%</td></tr></tbody></table>
+<p>三列负载（0.36 Ω / 2 Ω / 20 Ω，电流差 10 倍以上）给出的 <code class="ic">|V1|</code> <strong>完全相同</strong>。</p>
+<h2 id="s-8-3">5.3 为什么它是"干净旋钮"</h2>
+<p>因为互补发波的波形是<strong>开环</strong>的：任何一个周期的 <code class="ic">v_ab</code> 只由这一周期的栅极命令决定，跟上一周期、跟电流大小、跟负载轻重都没关系。中点在整个周期里始终被某一个管子（或体二极管）钳在 0 或 <code class="ic">Vin</code>，没有自由漂移的时间。</p>
+<p><strong>结论：互补发波的 <code class="ic">d</code> 是一个真正的、单值的、与工况无关的增益刻度。</strong> 你可以用它做标定、做前馈、做开环软启动。</p>
+<h2 id="s-8-4">5.4 三笔账</h2>
+<p>天下没有免费的旋钮。互补发波要付三笔：</p>
+<p><strong>第一笔：电流不对称。</strong> <code class="ic">d=0.30</code> 时正峰 3.48 A、负峰 −2.17 A，差 37.6%。损耗不均，两管壳温差可达 5~10℃。</p>
+<p><strong>第二笔：<code class="ic">Cr</code> 工作点随 <code class="ic">d</code> 移动。</strong> 从 <code class="ic">d1</code> 切到 <code class="ic">d2</code>，要搬 <code class="ic">ΔQ = Cr·(d2−d1)·Vin</code>。这个电荷只能从谐振腔里抽，表现为一次额外的电流冲击。</p>
+<p><strong>第三笔：磁通摆幅 ∝ <code class="ic">d</code>。</strong> <code class="ic">ΔB = (Vin/2)·d·T/(N·Ae)</code>。<strong>小占空比的磁通摆幅反而小，离饱和更远。</strong> 这与"小占空比容易饱和"的流行说法正好相反。</p>
+<h1 id="section-9">第 6 章 定理三（对称发波是一个闭环）</h1>
+<h2 id="s-9-1">6.1 波形真相</h2>
+<p>第 2.4 节已经看到：对称发波的 <code class="ic">v_ab</code> 不是"脉冲串"，是"<strong>被周期性钳位的积分</strong>"。栅极脉冲只在跳变瞬间起作用，脉冲之间中点一直在自由漂。</p>
+<p>这带来一个反直觉的后果：<strong>占空比不决定电压，它只决定"钳位的频率"。</strong></p>
+<h2 id="s-9-2">6.2 基波是电流的函数</h2>
+<p>同一个 <code class="ic">d</code>，换三种负载，测 <code class="ic">|V1|</code>：</p>
+<table><thead><tr><th><code class="ic">d</code></th><th>重载 <code class="ic">|V1|/Vin</code></th><th>中载</th><th>轻载</th><th>极差</th></tr></thead><tbody><tr><td>0.05</td><td>0.321</td><td>0.509</td><td>0.563</td><td><strong>43%</strong></td></tr><tr><td>0.10</td><td>0.443</td><td>0.583</td><td>0.602</td><td><strong>26%</strong></td></tr><tr><td>0.20</td><td>0.619</td><td>0.617</td><td>0.615</td><td>1%</td></tr><tr><td>0.45</td><td>0.633</td><td>0.633</td><td>0.634</td><td>0%</td></tr></tbody></table>
+<p><code class="ic">d=0.05</code> 时，同一个占空比能给出 0.321 到 0.563 两种基波，<strong>相差 43%</strong>（相对低值 75%）。<code class="ic">d≥0.20</code> 才收敛。</p>
+<h2 id="s-9-3">6.3 自限回路</h2>
+<p>为什么 <code class="ic">d</code> 小时基波对电流这么敏感？因为存在一个负反馈：</p>
+<pre class="cb">d 减小 → 导通时间短 → 增益下降 → 输出电流下降 → |i_Lr| 下降
+      → t_slew 变长 → 中点漂得更慢 → 波形更"圆" → 基波更低 → 增益再降</pre>
+<p>这是一个<strong>闭环</strong>。<code class="ic">d</code> 只是这个闭环里的一个参数，不是它的输出。</p>
+<p><strong>所以对称发波不能当旋钮用：你调 <code class="ic">d</code>，得到的增益取决于当时的负载；你按负载标定，换一个负载就失效。</strong></p>
+<h2 id="s-9-4">6.4 可调范围只有 0.47~1.00</h2>
+<p>满载、<code class="ic">f=200 kHz</code>：</p>
+<table><thead><tr><th><code class="ic">d</code></th><th>对称 <code class="ic">Vout</code></th><th>对称/满</th><th>互补 <code class="ic">Vout</code></th><th>互补/满</th></tr></thead><tbody><tr><td>0.02</td><td>2.97 V</td><td>0.472</td><td>0.00 V</td><td>0.000</td></tr><tr><td>0.05</td><td>3.55 V</td><td>0.565</td><td>1.38 V</td><td>0.220</td></tr><tr><td>0.10</td><td>4.77 V</td><td>0.759</td><td>2.58 V</td><td>0.410</td></tr><tr><td>0.20</td><td>6.15 V</td><td>0.978</td><td>4.38 V</td><td>0.697</td></tr><tr><td>0.30</td><td>6.24 V</td><td>0.992</td><td>5.40 V</td><td>0.859</td></tr><tr><td>0.45</td><td>6.27 V</td><td>0.997</td><td>6.23 V</td><td>0.991</td></tr><tr><td>0.50</td><td>6.29 V</td><td>1.000</td><td>6.28 V</td><td>1.000</td></tr></tbody></table>
+<p><strong>对称发波的下限是 0.47，不是 0。</strong> 而且这个下限不是设计者选的，是 <code class="ic">Coss</code> 和电流算出来的——<code class="ic">d</code> 再小也没用，因为电流也会跟着变小，<code class="ic">t_slew</code> 变长，波形自动变圆，增益自动回升。</p>
+<p><strong>这是一条自限的墙。</strong></p>
+<h2 id="s-9-5">6.5 为什么 d≥0.2 就饱和</h2>
+<p><code class="ic">d=0.20</code> 时增益已经到 0.978，<code class="ic">d=0.45</code> 才 0.997。中间这 25 个百分点的占空比只换来 2% 的增益。</p>
+<p>原因很简单：<code class="ic">d=0.2</code> 时空档 <code class="ic">0.3T = 1500 ns</code>，而 <code class="ic">t_slew</code> 只有 830 ns。<strong>中点有足够时间走完全摆幅并停住</strong>，波形已经是方波了。再加 <code class="ic">d</code>，只是把方波的高电平拉长一点点，<code class="ic">v_ab</code> 的均值被定理一锁死在 <code class="ic">Vin/2</code>，波形几乎不变。</p>
+<p><strong>所以：<code class="ic">d&gt;0.2</code> 之后，对称发波的占空比旋钮就拧到头了。</strong></p>
+<h1 id="section-10">第 7 章 定理四（ZVS 是 U 形）</h1>
+<h2 id="s-10-1">7.1 判据应该看电荷，不看时间</h2>
+<p>很多资料写"空档时间大于 <code class="ic">t_slew</code> 就能 ZVS"。这个判据只在<strong>电流恒定</strong>时成立，在 LLC 里会把两端都判错。</p>
+<p>正确的判据是电荷：</p>
+<pre class="cb">Q_gap = ∫_gap |i_Lr| dt  ≥  C_node·Vin = 2·Coss·Vin</pre>
+<p>中点要从 0 搬到 <code class="ic">Vin</code>，必须搬够 <code class="ic">C_node·Vin</code> 的电荷。空档期能搬多少，取决于这段时间里流过多少电流。</p>
+<h2 id="s-10-2">7.2 两端失效的机理完全不同</h2>
+<p><strong>小 <code class="ic">d</code> 端</strong>：空档很长（<code class="ic">d=0.02</code> 时 2400 ns），但电流很小（1.21 A），而且 <code class="ic">i_Lr</code> 在空档内会<strong>反向</strong>——前半段把中点往下推，后半段又推回来。净搬动的电荷很有限。</p>
+<p><strong>大 <code class="ic">d</code> 端</strong>：电流够大（2.98 A），但空档太短（<code class="ic">d=0.45</code> 时只有 250 ns）。<code class="ic">Q_gap = 2.98 × 250n = 0.745 µC</code>，而需要 <code class="ic">2×1.5n×400 = 1.2 µC</code>，<strong>差 38%</strong>。</p>
+<p><strong>中间</strong>：两头都不缺，唯一干净的窗口。</p>
+<h2 id="s-10-3">7.3 数据</h2>
+<table><thead><tr><th><code class="ic">d</code></th><th>空档 (ns)</th><th><code class="ic">i_pk</code> (A)</th><th>单次硬开关跳变</th><th>占 <code class="ic">Vin</code></th><th>ZVS</th></tr></thead><tbody><tr><td>0.02</td><td>2400</td><td>1.21</td><td>267 V</td><td>67%</td><td><strong>否</strong></td></tr><tr><td>0.05</td><td>2250</td><td>1.46</td><td>276 V</td><td>69%</td><td><strong>否</strong></td></tr><tr><td>0.10</td><td>2000</td><td>2.07</td><td>241 V</td><td>60%</td><td><strong>否</strong></td></tr><tr><td>0.15</td><td>1750</td><td>2.67</td><td>132 V</td><td>33%</td><td><strong>否</strong></td></tr><tr><td>0.20</td><td>1500</td><td>2.88</td><td>41 V</td><td>10%</td><td>是</td></tr><tr><td>0.25</td><td>1250</td><td>2.93</td><td>0 V</td><td>0%</td><td>是</td></tr><tr><td>0.30</td><td>1000</td><td>2.93</td><td>0 V</td><td>0%</td><td>是</td></tr><tr><td>0.35</td><td>750</td><td>2.93</td><td>0 V</td><td>0%</td><td>是</td></tr><tr><td>0.40</td><td>500</td><td>2.92</td><td>0 V</td><td>0%</td><td>是</td></tr><tr><td>0.42</td><td>400</td><td>2.93</td><td>36 V</td><td>9%</td><td>勉强</td></tr><tr><td>0.45</td><td>250</td><td>2.98</td><td>156 V</td><td>39%</td><td><strong>否</strong></td></tr><tr><td>0.48</td><td>100</td><td>3.10</td><td>300 V</td><td>75%</td><td><strong>否</strong></td></tr></tbody></table>
+<h2 id="s-10-4">7.4 一条可以手算的余量</h2>
+<p><code class="ic">d=0.45</code> 那行值得单独看：理论缺口 <code class="ic">1 − 0.745/1.2 = 38%</code>，实测跳变 <code class="ic">39% Vin</code>。<strong>两个数几乎相等。</strong></p>
+<p>这不是巧合。缺多少电荷，中点就差多少电压，栅极就得硬拽多少。所以你可以直接用</p>
+<pre class="cb">跳变比例 ≈ 1 − Q_gap/(2·Coss·Vin)</pre>
+<p>在画板子之前估算硬开关损耗：<code class="ic">P = ½·C_node·(跳变电压)²·f·2</code>。</p>
+<h2 id="s-10-5">7.5 对设计的含义</h2>
+<p><strong>"对称发波只是丢掉小占空比的 ZVS"这句话是错的。</strong> 它在<strong>两端</strong>都丢，只有中间 0.25~0.40 这一段干净。</p>
+<p>这意味着：如果你打算用对称发波做软启动，<strong>不要从 <code class="ic">d=5%</code> 起步</strong>——那个点既没有增益精度，又是 69% 的硬开关。起步点应该在 <code class="ic">d≈0.25</code>，但那又意味着你放弃了整个低压段。</p>
+<p><strong>这是对称发波做软启动最致命的矛盾。</strong></p>
+<h1 id="section-11">第 8 章 定理五（范围不对称 = 选型判据）</h1>
+<p>把前面几条合起来，得到本文最实用的一张表：</p>
+<table><thead><tr><th>性质</th><th>对称发波</th><th>互补发波</th></tr></thead><tbody><tr><td><code class="ic">mean(v_ab)</code></td><td><code class="ic">Vin/2</code>（恒定）</td><td><code class="ic">d·Vin</code></td></tr><tr><td><code class="ic">Cr</code> 工作点</td><td><code class="ic">Vin/2</code>（不动）</td><td><code class="ic">d·Vin</code>（随 <code class="ic">d</code> 移动）</td></tr><tr><td>基波</td><td>电流的函数（闭环）</td><td><code class="ic">(2Vin/π)sin(πd)</code>（开环）</td></tr><tr><td>可调范围</td><td><strong>0.47 ~ 1.00</strong></td><td><strong>0 ~ 1.00</strong></td></tr><tr><td>与负载的关系</td><td>强（<code class="ic">d</code> 小时差 43%）</td><td>无（差 &lt; 1%）</td></tr><tr><td>ZVS 窗口</td><td><code class="ic">d ≈ 0.25~0.40</code></td><td>全段（死区足够时）</td></tr><tr><td>电流不对称</td><td>无（<code class="ic">d</code> 大时）</td><td>37.6% @ <code class="ic">d=0.3</code></td></tr><tr><td>磁通摆幅</td><td>恒定，较小</td><td>∝ <code class="ic">d</code>，<code class="ic">d</code> 小更小</td></tr></tbody></table>
+<p><strong>选型判据只有一条：</strong></p>
+<pre class="cb">你的 Vout_min 是否低于 0.47 × Mmin × Vin/(2n) ？
+  是 → 必须用互补发波（对称发波物理上到不了）
+  否 → 两种都可以，按"要不要 Cr 瞬态"来选</pre>
+<p><strong>这一条比任何"业界惯例"都可靠，因为它来自定理，不来自经验。</strong></p>
+<p class="hr"></p>
+<h1 id="section-12">第三部分 推论：软启动怎么设计</h1>
+<p>有了定理，设计就退化成代数。这一部分把"选哪条路、算哪几个数、怎么验"写成可以直接照做的步骤，不再依赖经验判断。</p>
+<h1 id="section-13">第 9 章 软启动要压的三个量</h1>
+<p>软启动不是"让电压慢慢升"，是<strong>把三个冲击压在器件允许的范围内</strong>。三个冲击的量级完全不同。</p>
+<h2 id="s-13-1">9.1 冲击一：Cr 的充电电流（最主要）</h2>
+<p>开机瞬间 <code class="ic">Cr</code> 是 0 V，稳态要在 <code class="ic">Vin/2</code>。这半个母线电压的电荷，全部要从原边灌进去：</p>
+<pre class="cb">ΔQ = Cr·Vin/2 = 42nF × 200V = 8.4 µC</pre>
+<p>实测：第 1 周期原边电流峰值 <strong>10.49 A</strong>，稳态只有 3.09 A——<strong>3.38 倍</strong>。第 5 周期 8.05 A，第 20 周期 4.35 A，第 100 周期 3.09 A。</p>
+<p><strong>冲击不是"电压高"造成的，是"<code class="ic">Cr</code> 从 0 充到 <code class="ic">Vin/2</code> 这段路上，多出来的电荷没有别的路可走"。</strong></p>
+<h2 id="s-13-2">9.2 冲击二：磁通</h2>
+<p>磁通是 <code class="ic">∫v_p dt</code>。开机前几十个周期，<code class="ic">v_p</code> 的正负半周不等（因为 <code class="ic">Cr</code> 还在爬），磁通会走一段偏置。实测每周期净增量最大 38 µV·s，稳态残差 3.1 µV·s（数值残差）。</p>
+<p><strong>危险窗口是开机的前几十微秒，不是稳态。</strong> 这也是为什么"软启动要慢"——不是为了散热（10 ms 才 0.16 J），是为了别让 <code class="ic">Cr</code> 在几个周期内被硬灌。</p>
+<h2 id="s-13-3">9.3 冲击三：第一次硬开关</h2>
+<p>第一个脉冲到来时，中点在 0，<code class="ic">Cr</code> 在 0，谐振腔里没有储能。这一次开通必然是硬开关，<code class="ic">Coss</code> 的能量全损。这一条无法避免，只能保证它只发生一次。</p>
+<h1 id="section-14">第 10 章 三条路径与它们的边界</h1>
+<h2 id="s-14-1">10.1 路径一：纯扫频（PFM）</h2>
+<p><code class="ic">d</code> 固定 50%，频率从 <code class="ic">1.2~1.5×fmax</code> 扫到工作点。</p>
+<ul><li><strong>优点</strong>：全程 ZVS，无模式切换，波形干净；</li><li><strong>前提</strong>：<code class="ic">Mmin(fmax) &lt; M_target</code>，且留 10~15% 余量；</li><li><strong>边界</strong>：如果 <code class="ic">Vout_min</code> 低于 <code class="ic">Mmin</code>，这条路走不通——不是稳定性问题，是<strong>量程不够</strong>。</li></ul>
+<h2 id="s-14-2">10.2 路径二：互补爬坡（PWM）</h2>
+<p><code class="ic">f</code> 钉在 <code class="ic">fmax</code>，<code class="ic">d</code> 从 0 爬到 0.5，然后转扫频。</p>
+<ul><li><strong>优点</strong>：范围全覆盖（0→1），<code class="ic">d</code> 是干净旋钮，可以开环标定；</li><li><strong>代价</strong>：<code class="ic">Cr</code> 工作点随 <code class="ic">d</code> 移动，交接时有一次电荷冲击；电流不对称；</li><li><strong>边界</strong>：<code class="ic">d</code> 必须大于 <code class="ic">max(T_dead, t_slew)/T</code>，否则波形发不出来或硬开关。</li></ul>
+<h2 id="s-14-3">10.3 路径三：对称爬坡</h2>
+<p><code class="ic">f</code> 钉在 <code class="ic">fmax</code>，<code class="ic">d</code> 从某点爬到 0.45。</p>
+<ul><li><strong>优点</strong>：<code class="ic">Cr</code> 全程在 <code class="ic">Vin/2</code>，无充电瞬态，磁通摆幅小；</li><li><strong>致命边界</strong>：<strong>范围只有 0.47~1.00</strong>，而且 <code class="ic">d</code> 小时是 60~70% 的硬开关；</li><li><strong>唯一适用场景</strong>：<code class="ic">Vout_min</code> 恰好落在 <code class="ic">0.47·Mmin</code> 以上，且只需要 2 倍以内的增益带。</li></ul>
+<h2 id="s-14-4">10.4 对比矩阵</h2>
+<table><thead><tr><th></th><th>纯扫频</th><th>互补爬坡</th><th>对称爬坡</th></tr></thead><tbody><tr><td>覆盖范围</td><td><code class="ic">Mmin~1</code></td><td>0~1</td><td>0.47~1</td></tr><tr><td>ZVS</td><td>全程</td><td>全程（<code class="ic">d</code> 够大时）</td><td>仅 <code class="ic">d=0.25~0.40</code></td></tr><tr><td><code class="ic">Cr</code> 瞬态</td><td>无</td><td>有（<code class="ic">ΔQ=Cr·Δd·Vin</code>）</td><td>无</td></tr><tr><td>电流对称性</td><td>好</td><td>差（37.6%）</td><td>好</td></tr><tr><td>可标定性</td><td>好</td><td>好（开环）</td><td><strong>差</strong>（随负载漂）</td></tr><tr><td>实现复杂度</td><td>低</td><td>中</td><td>中</td></tr></tbody></table>
+<p><strong>决策顺序</strong>：先算 <code class="ic">Vout_min / (Mmin·Vin/(2n))</code>。大于 1 用纯扫频；小于 1 用互补爬坡；只有在"必须无 <code class="ic">Cr</code> 瞬态"且"范围够"时才考虑对称。</p>
+<h1 id="section-15">第 11 章 30% 交接为什么振荡：一个诊断</h1>
+<h2 id="s-15-1">11.1 台阶算准了只有 0.7%</h2>
+<p>从对称 <code class="ic">d</code> 切到互补 50%：</p>
+<table><thead><tr><th>交接点</th><th>交接前 <code class="ic">Vout</code></th><th>交接后稳态</th><th>增益台阶</th></tr></thead><tbody><tr><td><code class="ic">d=0.05</code></td><td>3.50 V</td><td>6.27 V</td><td>+79.2%</td></tr><tr><td><code class="ic">d=0.10</code></td><td>4.74 V</td><td>6.27 V</td><td>+32.4%</td></tr><tr><td><code class="ic">d=0.20</code></td><td>6.13 V</td><td>6.27 V</td><td>+2.3%</td></tr><tr><td><code class="ic">d=0.30</code></td><td>6.23 V</td><td>6.27 V</td><td><strong>+0.7%</strong></td></tr><tr><td><code class="ic">d=0.45</code></td><td>6.25 V</td><td>6.27 V</td><td>+0.3%</td></tr></tbody></table>
+<p><strong><code class="ic">d=0.30</code> 的台阶只有 0.7%，一个 PI 周期就吃掉了，不可能引起持续振荡。</strong></p>
+<h2 id="s-15-2">11.2 真正的三个原因</h2>
+<p>既然台阶不是原因，那就是环路。按可能性排序：</p>
+<p><strong>① 频率没有余量（最常见）。</strong> 你能在 <code class="ic">d=30%</code> 就到达目标电压，说明 <code class="ic">fmax</code>、50% 下的增益已经超过目标。要把它压回去，频率得比 <code class="ic">fmax</code> 更高，而 <code class="ic">fmax</code> 就是上限。于是环路顶在限幅上，<code class="ic">Vout</code> 一冲就往下掉，来回形成极限环。</p>
+<p><strong>② 积分器初值不对。</strong> 切到 PFM 的那一拍，如果 <code class="ic">integral</code> 从 0 开始，PI 要先积分一段才给出正确频率，这段时间输出无人管。正确做法是给 <code class="ic">integral = fmax × Ki</code>，让第一拍的输出正好等于 <code class="ic">fmax</code>。</p>
+<p><strong>③ 限幅太紧。</strong> <code class="ic">fmin</code> 钳位如果离工作点太近，环路一有大扰动就撞墙。</p>
+<h2 id="s-15-3">11.3 三个波形判据</h2>
+<p>不用猜，抓三个波形就能定位：</p>
+<table><thead><tr><th>现象</th><th>指向</th></tr></thead><tbody><tr><td>频率指令贴在 <code class="ic">fmax</code> 不动，<code class="ic">Vout</code> 在目标上下摆</td><td>① 量程不够</td></tr><tr><td>频率指令在交接后有一个明显跳变（不是连续过渡）</td><td>② 初值问题</td></tr><tr><td>频率指令在 <code class="ic">fmin</code> 处削平</td><td>③ 限幅太紧 / 容性区</td></tr></tbody></table>
+<p><strong>先抓频率指令。</strong> 这一条能省掉 80% 的排查时间。</p>
+<h1 id="section-16">第 12 章 设计方程</h1>
+<h2 id="s-16-1">12.1 Mmin：量程下限</h2>
+<pre class="cb">Mmin = |G(fmax)|        （FHA 增益在 fmax 处的值）
+Vout_min = Mmin · Vin/(2n)</pre>
+<p>注意 <code class="ic">M</code> 的定义是 <code class="ic">M = 2n·Vo/Vin</code>，所以 <code class="ic">Vo = M·Vin/(2n)</code>。<strong>漏掉这个 2 会让输出电压差一倍</strong>，这是最常见的错误。</p>
+<h2 id="s-16-2">12.2 fmax 上限：ZVS 的硬墙</h2>
+<p>励磁电流 <code class="ic">Im = Vin/(4·Lm·fs)</code>，ZVS 要求 <code class="ic">½·Lm·Im² ≥ Coss·Vin²</code>，解得：</p>
+<pre class="cb">fs_max = 1 / sqrt(32·Lm·Coss)</pre>
+<table><thead><tr><th><code class="ic">Lm</code></th><th><code class="ic">Coss</code></th><th><code class="ic">fs_max</code></th><th><code class="ic">fmax=200k</code> 余量</th></tr></thead><tbody><tr><td>78 µH</td><td>1.5 nF</td><td>517 kHz</td><td>158%</td></tr><tr><td>200 µH</td><td>1.5 nF</td><td>323 kHz</td><td>61%</td></tr><tr><td>200 µH</td><td>3.0 nF</td><td>228 kHz</td><td>14%</td></tr></tbody></table>
+<p><strong>抬 <code class="ic">fmax</code> 来扩增益范围，代价是起扫段的 ZVS 余量。</strong> 这是纯扫频方案自己的边界，不是免费的。</p>
+<h2 id="s-16-3">12.3 交接点：唯一正确的选法</h2>
+<p>A 段（爬 <code class="ic">d</code>）的终点必须让增益达到 <code class="ic">Mmin</code> 的 99% 以上。由第 6 章：</p>
+<pre class="cb">互补：sin(π·d_A) = 0.99  →  d_A ≥ 0.45
+对称：M(d_A) = 0.99·Mmin  →  d_A ≥ 0.45（因为 d&gt;0.2 已饱和）</pre>
+<p><strong>两种发波的 A 段终点都是 0.45 左右，不是 0.3，更不是 0.07。</strong></p>
+<p>原因很直接：<code class="ic">Mmin</code> 的定义就是"<code class="ic">fmax</code>、50% 占空比下的增益"。A 段如果停在 30%，它到达的增益只有 <code class="ic">Mmin</code> 的 99.2%（互补）——看起来只差 0.8%，但那 0.8% 要靠频率去补，而频率已经在 <code class="ic">fmax</code> 了，补不了。</p>
+<h2 id="s-16-4">12.4 斜率：由 Cr 的充电电流定</h2>
+<p>互补爬坡时，<code class="ic">Cr</code> 要跟着 <code class="ic">d</code> 走。<code class="ic">d</code> 变化速率受限：</p>
+<pre class="cb">d(d)/dt ≤ I_Cr_allow / (Cr·Vin)</pre>
+<p><code class="ic">I_Cr_allow</code> 取额定原边电流的 10~20%。本文参数（<code class="ic">Cr=42nF</code>、<code class="ic">Vin=400V</code>、额定 3A、允许 0.3A）：</p>
+<pre class="cb">d(d)/dt ≤ 0.3 / (42n × 400) = 17860 /s</pre>
+<p>爬满 0.5 需要 28 ms。<strong>这个数比"10 ms"慢得多，说明 10 ms 的爬坡其实是在用 3 倍的允许电流硬爬。</strong></p>
+<p>对称爬坡没有这个限制，因为 <code class="ic">Cr</code> 不动（定理一）。<strong>这是对称发波唯一真正的工程优势。</strong></p>
+<h2 id="s-16-5">12.5 一个诊断：A 段在哪结束</h2>
+<p><strong>如果你的 A 段在 <code class="ic">d &lt; 0.4</code> 时就达到了目标电压，说明 <code class="ic">Mmin &gt; V_target</code>，即 <code class="ic">fmax</code> 不够高。</strong></p>
+<p>这不是发波问题，改占空比曲线、改对称/互补、改爬坡时间都没用。只有三条修法：</p>
+<ol><li>提高 <code class="ic">fmax</code>（受 12.2 的 ZVS 墙限制）；</li><li>加大 <code class="ic">Ln = Lm/Lr</code>（压低 <code class="ic">Mmin</code>，牺牲 <code class="ic">Mmax</code>）；</li><li>调整匝比 <code class="ic">n</code>。</li></ol>
+<h1 id="section-17">第 13 章 验证清单</h1>
+<table><thead><tr><th>#</th><th>测什么</th><th>判据</th><th>不符说明</th></tr></thead><tbody><tr><td>1</td><td>对称发波下 <code class="ic">Cr</code> 的周期均值</td><td>应在 <code class="ic">Vin/2</code>，偏差 &lt; 2%</td><td>驱动不对称，或测量点取了瞬时值</td></tr><tr><td>2</td><td>互补发波下 <code class="ic">Cr</code> 的周期均值</td><td>应等于 <code class="ic">d·Vin</code>，偏差 &lt; 3%</td><td>同上</td></tr><tr><td>3</td><td>固定 <code class="ic">d</code>、改变负载，看 <code class="ic">Vout</code></td><td>互补应基本不变；对称会漂</td><td>漂得多 = 你在用对称当旋钮</td></tr><tr><td>4</td><td>扫 <code class="ic">d</code> 从 0 到 0.5，记 <code class="ic">Vout</code></td><td>对称应在 <code class="ic">d≈0.2</code> 饱和</td><td>不饱和 = <code class="ic">Coss</code> 比预期大</td></tr><tr><td>5</td><td>原边电流正负峰</td><td>互补 <code class="ic">d=0.3</code> 时差约 37%</td><td>差更多 = <code class="ic">Cr</code> 偏置没到位</td></tr><tr><td>6</td><td>两管壳温</td><td>差 &lt; 5℃</td><td>差大 = 电流不对称已造成损耗不均</td></tr><tr><td>7</td><td>交接瞬间的频率指令</td><td>应连续，不贴 <code class="ic">fmax</code></td><td>贴住 = 量程不够</td></tr><tr><td>8</td><td><code class="ic">d=0.45</code> 时的 <code class="ic">v_ab</code> 跳变</td><td>应接近 <code class="ic">0.4·Vin</code></td><td>远小于此 = 你的 <code class="ic">Coss</code> 更小</td></tr></tbody></table>
+<p><strong>第 3 条和第 7 条是这套理论最直接的两个可证伪点。</strong> 如果你的机器上"对称发波固定 <code class="ic">d</code> 改负载，<code class="ic">Vout</code> 完全不动"，那说明我的模型错了，请把数据发我，我重算。</p>
+<p class="hr"></p>
+<h1 id="section-18">附录 A 模型与复现</h1>
+<p>模型在 <code class="ic">llc_verify.py</code>，一次运行约 2 分钟，自动生成 <code class="ic">report.md</code> 和 8 张图。</p>
+<p><strong>核心是四个状态方程</strong>（<code class="ic">i_Lr</code>、<code class="ic">v_Cr</code>、<code class="ic">i_Lm</code>、<code class="ic">Vo</code>），加一个节点电容 <code class="ic">C_node = 2·Coss</code>。整流器用"导通/断开状态机 + 电压钳位"，不能用 <code class="ic">v_p = n·Vo·sign(i_p)</code>——后者允许变压器出现直流电压，违反伏秒平衡，算出来 <code class="ic">Cr</code> 会稳在 175 V 而不是 200 V。</p>
+<p><strong>两个必须注意的建模陷阱：</strong></p>
+<ol><li><strong>整流器必须用状态机。</strong> 电流符号模型在电流过零处会抖振，导致 <code class="ic">Cr</code> 偏 12%。</li><li><strong>步长必须细到 <code class="ic">T/300</code> 以上。</strong> <code class="ic">d=0.05</code> 时脉宽只有 250 ns，每周期采 160 点相当于占空比本身有 12% 误差。同一组参数能算出 1.24 V 也能算出 3.50 V。</li></ol>
+<h1 id="section-19">附录 B 推导</h1>
+<h2 id="s-19-1">B.1 均值定理（对称）</h2>
+<p>变换 <code class="ic">t → t+T/2</code> 交换上下管驱动，拓扑满足 <code class="ic">v_ab → Vin − v_ab</code>。稳态解唯一，故 <code class="ic">v_ab(t+T/2) = Vin − v_ab(t)</code>。取平均：<code class="ic">mean = Vin − mean</code>，<code class="ic">mean = Vin/2</code>。</p>
+<h2 id="s-19-2">B.2 互补基波</h2>
+<p>方波（幅度 <code class="ic">Vin</code>、占空比 <code class="ic">d</code>）减去直流 <code class="ic">d·Vin</code>，基波系数：</p>
+<pre class="cb">b1 = (2/T)∫₀^{dT} Vin(1−d)·sin(ωt)dt + (2/T)∫_{dT}^{T} (−d·Vin)·sin(ωt)dt
+   = (2·Vin/π)·sin(πd)</pre>
+<p><code class="ic">d=0.5</code> 时 <code class="ic">2Vin/π</code>，与标准方波一致。</p>
+<h2 id="s-19-3">B.3 ZVS 频率上限</h2>
+<p><code class="ic">Im = Vin/(4·Lm·fs)</code>，ZVS 要求 <code class="ic">½·Lm·Im² ≥ Coss·Vin²</code>：</p>
+<pre class="cb">Vin²/(32·Lm·fs²) ≥ Coss·Vin²  →  fs ≤ 1/sqrt(32·Lm·Coss)</pre>
+<h2 id="s-19-4">B.4 中点漂移时间</h2>
+<p><code class="ic">C_node·dv/dt = −i_Lr</code>，电流近似恒定：</p>
+<pre class="cb">t_slew = C_node·Vin/|i| = 2·Coss·Vin/|i|</pre>
+<h1 id="section-20">附录 C 已知局限</h1>
+<ol><li><strong><code class="ic">Coss</code> 决定低端增益。</strong> <code class="ic">d=0.05</code> 的稳态电压在 1.7~4.0 V 之间随 <code class="ic">Coss</code> 变化（0.3~4.0 nF）。<strong>「<code class="ic">d≥0.3</code> 饱和」这条在所有 <code class="ic">Coss</code> 下都成立，但低端的具体数值必须实测标定。</strong></li><li><strong>无损耗、无漏感。</strong> 看不到二极管压降、绕组损耗、漏感引起的占空比丢失。实际硬开关损耗会比模型算的高。</li><li><strong>变压器理想。</strong> 只能看磁通"走不走偏"，看不到"什么时候饱和"。</li><li><strong>参数是示例值。</strong> <code class="ic">Vin=400V, n=16, fr=100k</code> 算出来 <code class="ic">Mmin=5.9V</code>，不是 12 V。这不代表设计错了——<strong><code class="ic">Mmin</code> 由 <code class="ic">Ln</code> 和 <code class="ic">fmax/fr</code> 决定，不是设计者指定的</strong>。把你的实测值填进 <code class="ic">P</code> 重跑，那个数才是你的真值。</li></ol>
+<h1 id="section-21">结语</h1>
+<p>旧理论把软启动当成"占空比从 0 爬到 50%"的过程，因为它假设中点是一个听话的开关。中点不听话——它是一个电容，它只会对电流做积分。</p>
+<p>一旦接受这一点，两种发波的关系就彻底变了：<strong>互补发波是开环的，你能用它做标定；对称发波是闭环的，它自己决定自己。</strong> 开环的能当旋钮，闭环的不能。这不是"哪个更好"的问题，是"哪个能当工具"的问题。</p>
+<p>而软启动真正要压的那个东西，从来不是电压上升的斜率，是 <code class="ic">Cr</code> 从 0 充到 <code class="ic">Vin/2</code> 那半个母线的电荷。所有"要慢一点"的建议，本质上都是在说这一件事。</p>
+</section>
+</body>
+</html>

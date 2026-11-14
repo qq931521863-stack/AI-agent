@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>M18 加热材料储存箱 软件需求与架构设计 v1.0</title>
+<style>
+  body { font-family: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif; font-size: 10.5pt; line-height: 1.75; color: #1f2328; margin: 0; }
+  h1 { font-size: 22pt; color: #185FA5; border-bottom: 3px solid #185FA5; padding-bottom: 8px; margin: 0 0 6px 0; }
+  h2 { font-size: 15pt; color: #185FA5; margin: 26px 0 10px 0; padding-left: 10px; border-left: 5px solid #185FA5; }
+  h3 { font-size: 12pt; color: #24292f; margin: 18px 0 8px 0; }
+  h4 { font-size: 10.5pt; color: #444d56; margin: 14px 0 6px 0; }
+  p { margin: 6px 0; }
+  .sub { color: #57606a; font-size: 9.5pt; margin-bottom: 18px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 14px 0; font-size: 9pt; }
+  th { background: #EEF4FB; border: 1px solid #C3D3E4; padding: 6px 7px; text-align: left; font-weight: 600; color: #24292f; }
+  td { border: 1px solid #D8DEE4; padding: 6px 7px; vertical-align: top; }
+  tr:nth-child(even) td { background: #FAFBFC; }
+  .id { font-family: Consolas, "Courier New", monospace; font-weight: 700; color: #185FA5; white-space: nowrap; }
+  .p0 { color: #B3121C; font-weight: 700; }
+  .p1 { color: #B26B00; font-weight: 700; }
+  .p2 { color: #6E7781; font-weight: 700; }
+  .note { background: #FFF8E6; border-left: 4px solid #D4A017; padding: 8px 12px; margin: 12px 0; font-size: 9.5pt; }
+  .warn { background: #FDF0F0; border-left: 4px solid #B3121C; padding: 8px 12px; margin: 12px 0; font-size: 9.5pt; }
+  .ok { background: #EFF6FB; border-left: 4px solid #185FA5; padding: 8px 12px; margin: 12px 0; font-size: 9.5pt; }
+  pre { background: #F6F8FA; border: 1px solid #D8DEE4; border-left: 3px solid #185FA5; padding: 10px 12px; font-family: Consolas, "Courier New", monospace; font-size: 8.5pt; line-height: 1.6; overflow-x: auto; margin: 10px 0; white-space: pre-wrap; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #F0F3F6; padding: 1px 4px; }
+  .toc { background: #FAFBFC; border: 1px solid #D8DEE4; padding: 12px 18px; font-size: 9.5pt; line-height: 2; }
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+
+<h1>M18 加热材料储存箱<br>软件需求与架构设计（SRS + SAD v1.0）</h1>
+<p class="sub">嵌入式固件 · 与整机需求规格 v1.0 配套 · 2026-11-05</p>
+
+<table>
+<tr><th style="width:16%">项目</th><th>内容</th></tr>
+<tr><td>软件名称</td><td>HMS-FW（Heated Material Storage Firmware）</td></tr>
+<tr><td>上位文档</td><td>《M18 加热材料储存箱 完整需求规格 v1.0》（115 条整机需求）</td></tr>
+<tr><td>覆盖范围</td><td>单机固件全部：启动自检、温控、电源与电池管理、HMI、显示、告警、低功耗、参数存储、诊断保护</td></tr>
+<tr><td>不在范围</td><td>App / 云端、产线烧录工具、Bootloader 升级（暂列 P2）、硬件设计</td></tr>
+<tr><td>编号规则</td><td><span class="mono">SRS-F-xx</span> 功能 / <span class="mono">SRS-N-xx</span> 非功能 / <span class="mono">SRS-I-xx</span> 接口 / <span class="mono">SW-xx</span> 软件模块</td></tr>
+<tr><td>规模预估</td><td>Flash ≈ 48KB，RAM ≈ 4KB，CPU 负载 &lt; 30%，无动态内存分配</td></tr>
+</table>
+
+<div class="toc">
+<strong>目录</strong><br>
+一、软件定位与边界　二、软件需求（功能 / 非功能 / 接口）　三、软件架构（分层 / 模块 / 调度 / 状态机 / 数据模型）<br>
+四、关键算法设计　五、代码框架与目录规范　六、可靠性与安全设计　七、测试与验证　八、软件侧待确认清单
+</div>
+
+<h2>一、软件定位与边界</h2>
+
+<h3>1.1 软件在系统中的位置</h3>
+<p>固件是"传感器 → 决策 → 执行器 + 显示"的闭环中枢。整机 115 条需求中，约 62 条需要固件参与实现，其中 <strong>纯软件实现 31 条</strong>、<strong>软硬协同 24 条</strong>、<strong>硬件实现软件仅做呈现 7 条</strong>。</p>
+
+<h3>1.2 软硬件保护分工（安全相关，必须先划清）</h3>
+<table>
+<tr><th style="width:20%">保护项</th><th style="width:40%">硬件职责</th><th>软件职责</th></tr>
+<tr><td>过温</td><td>独立温控开关 / 热熔断器（建议必配，作为最后一道）</td><td>NTC 采样 + 阈值判断 + 锁存关断 + 图标提示</td></tr>
+<tr><td>过流 / 短路</td><td>保险丝或 PTC、MOSFET 驱动限流</td><td>电流采样 + 判定 + 锁存 + 故障码</td></tr>
+<tr><td>加热丝开路</td><td>—</td><td>上电脉冲测通断 + 运行中电流为零判定</td></tr>
+<tr><td>电池过放</td><td>电池包内建 BMS 保护</td><td>欠压阈值提前关断（早于 BMS），保护可恢复性</td></tr>
+<tr><td>反接</td><td>防反接二极管 / MOS</td><td>不做（硬件保证）</td></tr>
+<tr><td>MCU 死机</td><td>独立看门狗芯片（可选）</td><td>窗口看门狗喂狗 + 关键任务心跳</td></tr>
+</table>
+<div class="warn"><strong>铁律</strong>：任何故障路径的默认动作必须是"加热输出 OFF"。加热驱动的硬件默认态必须是关断（下拉），软件只能"使能"，不能"维持"。</div>
+
+<h2>二、软件需求</h2>
+
+<h3>2.1 G1 系统与启动</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:48%">需求</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>关联</th></tr>
+<tr><td class="id">SRS-F-01</td><td>上电或装入电池后 1s 内完成启动，全段点亮 1s 作为 LCD 自检</td><td>示波器测上电至首帧 ≤ 1s</td><td class="p0">P0</td><td class="mono">UI-15</td></tr>
+<tr><td class="id">SRS-F-02</td><td>自检项：LCD 全段、NVM CRC、双 NTC 合理性、电池电压、加热回路通断</td><td>逐项可单独注入故障验证</td><td class="p0">P0</td><td class="mono">SEN-06</td></tr>
+<tr><td class="id">SRS-F-03</td><td>自检失败 → 进入 FAULT 态，显示故障码，<strong>禁止加热</strong>，允许用户查看与关机</td><td>故障注入 6 类全部进入 FAULT</td><td class="p0">P0</td><td class="mono">SAF-01</td></tr>
+<tr><td class="id">SRS-F-04</td><td>记录复位原因（POR / BOR / WDT / 软复位 / 外部）；WDT 复位后<strong>不自动恢复加热</strong>，需用户重新按键确认</td><td>人为触发 WDT 后观察行为</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-05</td><td>1ms SysTick 作为全局时基，所有周期任务由此派生</td><td>逻辑分析仪测抖动 &lt; 5%</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-06</td><td>诊断模式可读固件版本号、硬件版本、累计运行小时</td><td>长按 OK 5s 进入</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>2.2 G2 温度控制</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:48%">需求</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>关联</th></tr>
+<tr><td class="id">SRS-F-10</td><td>温度采样周期 500ms，双 NTC 取均值；两点差值 &gt; 10°F 持续 5s 判定传感器故障</td><td>单点加热/单点制冷模拟</td><td class="p0">P0</td><td class="mono">SEN-01</td></tr>
+<tr><td class="id">SRS-F-11</td><td>一阶低通滤波，α = 0.2；滤波值用于显示与控制，原始值用于故障判定</td><td>阶跃响应时间常数 ≈ 2s</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-12</td><td>目标温度范围 40–80°F，步进 5°F，越界钳位不报错</td><td>连续按键不越界</td><td class="p0">P0</td><td class="mono">THM-01/03</td></tr>
+<tr><td class="id">SRS-F-13</td><td>迟滞控制：T ≤ SP − 3°F → 加热 ON；T ≥ SP → 加热 OFF</td><td>稳态温度曲线无高频抖动</td><td class="p0">P0</td><td class="mono">THM-05</td></tr>
+<tr><td class="id">SRS-F-14</td><td>最小 ON / 最小 OFF 时间各 60s，防止继电器或 MOSFET 频繁动作</td><td>统计 8h 内启停次数</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-15</td><td>过温保护：T ≥ min(85°F, SP + 5°F) → 立即 OFF 并锁存 60s，温度计图标常亮</td><td>超温后 200ms 内关断</td><td class="p0">P0</td><td class="mono">THM-06</td></tr>
+<tr><td class="id">SRS-F-16</td><td>任一 NTC 故障 → 强制 OFF + FAULT，不进入"盲加热"</td><td>拔传感器验证</td><td class="p0">P0</td><td class="mono">SAF-01</td></tr>
+<tr><td class="id">SRS-F-17</td><td>开盖 ≥ 60s → 强制 OFF；关盖后 10s 内自动恢复至原设定</td><td>计时 ±2s</td><td class="p0">P0</td><td class="mono">THM-09/10</td></tr>
+<tr><td class="id">SRS-F-18</td><td>加热输出软启动：PWM 0→100% 斜坡 2s，降低浪涌与电池瞬时压降</td><td>电流波形无阶跃</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-19</td><td>加热回路电流采样 100ms，超阈值或为零 → OFF + FAULT（E04）</td><td>断开加热丝验证</td><td class="p0">P0</td><td class="mono">SEN-05</td></tr>
+<tr><td class="id">SRS-F-20</td><td>内部统一以 °F 整数存储；°C 仅为显示换算，四舍五入取整</td><td>切换单位后设定值不漂移</td><td class="p0">P0</td><td class="mono">G-05</td></tr>
+<tr><td class="id">SRS-F-21</td><td>显示温度 = 滤波值四舍五入，1°F 分辨率；负值需支持（-20°F 工况）</td><td>低温舱显示正确</td><td class="p0">P0</td><td class="mono">THM-04</td></tr>
+</table>
+
+<h3>2.3 G3 电源与电池管理</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:48%">需求</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>关联</th></tr>
+<tr><td class="id">SRS-F-30</td><td>AC 在位检测（10ms 去抖）→ 立即切至 AC 域，电池停止放电</td><td>插拔瞬间电流路径切换</td><td class="p0">P0</td><td class="mono">PWR-04</td></tr>
+<tr><td class="id">SRS-F-31</td><td>双电池策略：默认 B2 为主供；B2 缺失或失效 → B1</td><td>单/双电池组合 4 种状态验证</td><td class="p0">P0</td><td class="mono">PWR-03</td></tr>
+<tr><td class="id">SRS-F-32</td><td>切换判据：带载电压 &lt; 截止值持续 3s → 切换；切换过程加热中断 ≤ 500ms</td><td>放电至切换点记录波形</td><td class="p0">P0</td><td class="mono">PWR-02</td></tr>
+<tr><td class="id">SRS-F-33</td><td>SOC 估算：电压查表 + 负载补偿 + 温度补偿，4 段量化，10s 更新</td><td>与实际放电曲线比对 ≤ 1 段误差</td><td class="p0">P0</td><td class="mono">UI-12</td></tr>
+<tr><td class="id">SRS-F-34</td><td>电池空仓或通信失效 → 对应电量条全灭</td><td>拔电池验证</td><td class="p0">P0</td><td class="mono">PWR-08</td></tr>
+<tr><td class="id">SRS-F-35</td><td>SOC &lt; 25% → 对应电量条以 500ms 闪烁</td><td>阈值可配</td><td class="p1">P1</td><td class="mono">PWR-11</td></tr>
+<tr><td class="id">SRS-F-36</td><td>全部电池耗尽且无 AC → 优雅关机，保存全部参数，禁止深度放电</td><td>放电至关机观察 NVM 完整性</td><td class="p0">P0</td><td class="mono">PWR-13</td></tr>
+<tr><td class="id">SRS-F-37</td><td>软件不使能任何充电通路（硬件本就无充电电路），仅监测</td><td>代码审查</td><td class="p0">P0</td><td class="mono">PWR-05</td></tr>
+<tr><td class="id">SRS-F-38</td><td>上电时若 AC 在位，直接进入 AC 域，不先走电池</td><td>插电上电验证</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>2.4 G4 人机交互</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:48%">需求</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>关联</th></tr>
+<tr><td class="id">SRS-F-50</td><td>按键 10ms 扫描、20ms 去抖；事件入队（深度 ≥ 8），不丢事件</td><td>快速连按 20 次全部响应</td><td class="p0">P0</td><td class="mono">HMI-01</td></tr>
+<tr><td class="id">SRS-F-51</td><td>短按定义：按下 20–500ms 后释放</td><td>边界值测试</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-52</td><td>长按连发：按下 ≥ 800ms 起，每 200ms 触发一步</td><td>见 4.3 冲突说明</td><td class="p0">P0</td><td class="mono">THM-02</td></tr>
+<tr><td class="id">SRS-F-53</td><td>双键（UP+DOWN）同时按下满 750ms → 切换单位；<strong>检测到双键后立即抑制单键动作并撤销未提交的步进</strong></td><td>组合键成功率 100%</td><td class="p0">P0</td><td class="mono">HMI-07</td></tr>
+<tr><td class="id">SRS-F-54</td><td>OK 提交：写入 setpoint、蜂鸣 1 声、退出调整态</td><td>盲操作可感知</td><td class="p0">P0</td><td class="mono">HMI-05</td></tr>
+<tr><td class="id">SRS-F-55</td><td>调整态 5s 无操作 → 自动保存并退出（策略待确认，见 8.4）</td><td>可配置为回退</td><td class="p1">P1</td><td class="mono">HMI-11</td></tr>
+<tr><td class="id">SRS-F-56</td><td>任意键唤醒低功耗态，唤醒后首帧显示完整信息</td><td>唤醒 ≤ 300ms</td><td class="p0">P0</td><td class="mono">PWRM-04</td></tr>
+<tr><td class="id">SRS-F-57</td><td>电源键：短按开关机；关机时保存 setpoint 与单位</td><td>断电 24h 后恢复</td><td class="p0">P0</td><td class="mono">HMI-03</td></tr>
+<tr><td class="id">SRS-F-58</td><td>防误触开机：长按 1.5s 开机（方案待定，见 8.2）</td><td>振动台不误开机</td><td class="p0">P0</td><td class="mono">HMI-02</td></tr>
+</table>
+
+<h3>2.5 G5 显示驱动</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:48%">需求</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>关联</th></tr>
+<tr><td class="id">SRS-F-70</td><td>段码显存为位映射 buffer，100ms 重组一次并整帧刷新</td><td>无残影、无闪烁</td><td class="p0">P0</td><td class="mono">UI-01</td></tr>
+<tr><td class="id">SRS-F-71</td><td>按 L1–L4 四分区合成：目标温度 / 内部温度 / 状态图标 / 电量条</td><td>与标注图逐段比对</td><td class="p0">P0</td><td class="mono">UI-02~12</td></tr>
+<tr><td class="id">SRS-F-72</td><td>闪烁周期：加热 1000ms、开盖告警 350ms、单位切换 150ms×3、低电量 500ms</td><td>示波器测各周期 ±5%</td><td class="p0">P0</td><td class="mono">UI-06/08</td></tr>
+<tr><td class="id">SRS-F-73</td><td>所有闪烁共用同一相位基准（全局 1ms 计数器取模），避免同屏不同步</td><td>目视同相</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-74</td><td>两位数值显示，前导零消隐；负号独立段</td><td>显示 5 / -8 / 40 / 80</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-75</td><td>超范围或无效值显示 <code>--</code>；故障显示 <code>Err</code> 与故障码交替（2s 切换）</td><td>故障注入验证</td><td class="p1">P1</td><td class="mono">UI-16</td></tr>
+<tr><td class="id">SRS-F-76</td><td>低功耗态仅保留右下角设定值，其余段全灭</td><td>与 G-01 结论一致</td><td class="p0">P0</td><td class="mono">PWRM-02</td></tr>
+<tr><td class="id">SRS-F-77</td><td>显示合成遵循优先级：FAULT &gt; OVERTEMP &gt; LID &gt; HEATING &gt; MAINTAIN &gt; 常规</td><td>并发状态验证</td><td class="p0">P0</td><td class="mono">G-08</td></tr>
+</table>
+
+<h3>2.6 G6 告警</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:48%">需求</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>关联</th></tr>
+<tr><td class="id">SRS-F-80</td><td>开盖计时：30s → 蜂鸣 + 图标 350ms 闪；60s → 停止蜂鸣 + 停止加热</td><td>计时 ±2s</td><td class="p0">P0</td><td class="mono">ALM-01/02</td></tr>
+<tr><td class="id">SRS-F-81</td><td>关盖 → 2s 内清除计时、静音、恢复加热</td><td>快速开合 10 次</td><td class="p0">P0</td><td class="mono">ALM-03</td></tr>
+<tr><td class="id">SRS-F-82</td><td>蜂鸣音型：2kHz，200ms 响 / 800ms 停，最长持续 30s 后自动静音（音型待确认）</td><td>声级计 + 录音</td><td class="p1">P1</td><td class="mono">ALM-04</td></tr>
+<tr><td class="id">SRS-F-83</td><td>告警互斥：同时存在时按 4.4 优先级表只播放最高优先级音型</td><td>并发注入验证</td><td class="p0">P0</td><td class="mono">G-08</td></tr>
+<tr><td class="id">SRS-F-84</td><td>OK 键静音：静音后 10min 自动恢复（待确认）</td><td>可配置</td><td class="p1">P1</td><td class="mono">ALM-05</td></tr>
+</table>
+
+<h3>2.7 G7 低功耗</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:48%">需求</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>关联</th></tr>
+<tr><td class="id">SRS-F-90</td><td>连续 5min 无按键 → 背光降至 10%，进入低功耗显示态</td><td>计时 ±10s</td><td class="p0">P0</td><td class="mono">PWRM-01</td></tr>
+<tr><td class="id">SRS-F-91</td><td>MCU 进入 STOP 模式，RTC 1s 唤醒执行采样与状态机</td><td>静态电流实测</td><td class="p0">P0</td><td class="mono">N-03</td></tr>
+<tr><td class="id">SRS-F-92</td><td>达标 / 告警 / 按键 → 点亮 3s 后回到低功耗</td><td>三种触发分别验证</td><td class="p0">P0</td><td class="mono">PWRM-03</td></tr>
+<tr><td class="id">SRS-F-93</td><td>低功耗下采样、控温、保护逻辑<strong>不得降级</strong>，仅降低显示与主频</td><td>低功耗下注入过温验证</td><td class="p0">P0</td><td class="mono">PWRM-05</td></tr>
+</table>
+
+<h3>2.8 G8 参数存储</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:48%">需求</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>关联</th></tr>
+<tr><td class="id">SRS-F-100</td><td>持久化项：setpoint、unit、累计运行小时、故障历史（最近 5 条）、标定系数</td><td>逐项断电验证</td><td class="p0">P0</td><td class="mono">PWRM-06/07</td></tr>
+<tr><td class="id">SRS-F-101</td><td>双 Slot + CRC16 + 版本号交替写入，任一 Slot 损坏可回滚另一份</td><td>写入中途断电 20 次不丢参数</td><td class="p0">P0</td><td class="mono">PWRM-08</td></tr>
+<tr><td class="id">SRS-F-102</td><td>仅在参数变更时写入，禁止周期性刷写；累计运行小时按整点写</td><td>统计 30 天写入次数</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-103</td><td>NVM 双 Slot 均损坏 → 恢复出厂默认（70°F / °F）并报 E06</td><td>擦除后上电验证</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>2.9 G9 诊断与故障码</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:48%">需求</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>关联</th></tr>
+<tr><td class="id">SRS-F-110</td><td>故障码定义（见 2.10），任一故障置位后进入 FAULT 并锁存，仅断电或诊断模式可清</td><td>故障码表评审</td><td class="p0">P0</td><td class="mono">G-07</td></tr>
+<tr><td class="id">SRS-F-111</td><td>长按 OK 5s 进入诊断模式，循环显示故障历史与版本信息，再长按退出</td><td>操作验证</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SRS-F-112</td><td>温度合理性：变化速率限制（&gt; 5°F/s 判异常）、双点互检、量程检查</td><td>吹风机 / 冰袋冲击测试</td><td class="p0">P0</td><td class="mono">SEN-06</td></tr>
+<tr><td class="id">SRS-F-113</td><td>窗口看门狗：主循环心跳 + 关键任务标志位同时满足才喂狗</td><td>人为卡死 2s 触发复位</td><td class="p0">P0</td><td class="mono">N-04</td></tr>
+</table>
+
+<h4>2.10 故障码表</h4>
+<table>
+<tr><th style="width:10%">码</th><th style="width:26%">名称</th><th style="width:34%">判据</th><th>动作</th></tr>
+<tr><td class="id">E01</td><td>NTC1 开路 / 短路</td><td>ADC 值贴轨持续 1s</td><td>停热 + FAULT</td></tr>
+<tr><td class="id">E02</td><td>NTC2 开路 / 短路</td><td>同上</td><td>停热 + FAULT</td></tr>
+<tr><td class="id">E03</td><td>NTC 互检失败</td><td>两点差值 &gt; 10°F 持续 5s</td><td>停热 + FAULT</td></tr>
+<tr><td class="id">E04</td><td>加热回路过流 / 开路</td><td>电流超限或加热 ON 时电流≈0</td><td>停热 + 锁存</td></tr>
+<tr><td class="id">E05</td><td>电池异常</td><td>电压超范围或 ID 识别失败</td><td>该路禁用，另一路继续</td></tr>
+<tr><td class="id">E06</td><td>NVM 损坏</td><td>双 Slot CRC 均失败</td><td>恢复默认值</td></tr>
+<tr><td class="id">E07</td><td>过温保护触发</td><td>T ≥ min(85°F, SP+5°F)</td><td>停热 60s 后自动恢复</td></tr>
+<tr><td class="id">E08</td><td>欠压</td><td>电池电压 &lt; 截止值</td><td>切路 / 关机</td></tr>
+<tr><td class="id">E09</td><td>时钟异常</td><td>RTC 与 SysTick 偏差 &gt; 5%</td><td>记录，不影响功能</td></tr>
+</table>
+
+<h3>2.11 非功能需求</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:44%">类别与要求</th><th style="width:34%">指标</th><th>验证</th></tr>
+<tr><td class="id">SRS-N-01</td><td>实时性：按键到显示响应</td><td>≤ 100ms</td><td>逻辑分析仪</td></tr>
+<tr><td class="id">SRS-N-02</td><td>实时性：过温到加热关断</td><td>≤ 200ms（含硬件）</td><td>示波器</td></tr>
+<tr><td class="id">SRS-N-03</td><td>功耗：关机静态电流 / 低功耗运行电流</td><td>≤ 50µA / ≤ 5mA</td><td>µA 表</td></tr>
+<tr><td class="id">SRS-N-04</td><td>可靠性：WDT + 复位原因记录 + RAM 关键区校验</td><td>连续运行 30 天无异常复位</td><td>老化测试</td></tr>
+<tr><td class="id">SRS-N-05</td><td>环境：-40°C ~ +85°C 器件选型，软件含 NTC 全温区标定</td><td>-20°F ~ 120°F 功能正常</td><td>环境舱</td></tr>
+<tr><td class="id">SRS-N-06</td><td>代码规范：MISRA-C 2012，静态分析 0 Error</td><td>报告</td><td>工具扫描</td></tr>
+<tr><td class="id">SRS-N-07</td><td>资源：Flash ≤ 48KB，RAM ≤ 4KB，无 malloc</td><td>map 文件</td><td>编译产物</td></tr>
+<tr><td class="id">SRS-N-08</td><td>可测试性：单元测试覆盖率 ≥ 80%（核心模块 ≥ 90%）</td><td>覆盖率报告</td><td>gcov</td></tr>
+<tr><td class="id">SRS-N-09</td><td>可维护性：UART 调试口输出状态日志，可开关</td><td>日志可读</td><td>联调</td></tr>
+<tr><td class="id">SRS-N-10</td><td>启动时间：上电到首帧</td><td>≤ 1s</td><td>示波器</td></tr>
+<tr><td class="id">SRS-N-11</td><td>EMC：软件不产生周期性高频翻转，PWM 频率避开敏感频段</td><td>预兼容测试</td><td>暗室</td></tr>
+<tr><td class="id">SRS-N-12</td><td>可升级性：预留 Bootloader 分区（P2，见 8.8）</td><td>设计预留</td><td>评审</td></tr>
+</table>
+
+<h3>2.12 接口需求</h3>
+<table>
+<tr><th style="width:10%">ID</th><th style="width:22%">接口</th><th style="width:16%">类型</th><th>说明</th></tr>
+<tr><td class="id">SRS-I-01</td><td>按键 ×4</td><td>GPIO 输入</td><td>POWER / UP / DOWN / OK，上拉，低有效，硬件 RC 滤波</td></tr>
+<tr><td class="id">SRS-I-02</td><td>NTC ×2</td><td>ADC 12bit</td><td>分压采样，含基准电阻，需单点标定</td></tr>
+<tr><td class="id">SRS-I-03</td><td>盖开合</td><td>GPIO / 霍尔</td><td>开盖 = 低电平，10ms 去抖</td></tr>
+<tr><td class="id">SRS-I-04</td><td>电池在位 / ID ×2</td><td>GPIO / ADC</td><td>识别有无电池与型号</td></tr>
+<tr><td class="id">SRS-I-05</td><td>AC 在位</td><td>GPIO</td><td>光耦隔离，10ms 去抖</td></tr>
+<tr><td class="id">SRS-I-06</td><td>加热驱动</td><td>PWM / GPIO</td><td>硬件默认下拉关断</td></tr>
+<tr><td class="id">SRS-I-07</td><td>加热电流</td><td>ADC</td><td>采样电阻 + 运放，100ms 一次</td></tr>
+<tr><td class="id">SRS-I-08</td><td>段码 LCD</td><td>COM/SEG</td><td>内置 LCD 控制器，1/4 duty 或 1/8 duty</td></tr>
+<tr><td class="id">SRS-I-09</td><td>蜂鸣器</td><td>PWM</td><td>2kHz 方波驱动</td></tr>
+<tr><td class="id">SRS-I-10</td><td>调试口</td><td>UART + SWD</td><td>需防水盖保护</td></tr>
+<tr><td class="id">SRS-I-11</td><td>BLE（预留）</td><td>UART / SPI</td><td>P2 探索项，仅预留焊盘与接口层</td></tr>
+</table>
+
+<h2>三、软件架构</h2>
+
+<h3>3.1 分层架构（5 层，严格单向依赖）</h3>
+<table>
+<tr><th style="width:8%">层</th><th style="width:18%">名称</th><th style="width:30%">职责</th><th style="width:22%">不允许做的事</th><th>典型文件</th></tr>
+<tr><td>L5</td><td>应用层 App</td><td>三个正交状态机、控温策略、业务规则</td><td>不直接操作寄存器、不调用 BSP</td><td class="mono">app_sm_*.c</td></tr>
+<tr><td>L4</td><td>服务层 Service</td><td>调度器、事件总线、软件定时器、滤波、告警队列</td><td>不含业务判断</td><td class="mono">sched.c event.c</td></tr>
+<tr><td>L3</td><td>设备层 Device</td><td>按键、显示、热控、电源、电池、NVM、诊断的抽象设备</td><td>不出现具体引脚号</td><td class="mono">dev_key.c dev_lcd.c</td></tr>
+<tr><td>L2</td><td>板级支持 BSP</td><td>GPIO / ADC / PWM / LCD / I2C 的引脚级实现</td><td>不做业务逻辑</td><td class="mono">bsp_gpio.c</td></tr>
+<tr><td>L1</td><td>芯片 HAL</td><td>厂商库 / CMSIS</td><td>—</td><td class="mono">hal_*.c</td></tr>
+</table>
+<div class="ok"><strong>依赖规则</strong>：只允许上层调下层，禁止反向调用与跨层调用（L5 不得直接调 L2）。层间通过头文件接口隔离，便于 SIL 仿真时整体替换 L1/L2。</div>
+
+<h3>3.2 软件模块清单</h3>
+<table>
+<tr><th style="width:9%">模块</th><th style="width:20%">名称</th><th style="width:8%">层</th><th style="width:36%">职责</th><th>对应需求</th></tr>
+<tr><td class="id">SW-01</td><td>启动与自检</td><td>L5</td><td>上电流程、自检序列、故障入口</td><td class="mono">F-01~F-04</td></tr>
+<tr><td class="id">SW-02</td><td>调度器</td><td>L4</td><td>1ms 时基、任务表、软定时器</td><td class="mono">F-05</td></tr>
+<tr><td class="id">SW-03</td><td>事件总线</td><td>L4</td><td>事件投递、订阅、优先级队列</td><td class="mono">F-50</td></tr>
+<tr><td class="id">SW-04</td><td>按键服务</td><td>L3</td><td>扫描、去抖、短/长/组合键识别</td><td class="mono">F-50~F-58</td></tr>
+<tr><td class="id">SW-05</td><td>显示服务</td><td>L3</td><td>显存合成、闪烁相位、分区渲染</td><td class="mono">F-70~F-77</td></tr>
+<tr><td class="id">SW-06</td><td>温控服务</td><td>L3</td><td>采样、滤波、迟滞、过温、软启动</td><td class="mono">F-10~F-19</td></tr>
+<tr><td class="id">SW-07</td><td>电源管理</td><td>L3</td><td>AC/电池域切换、上电时序</td><td class="mono">F-30/38</td></tr>
+<tr><td class="id">SW-08</td><td>电池管理</td><td>L3</td><td>双路选择、SOC 估算、欠压</td><td class="mono">F-31~F-36</td></tr>
+<tr><td class="id">SW-09</td><td>告警服务</td><td>L3</td><td>蜂鸣音型、优先级、静音</td><td class="mono">F-80~F-84</td></tr>
+<tr><td class="id">SW-10</td><td>参数管理</td><td>L3</td><td>NVM 双 Slot、CRC、默认值</td><td class="mono">F-100~F-103</td></tr>
+<tr><td class="id">SW-11</td><td>诊断</td><td>L3</td><td>故障码、历史、诊断模式</td><td class="mono">F-110~F-112</td></tr>
+<tr><td class="id">SW-12</td><td>低功耗</td><td>L4</td><td>STOP 模式进出、唤醒源管理</td><td class="mono">F-90~F-93</td></tr>
+<tr><td class="id">SW-13</td><td>系统监控</td><td>L4</td><td>窗口看门狗、心跳、复位原因</td><td class="mono">F-113</td></tr>
+</table>
+
+<h3>3.3 运行时视图：任务调度表</h3>
+<p>不引入 RTOS，采用<strong>时间触发 + 前后台</strong>架构（资源占用最小、行为可预测、易做 SIL 仿真）。若后续需要 BLE 协议栈再评估 FreeRTOS。</p>
+<table>
+<tr><th style="width:22%">任务</th><th style="width:12%">周期</th><th style="width:14%">时间预算</th><th style="width:14%">触发方式</th><th>说明</th></tr>
+<tr><td>按键扫描</td><td>10ms</td><td>&lt; 200µs</td><td>调度表</td><td>4 路 GPIO 读取 + 去抖状态机</td></tr>
+<tr><td>状态机步进</td><td>100ms</td><td>&lt; 500µs</td><td>调度表</td><td>三个正交域各跑一次</td></tr>
+<tr><td>显示刷新</td><td>100ms</td><td>&lt; 800µs</td><td>调度表</td><td>合成显存 + 写 LCD RAM</td></tr>
+<tr><td>温度采样</td><td>500ms</td><td>&lt; 1ms</td><td>调度表</td><td>ADC 双通道 + 滤波 + 故障判定</td></tr>
+<tr><td>加热电流采样</td><td>100ms</td><td>&lt; 300µs</td><td>调度表</td><td>仅加热 ON 时执行</td></tr>
+<tr><td>SOC 更新</td><td>10s</td><td>&lt; 500µs</td><td>调度表</td><td>电压 + 补偿计算</td></tr>
+<tr><td>加热输出更新</td><td>事件</td><td>&lt; 50µs</td><td>状态变化</td><td>PWM 占空比设置</td></tr>
+<tr><td>NVM 写入</td><td>事件</td><td>5–20ms</td><td>参数变更</td><td>低优先级，可延后</td></tr>
+</table>
+
+<h3>3.4 三层正交状态机（核心设计）</h3>
+<p>整机 UI 需求里描述了 11 个"状态"，但把它们画成一张扁平状态机会产生 11×11 的转移爆炸。实际它们是<strong>三个彼此独立的维度</strong>，应该用三个正交状态机并行运行，显示层负责合成。</p>
+
+<h4>域 A · 电源域（低频，秒级）</h4>
+<table>
+<tr><th style="width:16%">状态</th><th style="width:34%">进入条件</th><th>退出条件</th></tr>
+<tr><td>A0 OFF</td><td>关机 / 无电源</td><td>按键开机 且 有可用电源</td></tr>
+<tr><td>A1 ON_BAT</td><td>无 AC 且有电池</td><td>插入 AC → A2；电池耗尽 → A0</td></tr>
+<tr><td>A2 ON_AC</td><td>AC 在位</td><td>拔掉 AC → A1</td></tr>
+<tr><td>A3 SHUTDOWN</td><td>欠压 / 用户关机</td><td>保存参数完成 → A0</td></tr>
+</table>
+
+<h4>域 B · 温控域（中频，500ms）</h4>
+<table>
+<tr><th style="width:16%">状态</th><th style="width:34%">进入条件</th><th>退出条件</th></tr>
+<tr><td>B0 IDLE</td><td>未使能加热</td><td>T ≤ SP − 3°F → B1</td></tr>
+<tr><td>B1 HEATING</td><td>低于回差下沿</td><td>T ≥ SP → B2；故障 → B4</td></tr>
+<tr><td>B2 MAINTAIN</td><td>达到设定温度</td><td>T ≤ SP − 3°F → B1</td></tr>
+<tr><td>B3 OVERTEMP</td><td>T ≥ min(85°F, SP+5°F)</td><td>回落并锁存 60s → B0</td></tr>
+<tr><td>B4 FAULT</td><td>任一硬件故障</td><td>断电 / 诊断清除</td></tr>
+</table>
+
+<h4>域 C · 交互域（高频，10–100ms）</h4>
+<table>
+<tr><th style="width:16%">状态</th><th style="width:34%">进入条件</th><th>退出条件</th></tr>
+<tr><td>C0 NORMAL</td><td>默认</td><td>按键 → C1；5min 无操作 → C2</td></tr>
+<tr><td>C1 ADJUST</td><td>按 ↑ / ↓</td><td>OK / 5s 超时 → C0</td></tr>
+<tr><td>C2 LOWPOWER</td><td>5min 无操作</td><td>按键 / 达标 / 告警 → C0</td></tr>
+<tr><td>C3 ALARM_LID</td><td>开盖 ≥ 30s</td><td>关盖 → C0</td></tr>
+</table>
+<div class="note"><strong>合成规则</strong>：显示与蜂鸣由 <code>f(A, B, C)</code> 统一计算，优先级为 B4 &gt; B3 &gt; C3 &gt; B1 &gt; B2 &gt; C1 &gt; C2。这样新增一个状态只需改一个域，不会引起组合爆炸。</div>
+
+<h3>3.5 关键数据模型（单一数据源）</h3>
+<pre>typedef struct {
+    /* 传感器原始与滤波值 */
+    int16_t  ntc_raw[2];          /* ADC 原始值 */
+    int16_t  temp_f;              /* 滤波后内部温度, °F ×1 */
+    int16_t  temp_target_f;       /* 设定温度, °F ×1 */
+    uint8_t  unit;                /* 0 = °F, 1 = °C */
+
+    /* 电源 */
+    uint8_t  ac_present;
+    uint8_t  batt_present[2];
+    uint8_t  batt_soc[2];         /* 0-100 */
+    uint8_t  active_batt;         /* 0/1 */
+
+    /* 执行器 */
+    uint8_t  heat_duty;           /* 0-100 % */
+
+    /* 状态 */
+    uint8_t  sm_power;            /* A0-A3 */
+    uint8_t  sm_thermal;          /* B0-B4 */
+    uint8_t  sm_ui;               /* C0-C3 */
+
+    /* 诊断 */
+    uint16_t fault_bits;          /* 位图, 见 E01-E09 */
+    uint8_t  lid_open;
+    uint32_t run_hours;
+} unit_state_t;</pre>
+<div class="ok"><strong>设计要点</strong>：全局只有一份 <code>unit_state_t</code>，任何模块只读；写入必须通过该模块的 setter 并置 dirty 标志，由显示服务统一刷新。禁止模块各自缓存温度。</div>
+
+<h3>3.6 事件机制</h3>
+<pre>typedef enum {
+    EV_NONE = 0,
+    EV_TICK_10MS, EV_TICK_100MS, EV_TICK_500MS, EV_TICK_1S,
+    EV_KEY_PRESS, EV_KEY_RELEASE, EV_KEY_LONG, EV_KEY_COMBO,
+    EV_LID_CHANGE, EV_AC_CHANGE, EV_BATT_CHANGE,
+    EV_FAULT_SET, EV_FAULT_CLR
+} event_id_t;
+
+typedef struct {
+    event_id_t id;
+    uint8_t    arg0;
+    uint8_t    arg1;
+} event_t;
+
+void event_post(event_id_t id, uint8_t a0, uint8_t a1);
+bool event_get(event_t *out);          /* 主循环中非阻塞取事件 */</pre>
+<p>中断只负责 <code>event_post</code>，不做业务判断；所有业务在 <code>app_main_loop()</code> 中处理，保证可重入安全与可测试性。</p>
+
+<h2>四、关键算法设计</h2>
+
+<h3>4.1 控温算法</h3>
+<p>采用<strong>迟滞（Bang-Bang）+ 最小驻留时间 + 软启动</strong>，不使用 PID。理由：被控对象是"箱体 + 加热丝"，热惯性极大（分钟级），PID 的积分项在 5°F 步进下没有意义，反而会因超调触发过温保护。</p>
+<pre>T_f = α·T_raw + (1-α)·T_f          /* α = 0.2, 500ms 周期 */
+
+if (T_f &lt;= SP - 3)  want_heat = 1
+if (T_f &gt;= SP)      want_heat = 0
+if (T_f &gt;= min(85, SP+5))  → 强制 OFF + 锁存 60s
+
+/* 最小驻留 */
+if (want_heat != heat_on &amp;&amp; (now - last_toggle) &lt; 60s) 保持原状态
+
+/* 软启动 */
+heat_duty += (want_heat ? +2 : -5)   /* 每 100ms 步进, 约 5s 到 100% */</pre>
+
+<h3>4.2 SOC 估算</h3>
+<pre>SOC_ocv = lookup( V_batt + I_load · R_internal )   /* 内阻补偿 */
+SOC_t   = compensate_temp(SOC_ocv, T_batt)         /* 低温降容补偿 */
+段数 = SOC_t ≥ 75 ? 4 : SOC_t ≥ 50 ? 3 : SOC_t ≥ 25 ? 2 : 1</pre>
+<p>切换判据独立于 SOC：带载电压低于截止值持续 3s 即切换，避免 SOC 估算误差导致深度放电。</p>
+
+<h3>4.3 按键识别（含一处规格冲突）</h3>
+<div class="warn"><strong>冲突</strong>：UI 规格写"长按每 200ms 步进一次"，同时又要求"UP+DOWN 长按 750ms 切换单位"。若连发在 500ms 就启动，那么到 750ms 时单键已经触发过一次，切单位时会带上一次误调整。<br>
+<strong>解法</strong>：把<strong>单键连发起始延时设为 800ms</strong>（&gt; 750ms 组合键判定窗口），800ms 后才开始每 200ms 连发。这样组合键永远优先，无需回滚逻辑。</div>
+
+<h3>4.4 显示合成</h3>
+<pre>/* 每 100ms 调用一次 */
+seg_clear();
+if (fault_bits)            render_fault();       /* Err + 码, 2s 交替 */
+else {
+    render_target(temp_target_f, unit);          /* L1 + 单位 */
+    render_internal(temp_f);                     /* L2 */
+    render_icons(priority_pick());               /* L3, 单图标优先 */
+    render_battery(batt_soc, batt_present);      /* L4 */
+}
+lcd_flush();</pre>
+<p>闪烁统一用 <code>phase = tick_1ms % period</code> 计算，保证同屏所有图标同相位，不会出现"两个图标交替闪"的观感问题。</p>
+
+<h3>4.5 低功耗时序</h3>
+<table>
+<tr><th style="width:26%">阶段</th><th style="width:20%">功耗</th><th>动作</th></tr>
+<tr><td>正常运行</td><td>≈ 8mA</td><td>全速、背光 100%</td></tr>
+<tr><td>低功耗显示（5min 后）</td><td>≈ 5mA</td><td>背光 10%、仅右下角显示、主频降至 1MHz</td></tr>
+<tr><td>STOP（无加热、无告警）</td><td>≈ 30µA</td><td>RTC 1s 唤醒采样，按键 EXTI 唤醒</td></tr>
+</table>
+<div class="note">加热工作时 MCU 功耗可忽略（加热丝是安培级），所以低功耗优化的重点是<strong>不加热时的待机电流</strong>——这直接决定"一节 12Ah 电池能否撑 24 小时"。</div>
+
+<h2>五、代码框架与目录规范</h2>
+
+<h3>5.1 目录结构</h3>
+<pre>hms-fw/
+├── app/                      L5 应用层
+│   ├── app_main.c            启动、主循环、自检
+│   ├── sm_power.c            域 A 电源状态机
+│   ├── sm_thermal.c          域 B 温控状态机
+│   ├── sm_ui.c               域 C 交互状态机
+│   ├── policy_thermal.c      控温策略（迟滞/软启动/过温）
+│   ├── policy_battery.c      双电池选择与 SOC
+│   └── render.c              显示合成（f(A,B,C)）
+├── service/                  L4 服务层
+│   ├── sched.c/h             1ms 时基与任务表
+│   ├── event.c/h             事件队列
+│   ├── soft_timer.c/h        软件定时器
+│   └── filter.c/h            一阶滤波 / 滑动平均
+├── device/                   L3 设备层
+│   ├── dev_key.c/h           按键设备
+│   ├── dev_lcd.c/h           段码 LCD 设备
+│   ├── dev_ntc.c/h           NTC 采集与换算
+│   ├── dev_heat.c/h          加热执行器
+│   ├── dev_batt.c/h          电池检测
+│   ├── dev_nvm.c/h           参数存储
+│   └── dev_buzzer.c/h        蜂鸣器
+├── bsp/                      L2 板级支持
+│   ├── bsp_gpio.c  bsp_adc.c  bsp_pwm.c
+│   ├── bsp_lcd.c   bsp_i2c.c  bsp_wdt.c
+│   └── board_cfg.h           引脚映射（唯一允许出现引脚号的地方）
+├── hal/                      L1 芯片库
+├── config/
+│   ├── app_cfg.h             所有阈值常量（唯一配置入口）
+│   └── seg_map.h             段码位映射表
+├── test/                     单元测试与 SIL 桩
+└── main.c</pre>
+
+<h3>5.2 编码约定</h3>
+<table>
+<tr><th style="width:24%">规则</th><th>内容</th></tr>
+<tr><td>命名</td><td>模块前缀 + 小写下划线：<code>thermal_get_state()</code>；宏全大写；类型 <code>_t</code> 结尾</td></tr>
+<tr><td>内存</td><td>禁止 <code>malloc/free</code>，全部静态分配；栈深度静态分析</td></tr>
+<tr><td>中断</td><td>ISR 内禁止浮点、禁止阻塞、禁止 NVM 写；只投事件</td></tr>
+<tr><td>浮点</td><td>默认定点（×10 或 ×100），仅标定计算允许 float</td></tr>
+<tr><td>魔法数</td><td>所有阈值进 <code>app_cfg.h</code>，代码中不得出现裸数字</td></tr>
+<tr><td>断言</td><td>Release 版本保留参数范围断言，越界置故障码而非复位</td></tr>
+<tr><td>版本</td><td>语义化版本 + 编译时间戳，写入 Flash 固定地址</td></tr>
+</table>
+
+<h3>5.3 核心接口示例</h3>
+<pre>/* device 层对外接口 —— 上层只依赖这些 */
+void     dev_ntc_init(void);
+int16_t  dev_ntc_read_f(uint8_t idx);        /* 返回 °F×1, 无效返回 INT16_MIN */
+
+void     dev_heat_set_duty(uint8_t duty);    /* 0-100 */
+uint8_t  dev_heat_get_duty(void);
+
+bool     dev_key_get_event(key_event_t *ev); /* 非阻塞 */
+void     dev_lcd_render(const seg_frame_t *f);
+void     dev_nvm_save(const param_t *p);
+bool     dev_nvm_load(param_t *p);</pre>
+
+<h2>六、可靠性与安全设计</h2>
+<table>
+<tr><th style="width:22%">机制</th><th style="width:40%">做法</th><th>目的</th></tr>
+<tr><td>Fail-safe 默认态</td><td>加热驱动硬件下拉；软件复位期间输出恒为 OFF</td><td>任何异常都导向"不加热"</td></tr>
+<tr><td>窗口看门狗</td><td>喂狗需同时满足"主循环计数递增"与"关键任务标志置位"</td><td>防止单一任务卡死被掩盖</td></tr>
+<tr><td>双传感器互检</td><td>两点温差 &gt; 10°F 持续 5s 判故障</td><td>防止单点失效导致持续加热</td></tr>
+<tr><td>变化速率限制</td><td>|ΔT/Δt| &gt; 5°F/s 判异常</td><td>识别传感器脱焊 / 短路</td></tr>
+<tr><td>参数双备份</td><td>双 Slot + CRC16 + 版本号</td><td>写入断电不丢参数</td></tr>
+<tr><td>复位原因记录</td><td>上电读 RCC 标志并持久化</td><td>现场问题可追溯</td></tr>
+<tr><td>故障锁存</td><td>FAULT 态需断电或诊断清除，不自动恢复</td><td>防止故障反复触发掩盖问题</td></tr>
+</table>
+
+<h2>七、测试与验证</h2>
+<table>
+<tr><th style="width:18%">层级</th><th style="width:34%">方法</th><th>覆盖目标</th></tr>
+<tr><td>单元测试</td><td>Unity / Ceedling，硬件打桩</td><td>状态机、滤波、SOC、按键识别，覆盖率 ≥ 80%</td></tr>
+<tr><td>SIL 仿真</td><td>PC 上跑 app + service 层，用模型替身模拟热学响应</td><td>72 小时加速老化、边界组合</td></tr>
+<tr><td>HIL 台架</td><td>电阻箱模拟 NTC、继电器模拟开合盖、程控电源模拟电池</td><td>全状态迁移、故障注入 9 类</td></tr>
+<tr><td>环境测试</td><td>-20°F / 120°F 环境舱连续运行</td><td>低温显示、时钟漂移、续航</td></tr>
+<tr><td>EMC</td><td>预兼容扫描</td><td>PWM 与 LCD 翻转不超标</td></tr>
+</table>
+
+<h2>八、软件侧待确认清单</h2>
+<table>
+<tr><th style="width:8%">编号</th><th style="width:30%">问题</th><th style="width:14%">影响</th><th>建议</th></tr>
+<tr><td class="id">SW-Q1</td><td>是否引入 RTOS</td><td>中</td><td>当前规模用前后台足够；若加 BLE 再评估 FreeRTOS</td></tr>
+<tr><td class="id">SW-Q2</td><td>防误触开机方案：长按 1.5s 还是机械锁</td><td>高</td><td>长按 1.5s（成本低），配合按键凹陷设计</td></tr>
+<tr><td class="id">SW-Q3</td><td>长按连发与组合键的时序冲突</td><td>高</td><td>连发起始延时改为 800ms（见 4.3）</td></tr>
+<tr><td class="id">SW-Q4</td><td>调整态 5s 超时是保存还是回退</td><td>中</td><td>保存（符合"设完就走"的使用习惯）</td></tr>
+<tr><td class="id">SW-Q5</td><td>蜂鸣音型、音量、是否可静音</td><td>中</td><td>2kHz 断续音，OK 键静音 10min</td></tr>
+<tr><td class="id">SW-Q6</td><td>过温阈值取 85°F 还是 SP+5°F</td><td>高</td><td>取两者较小值，兼顾材料安全与不误触发</td></tr>
+<tr><td class="id">SW-Q7</td><td>SOC 是否上库仑计</td><td>中</td><td>先做电压法；若误差超标再加采样电阻积分</td></tr>
+<tr><td class="id">SW-Q8</td><td>是否需要固件升级能力</td><td>中</td><td>预留 Bootloader 分区，首版可不实现</td></tr>
+<tr><td class="id">SW-Q9</td><td>温度基准单位最终取 °F 还是 °C</td><td>高</td><td>°F（美国主市场），见整机规格 G-05</td></tr>
+<tr><td class="id">SW-Q10</td><td>是否预留 BLE 硬件</td><td>低</td><td>预留 UART 与焊盘，接口层留空实现</td></tr>
+</table>
+
+<p style="margin-top:26px; font-size:8.5pt; color:#6E7781;">本文件与《M18 加热材料储存箱 完整需求规格 v1.0》配套使用。SW-Q1~Q10 需在软件方案评审会上关闭后方可进入编码。</p>
+
+</body>
+</html>

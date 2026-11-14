@@ -1,0 +1,52 @@
+request_id: 20261104-llc-softstart
+entry_type: full_pipeline
+genre: tech-blog
+current_stage: 3
+output_docx_path: "C:\\Users\\zhizh\\WorkBuddy AI\\2026-10-29-10-28-49\\output\\20261104-llc-softstart\\stage3\\半桥LLC软启动原理与工程实践.docx"
+output_docx_user_specified: false
+created_at: "2026-11-04T15:35:00+08:00"
+updated_at: "2026-11-04T15:52:00+08:00"
+stages:
+  stage_0:
+    status: completed
+    intent: 从零创作中文电力电子技术文档
+    decision: full_pipeline
+  stage_1:
+    status: completed
+    completed_at: "2026-11-04T15:45:00+08:00"
+    output_path: "stage1/final_draft.md"
+    genre: tech-blog
+    expert_used: tech-blog-expert
+    route_tag: expert_tech_blog
+    fallback: false
+  stage_2:
+    status: completed
+    completed_at: "2026-11-04T15:50:00+08:00"
+    route: html
+    html_sub: template
+    template_used: base.html
+    output_path: "stage2/formatted-半桥LLC软启动.html"
+    output_format: html
+    skills_invoked: [doc-typeset, html-review]
+    html_review_attempts: 1
+    review_score: 91
+    fallback: false
+  stage_3:
+    status: completed
+    completed_at: "2026-11-04T15:52:00+08:00"
+    executor: doc-converter
+    input_format: html
+    output_path: "C:\\Users\\zhizh\\WorkBuddy AI\\2026-10-29-10-28-49\\output\\20261104-llc-softstart\\stage3\\半桥LLC软启动原理与工程实践.docx"
+    skill_used: ["html-to-doc"]
+    present_files_opened: true
+    fallback: false
+    fallback_used: false
+    fallback_reason: null
+    preflight_passed: true
+    aigc_tag: true
+consistency_check:
+  heading1: 15
+  heading2: 46
+  tables: 13
+  code_blocks: 23
+  text_chars: 15410

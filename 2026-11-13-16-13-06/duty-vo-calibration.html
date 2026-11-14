@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duty–Vo 标定工具 · R02 1600W 硬开关 PWM 段</title>
+<style>
+:root{
+  --bg:#fdfcf9; --panel:#fff; --ink:#2b2b2b; --ink2:#5a5a5a; --ink3:#8a8a8a;
+  --line:#e2e2e0; --line2:#d5d3cd;
+  --accent:#8a4b2a; --accent2:#1f4e5f; --ok:#2f5d3a; --warn:#b8873a; --fail:#8c2f1f;
+  --hi:#f5efe3;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:14px; line-height:1.65; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:38px 30px 70px}
+
+header{border-bottom:2px solid var(--ink); padding-bottom:16px; margin-bottom:26px}
+h1{font-size:25px; margin:0 0 8px; font-weight:600; letter-spacing:.01em}
+.sub{color:var(--ink2); font-size:13.5px; margin:0}
+.sub b{color:var(--accent)}
+
+h2{font-size:16px; margin:34px 0 14px; font-weight:600; display:flex; align-items:baseline; gap:10px}
+h2 .n{font-family:"SF Mono",Consolas,monospace; font-size:12px; color:var(--accent);
+  border:1px solid var(--line2); padding:1px 7px; letter-spacing:.06em}
+h2 .hint{font-size:12.5px; color:var(--ink3); font-weight:400; margin-left:auto}
+
+/* ---- 参数 ---- */
+.params{display:grid; grid-template-columns:repeat(auto-fit,minmax(122px,1fr)); gap:1px;
+  background:var(--line); border:1px solid var(--line); margin-bottom:8px}
+.pf{background:var(--panel); padding:10px 12px}
+.pf label{display:block; font-size:11.5px; color:var(--ink3); margin-bottom:3px;
+  font-family:"SF Mono",Consolas,monospace; letter-spacing:.04em}
+.pf input{width:100%; border:0; background:transparent; font-size:16px; color:var(--ink);
+  font-family:"SF Mono",Consolas,monospace; padding:0; outline:none}
+.pf input:focus{color:var(--accent2)}
+.pf .u{font-size:11px; color:var(--ink3); margin-left:2px}
+
+.derived{display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--line); border-top:0;
+  background:var(--hi); font-size:12.5px; font-family:"SF Mono",Consolas,monospace}
+.derived div{padding:7px 14px; color:var(--ink2)}
+.derived b{color:var(--accent); font-weight:600}
+
+/* ---- 图 ---- */
+.chartbox{border:1px solid var(--line); background:var(--panel); padding:14px 10px 6px; position:relative}
+canvas{display:block; width:100%}
+.cap{font-size:12px; color:var(--ink3); padding:4px 6px 8px; line-height:1.6}
+
+/* ---- 实测表 ---- */
+.tbl-wrap{border:1px solid var(--line); overflow-x:auto; background:var(--panel)}
+table{border-collapse:collapse; width:100%; font-size:13px}
+th{background:var(--hi); font-weight:600; font-size:11.5px; color:var(--ink2);
+  padding:8px 9px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--line2);
+  font-family:"SF Mono",Consolas,monospace; letter-spacing:.03em}
+th:first-child,th.l{text-align:left}
+td{padding:0; border-bottom:1px solid var(--line); text-align:right;
+  font-family:"SF Mono",Consolas,monospace; font-size:13px; color:var(--ink)}
+td input{width:100%; border:0; background:transparent; text-align:right; padding:7px 9px;
+  font-family:inherit; font-size:inherit; color:inherit; outline:none}
+td input:focus{background:#f0f7f9}
+td.l{text-align:left; padding:7px 9px; font-family:inherit; font-size:12.5px}
+tr:hover td{background:#faf9f6}
+tr.hi td{background:var(--hi)}
+tr.hi:hover td{background:#f0e9dc}
+.dv{font-family:"SF Mono",Consolas,monospace; font-size:12.5px; padding:7px 9px}
+.dv.ok{color:var(--ok)} .dv.mid{color:var(--warn)} .dv.bad{color:var(--fail); font-weight:600}
+.dv.dim{color:var(--ink3)}
+.del{border:0; background:transparent; color:var(--ink3); cursor:pointer; font-size:15px;
+  padding:2px 7px; line-height:1}
+.del:hover{color:var(--fail)}
+
+.bar{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+button{font-family:inherit; font-size:12.5px; padding:7px 15px; cursor:pointer;
+  border:1px solid var(--line2); background:var(--panel); color:var(--ink2); border-radius:2px;
+  transition:all .12s}
+button:hover{border-color:var(--accent); color:var(--accent)}
+button.pri{background:var(--accent2); border-color:var(--accent2); color:#fff}
+button.pri:hover{background:#17404e; color:#fff}
+
+/* ---- 诊断 ---- */
+.diag{border:1px solid var(--line); background:var(--panel); padding:0}
+.diag .hd{background:var(--hi); padding:8px 14px; font-size:12px; color:var(--ink2);
+  font-family:"SF Mono",Consolas,monospace; letter-spacing:.04em; border-bottom:1px solid var(--line2)}
+.diag .bd{padding:14px 16px}
+.kv{display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dotted var(--line);
+  font-size:13px}
+.kv:last-child{border:0}
+.kv span{color:var(--ink2)}
+.kv b{font-family:"SF Mono",Consolas,monospace; font-weight:600; color:var(--ink)}
+.verdict{margin-top:12px; padding:11px 13px; font-size:12.8px; line-height:1.7;
+  border-left:3px solid var(--accent2); background:#f4f8f9}
+.verdict.good{border-color:var(--ok); background:#f2f7f3}
+.verdict.warn{border-color:var(--warn); background:#fbf6ec}
+.verdict.bad{border-color:var(--fail); background:#fbf1ef}
+
+.grid2{display:grid; grid-template-columns:1.55fr 1fr; gap:18px; align-items:start}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}}
+
+/* ---- 交接点 ---- */
+.ho{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px;
+  background:var(--line); border:1px solid var(--line)}
+.ho .c{background:var(--panel); padding:11px 14px}
+.ho .c .t{font-size:11.5px; color:var(--ink3); font-family:"SF Mono",Consolas,monospace}
+.ho .c .v{font-size:19px; font-family:"SF Mono",Consolas,monospace; color:var(--ink); margin-top:2px}
+.ho .c .v small{font-size:12px; color:var(--ink3)}
+.ho .c .s{font-size:11.5px; margin-top:3px}
+.ho .c .s.ok{color:var(--ok)} .ho .c .s.bad{color:var(--fail)}
+
+.notes{margin-top:34px; border-top:1px solid var(--line); padding-top:18px;
+  font-size:12.8px; color:var(--ink2); line-height:1.85}
+.notes b{color:var(--ink)}
+.notes ol{padding-left:20px; margin:8px 0}
+.notes li{margin-bottom:5px}
+code{font-family:"SF Mono",Consolas,monospace; font-size:12px; background:#f2f0eb;
+  padding:1px 5px; border-radius:2px; color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Duty–Vo 标定工具</h1>
+  <p class="sub">R02 1600W · <b>80kHz 对称 PWM 硬开关段</b>（30–42V）· 填入实测点，自动对比理论并反推模型误差</p>
+</header>
+
+<h2><span class="n">01</span>机器参数<span class="hint">改这里，全表重算</span></h2>
+
+<div class="params">
+  <div class="pf"><label>n　匝比</label><input id="n" value="4" step="0.01"></div>
+  <div class="pf"><label>Lr　谐振电感</label><input id="lr" value="12" step="0.1"><span class="u">µH</span></div>
+  <div class="pf"><label>Lm　励磁电感</label><input id="lm" value="80" step="0.5"><span class="u">µH</span></div>
+  <div class="pf"><label>Cr　谐振电容</label><input id="cr" value="136" step="1"><span class="u">nF</span></div>
+  <div class="pf"><label>Vin　母线</label><input id="vin" value="400" step="1"><span class="u">V</span></div>
+  <div class="pf"><label>fsw　开关频率</label><input id="fsw" value="80" step="1"><span class="u">kHz</span></div>
+  <div class="pf"><label>Td　死区</label><input id="td" value="176" step="1"><span class="u">ns</span></div>
+</div>
+
+<div class="derived" id="derived"></div>
+
+<h2><span class="n">02</span>理论曲线与实测点<span class="hint">横轴 Duty，纵轴输出电压</span></h2>
+
+<div class="chartbox">
+  <canvas id="cv"></canvas>
+  <div class="cap" id="cap"></div>
+</div>
+
+<h2><span class="n">03</span>实测数据<span class="hint">Duty 从 0.05 扫到 0.40，每档记 Vo 与 Io</span></h2>
+
+<div class="grid2">
+  <div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="l" style="width:38px">#</th>
+            <th>Duty</th>
+            <th>Vo 实测</th>
+            <th>Io 实测</th>
+            <th>Vo 理论</th>
+            <th>偏差</th>
+            <th>脉宽</th>
+            <th style="width:34px"></th>
+          </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+    <div class="bar">
+      <button class="pri" id="add">+ 加一行</button>
+      <button id="demo">填入示例</button>
+      <button id="clear">清空</button>
+      <button id="csv">导出 CSV</button>
+    </div>
+  </div>
+
+  <div class="diag">
+    <div class="hd">模型诊断</div>
+    <div class="bd">
+      <div class="kv"><span>实测点数</span><b id="dN">—</b></div>
+      <div class="kv"><span>平均绝对偏差</span><b id="dMape">—</b></div>
+      <div class="kv"><span>M_FHA 有效值（均值）</span><b id="dMeff">—</b></div>
+      <div class="kv"><span>M_FHA 有效值（标准差）</span><b id="dSd">—</b></div>
+      <div class="kv"><span>理论 M_FHA（该 fn）</span><b id="dMth">—</b></div>
+      <div class="verdict" id="verdict">填入实测数据后，这里给出诊断。</div>
+    </div>
+  </div>
+</div>
+
+<h2><span class="n">04</span>交接点检查<span class="hint">40.2V 门限到底成不成立</span></h2>
+
+<div class="params" style="margin-bottom:1px">
+  <div class="pf"><label>Vin_min</label><input id="vmin" value="360" step="1"><span class="u">V</span></div>
+  <div class="pf"><label>Vin_nom</label><input id="vnom" value="400" step="1"><span class="u">V</span></div>
+  <div class="pf"><label>Vin_max</label><input id="vmax" value="410" step="1"><span class="u">V</span></div>
+  <div class="pf"><label>固件门限</label><input id="vth" value="40.2" step="0.1"><span class="u">V</span></div>
+  <div class="pf"><label>余量</label><input id="mg" value="1.0" step="0.1"><span class="u">V</span></div>
+</div>
+
+<div class="ho" id="ho"></div>
+
+<div class="notes">
+  <b>怎么用</b>
+  <ol>
+    <li><b>先确认参数</b>：n / Lr / Lm / Cr 应与实物一致。Cr 是 C44、C50 并联的 136nF，不是模型里的 200nF。</li>
+    <li><b>上机扫点</b>：让机器停在 80kHz 硬开关段（30–42V 区间），从 Duty 0.05 起，每 0.05 一档，等输出稳定后记 Vo 和 Io。Duty 可以从 <code>iParamPid.output</code> 读出，或直接抓 CAN 调试帧。</li>
+    <li><b>看偏差列</b>：±10% 以内说明模型够用；超过 20% 说明该点已经偏离基波近似（多半在 Duty 很小、脉宽接近死区的位置）。</li>
+    <li><b>看 M_FHA 有效值</b>：这是从实测反推出来的。如果它稳定在 1.1–1.3，说明模型<b>结构</b>对、只是系数偏；如果它随 Duty 大幅漂移，说明 <code>sin(πD)</code> 这个近似在容性区不成立，需要换成查表。</li>
+    <li><b>交接点</b>：第 4 节算出 PFM 地板，对比固件 40.2V。若地板高于门限，切 PFM 的瞬间输出会跳变。</li>
+  </ol>
+  <p style="margin-top:14px"><b>两个公式，记住就够了</b><br>
+  理论：<code>Vo = M_FHA(fn,Q) × sin(πD) × Vin / (2n)</code>　　Q = Z0 / Rac，Rac = 8n²Vo/(π²Io)<br>
+  反推：<code>M_FHA_eff = 8×Vo_meas / (Vin × sin(πD))</code>　　（把实测的 Vo 和已知的 D 代进去，看模型差多少）</p>
+</div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var $ = function(id){ return document.getElementById(id); };
+
+/* ---------- 计算 ---------- */
+function fhaM(fn, k, q){
+  var A = 1 + (1/k)*(1 - 1/(fn*fn));
+  var B = q*(fn - 1/fn);
+  return 1/Math.hypot(A, B);
+}
+function params(){
+  var n  = +$('n').value   || 4;
+  var lr = (+$('lr').value || 12) * 1e-6;
+  var lm = (+$('lm').value || 80) * 1e-6;
+  var cr = (+$('cr').value || 136) * 1e-9;
+  var vin= +$('vin').value || 400;
+  var fsw= (+$('fsw').value || 80) * 1e3;
+  var td = +$('td').value  || 176;
+  var k  = lm/lr;
+  var fr = 1/(2*Math.PI*Math.sqrt(lr*cr));
+  var z0 = Math.sqrt(lr/cr);
+  var fn = fsw/fr;
+  return {n:n, lr:lr, lm:lm, cr:cr, vin:vin, fsw:fsw, td:td,
+          k:k, fr:fr, z0:z0, fn:fn};
+}
+function theoryVo(P, D, VoRef, Io){
+  // 用给定的 (VoRef,Io) 算负载阻抗 → Q → M_FHA，再乘 sin(piD)
+  var vo = VoRef > 0 ? VoRef : 40;
+  var io = Io > 0 ? Io : 3;
+  var rac = 8*P.n*P.n*vo/(Math.PI*Math.PI*io);
+  var q = P.z0/rac;
+  var m = fhaM(P.fn, P.k, q);
+  return m * Math.sin(Math.PI*D) * P.vin/(2*P.n);
+}
+
+/* ---------- 状态 ---------- */
+var rows = [];      // {d, vo, io}
+var demoMode = false;   // 示例数据标记（readRows 会重建 rows，不能用行内字段）
+
+function readRows(){
+  rows = [];
+  var trs = $('tb').querySelectorAll('tr');
+  for(var i=0;i<trs.length;i++){
+    var ins = trs[i].querySelectorAll('input');
+    var d = parseFloat(ins[0].value);
+    var v = parseFloat(ins[1].value);
+    var c = parseFloat(ins[2].value);
+    if(isNaN(d)) continue;
+    rows.push({d:d, vo:isNaN(v)?null:v, io:isNaN(c)?null:c});
+  }
+}
+
+function rowHtml(r, i){
+  var P = params();
+  var voTxt = '', dvTxt = '', dvCls = 'dim', pwTxt = '';
+  if(r.vo !== null){
+    var vt = theoryVo(P, r.d, r.vo, r.io);
+    var dv = (r.vo - vt)/vt*100;
+    voTxt = vt.toFixed(1);
+    dvTxt = (dv>=0?'+':'') + dv.toFixed(1) + '%';
+    dvCls = Math.abs(dv)<=10 ? 'ok' : (Math.abs(dv)<=20 ? 'mid' : 'bad');
+    var pw = r.d/P.fsw*1e9;
+    pwTxt = pw.toFixed(0) + 'ns';
+  }
+  var hiCls = (r.d>=0.15 && r.d<=0.25) ? ' class="hi"' : '';
+  return '<tr'+hiCls+'>'
+    + '<td class="l dim" style="color:#8a8a8a">'+(i+1)+'</td>'
+    + '<td><input data-f="d"  value="'+r.d+'" inputmode="decimal"></td>'
+    + '<td><input data-f="vo" value="'+(r.vo===null?'':r.vo)+'" inputmode="decimal"></td>'
+    + '<td><input data-f="io" value="'+(r.io===null?'':r.io)+'" inputmode="decimal"></td>'
+    + '<td class="dv dim">'+voTxt+'</td>'
+    + '<td class="dv '+dvCls+'">'+dvTxt+'</td>'
+    + '<td class="dv dim">'+pwTxt+'</td>'
+    + '<td style="text-align:center"><button class="del" data-i="'+i+'">×</button></td>'
+    + '</tr>';
+}
+
+/* ---------- 诊断 ---------- */
+function diagnose(P){
+  var pts = [];
+  for(var i=0;i<rows.length;i++){
+    var r = rows[i];
+    if(r.vo===null || r.io===null || r.io<=0) continue;
+    var s = Math.sin(Math.PI*r.d);
+    if(s < 1e-6) continue;
+    var meff = 8*r.vo/(P.vin*s);
+    var vt = theoryVo(P, r.d, r.vo, r.io);
+    var err = (r.vo - vt)/vt*100;
+    pts.push({d:r.d, meff:meff, err:err, vo:r.vo, io:r.io});
+  }
+  if(!pts.length){
+    $('dN').textContent='—'; $('dMape').textContent='—';
+    $('dMeff').textContent='—'; $('dSd').textContent='—';
+    $('dMth').textContent='—';
+    var v=$('verdict'); v.className='verdict'; v.textContent='填入实测数据后，这里给出诊断。';
+    return;
+  }
+  var n=pts.length, sumE=0, sumM=0;
+  for(var j=0;j<n;j++){ sumE += Math.abs(pts[j].err); sumM += pts[j].meff; }
+  var mape = sumE/n, meanM = sumM/n;
+  var sq=0;
+  for(var j2=0;j2<n;j2++){ sq += Math.pow(pts[j2].meff-meanM,2); }
+  var sd = Math.sqrt(sq/n);
+  var avgVo=0, avgIo=0;
+  for(var m3=0;m3<n;m3++){ avgVo += pts[m3].vo; avgIo += pts[m3].io; }
+  avgVo/=n; avgIo/=n;
+  var mth = fhaM(P.fn, P.k, P.z0/(8*P.n*P.n*avgVo/(Math.PI*Math.PI*avgIo)));
+
+  $('dN').textContent = n + ' 点';
+  $('dMape').textContent = mape.toFixed(1) + '%';
+  $('dMeff').textContent = meanM.toFixed(3);
+  $('dSd').textContent = sd.toFixed(3);
+  $('dMth').textContent = mth.toFixed(3);
+
+  var v2 = $('verdict'), msg, cls;
+  var isDemo = demoMode;
+  var pre = isDemo ? '<b>【示例数据】</b>下面这组是故意做成"系数偏"的演示数据，不是真实验证结果。换成你自己的实测值才有意义。<br><br>' : '';
+  if(n < 3){
+    cls=''; msg='点太少（'+n+' 个），至少要 4–5 个不同 Duty 才能判断趋势。';
+  } else if(sd < 0.06 && mape < 10 && Math.abs(meanM/mth-1) < 0.03){
+    cls='good';
+    msg='模型<b>结构与系数都对得上</b>：M_FHA 有效值稳定在 '+meanM.toFixed(2)+'（理论 '+mth.toFixed(2)+'），偏差 '+
+        mape.toFixed(1)+'%。可以把这条理论曲线当查表基准用。';
+  } else if(sd < 0.08 && mape < 20){
+    cls='warn';
+    msg='模型<b>结构对、系数偏</b>：M_FHA 有效值 '+meanM.toFixed(2)+'，理论 '+mth.toFixed(2)+
+        '，差 '+((meanM/mth-1)*100).toFixed(0)+'%。多半是 n、Vin 或 Cr 的实际值有偏差，先复核这三个数。';
+  } else {
+    cls='bad';
+    msg='<b>sin(πD) 这个近似在这里不成立</b>：M_FHA 有效值从 '+
+        Math.min.apply(null,pts.map(function(p){return p.meff;})).toFixed(2)+' 漂到 '+
+        Math.max.apply(null,pts.map(function(p){return p.meff;})).toFixed(2)+
+        '，标准差 '+sd.toFixed(3)+'。容性区的电流畸变已经让基波近似失效，<b>改用实测查表</b>，别再用公式外推。';
+  }
+  v2.className='verdict '+cls;
+  v2.innerHTML=pre+msg;
+}
+
+/* ---------- 交接点 ---------- */
+function handoff(P){
+  var fl = P.k/(P.k+1);
+  var vmin=+$('vmin').value, vnom=+$('vnom').value, vmax=+$('vmax').value;
+  var vth=+$('vth').value, mg=+$('mg').value;
+  var fmin = fl*vmin/(2*P.n);
+  var fnom = fl*vnom/(2*P.n);
+  var fmax = fl*vmax/(2*P.n);
+  var rec = fmax + mg;   // 最保守：按最高母线算地板
+
+  function cell(t, val, sub, cls){
+    return '<div class="c"><div class="t">'+t+'</div><div class="v">'+val+
+           '</div><div class="s '+(cls||'')+'">'+sub+'</div></div>';
+  }
+  var gapNom = vth - fnom;
+  var s1 = gapNom >= 0 ? 'ok' : 'bad';
+  var t1 = gapNom >= 0
+    ? '门限高于地板 ' + gapNom.toFixed(1) + 'V，可交接'
+    : '门限低于地板 ' + Math.abs(gapNom).toFixed(1) + 'V，<b>会跳变</b>';
+
+  var html = '';
+  html += cell('PFM 地板 @ Vin_min', fmin.toFixed(1)+' <small>V</small>', '母线 '+vmin+'V');
+  html += cell('PFM 地板 @ Vin_nom', fnom.toFixed(1)+' <small>V</small>', '母线 '+vnom+'V');
+  html += cell('PFM 地板 @ Vin_max', fmax.toFixed(1)+' <small>V</small>', '母线 '+vmax+'V');
+  html += cell('固件门限', vth.toFixed(1)+' <small>V</small>', t1, s1);
+  html += cell('建议门限', rec.toFixed(1)+' <small>V</small>', '按最高母线地板 + '+mg.toFixed(1)+'V 余量');
+  html += cell('地板系数 k/(k+1)', fl.toFixed(4), 'k = '+P.k.toFixed(2));
+  $('ho').innerHTML = html;
+}
+
+/* ---------- 绘图 ---------- */
+function draw(P){
+  var cv = $('cv');
+  var cssW = cv.parentNode.clientWidth - 20;
+  var cssH = Math.max(360, Math.min(520, cssW*0.46));
+  var dpr = window.devicePixelRatio || 1;
+  cv.width = cssW*dpr; cv.height = cssH*dpr;
+  cv.style.width = cssW+'px'; cv.style.height = cssH+'px';
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  var padL=54, padR=18, padT=18, padB=42;
+  var x0=padL, x1=cssW-padR, y0=padT, y1=cssH-padB;
+  var dMax=0.45, vMax=65;
+
+  var X = function(d){ return x0 + (d/dMax)*(x1-x0); };
+  var Y = function(v){ return y1 - (v/vMax)*(y1-y0); };
+
+  // 目标带 30-40V
+  ctx.fillStyle='rgba(31,78,95,0.055)';
+  ctx.fillRect(x0, Y(40), x1-x0, Y(30)-Y(40));
+
+  // 网格
+  ctx.strokeStyle='#eeece6'; ctx.lineWidth=1;
+  for(var v=0; v<=vMax; v+=10){
+    ctx.beginPath(); ctx.moveTo(x0,Y(v)); ctx.lineTo(x1,Y(v)); ctx.stroke();
+  }
+  for(var d=0; d<=dMax; d+=0.05){
+    ctx.beginPath(); ctx.moveTo(X(d),y0); ctx.lineTo(X(d),y1); ctx.stroke();
+  }
+
+  // 40.2V 门限
+  var vth=+$('vth').value;
+  ctx.strokeStyle='#8c2f1f'; ctx.setLineDash([6,5]); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(x0,Y(vth)); ctx.lineTo(x1,Y(vth)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#8c2f1f'; ctx.font='12px "SF Mono",Consolas,monospace';
+  ctx.textAlign='right';
+  ctx.fillText('门限 '+vth.toFixed(1)+'V', x1-4, Y(vth)-6);
+
+  // 理论曲线：3A / 10A / 30A
+  var loads=[
+    {io:3,  c:'#b8873a', lab:'3 A'},
+    {io:10, c:'#1f4e5f', lab:'10 A'},
+    {io:30, c:'#8a4b2a', lab:'30 A'}
+  ];
+  loads.forEach(function(L){
+    ctx.beginPath();
+    var started=false;
+    for(var d=0.01; d<=dMax+1e-9; d+=0.002){
+      // 迭代两次求自洽的 Vo（先用 40V 估 Q）
+      var v = theoryVo(P, d, 40, L.io);
+      v = theoryVo(P, d, v, L.io);
+      if(v>vMax){ started=false; continue; }
+      if(!started){ ctx.moveTo(X(d),Y(v)); started=true; }
+      else ctx.lineTo(X(d),Y(v));
+    }
+    ctx.strokeStyle=L.c; ctx.lineWidth=2.2; ctx.lineJoin='round'; ctx.stroke();
+  });
+
+  // 实测点
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    if(r.vo===null) continue;
+    var px=X(r.d), py=Y(r.vo);
+    ctx.beginPath(); ctx.arc(px,py,5.5,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+    ctx.strokeStyle='#2b2b2b'; ctx.lineWidth=2.2; ctx.stroke();
+    // 偏差标注
+    if(r.io!==null){
+      var vt=theoryVo(P,r.d,r.vo,r.io);
+      var dv=(r.vo-vt)/vt*100;
+      ctx.fillStyle = Math.abs(dv)<=10 ? '#2f5d3a' : (Math.abs(dv)<=20 ? '#b8873a' : '#8c2f1f');
+      ctx.font='10.5px "SF Mono",Consolas,monospace';
+      ctx.textAlign='center';
+      ctx.fillText((dv>=0?'+':'')+dv.toFixed(0)+'%', px, py-11);
+    }
+  }
+
+  // 轴
+  ctx.strokeStyle='#c9c6be'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x0,y1); ctx.lineTo(x1,y1); ctx.stroke();
+
+  ctx.fillStyle='#8a8a8a'; ctx.font='11.5px "SF Mono",Consolas,monospace';
+  ctx.textAlign='center';
+  for(var d2=0; d2<=dMax+1e-9; d2+=0.05){
+    ctx.fillText(d2.toFixed(2).replace(/0$/,''), X(d2), y1+16);
+  }
+  ctx.textAlign='right';
+  for(var v2=0; v2<=vMax; v2+=10){
+    ctx.fillText(v2, x0-8, Y(v2)+4);
+  }
+  ctx.textAlign='center';
+  ctx.fillStyle='#5a5a5a'; ctx.font='12px sans-serif';
+  ctx.fillText('Duty（每路占空比）', (x0+x1)/2, y1+33);
+  ctx.save();
+  ctx.translate(13,(y0+y1)/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('输出电压 Vo (V)', 0, 0);
+  ctx.restore();
+
+  // 图例
+  var lx=x0+14, ly=y0+12;
+  ctx.fillStyle='rgba(255,255,255,0.93)';
+  ctx.fillRect(lx-8, ly-10, 168, 74);
+  ctx.strokeStyle='#e2e2e0'; ctx.strokeRect(lx-8, ly-10, 168, 74);
+  ctx.textAlign='left'; ctx.font='11.5px "SF Mono",Consolas,monospace';
+  loads.forEach(function(L,idx){
+    var yy=ly+9+idx*20;
+    ctx.strokeStyle=L.c; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.moveTo(lx,yy); ctx.lineTo(lx+22,yy); ctx.stroke();
+    ctx.fillStyle='#5a5a5a';
+    ctx.fillText('理论 '+L.lab, lx+30, yy+4);
+  });
+  var yy2=ly+9+3*20;
+  ctx.beginPath(); ctx.arc(lx+11,yy2,4.5,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.fill(); ctx.strokeStyle='#2b2b2b'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#5a5a5a'; ctx.fillText('实测点', lx+30, yy2+4);
+
+  // 目标带标注
+  ctx.fillStyle='#1f4e5f'; ctx.font='11.5px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('目标区间 30–40V', x0+14, Y(30)+16);
+
+  $('cap').innerHTML = '理论曲线按 <b>Vo = M_FHA(fn,Q) × sin(πD) × Vin/(2n)</b> 计算，每条曲线用对应负载迭代求自洽的 Q。'
+    + '实测点为空心圆，上方数字是相对理论的偏差。阴影是 30–40V 目标区间，红虚线是 PFM 交接门限。'
+    + '当前 fn = ' + P.fn.toFixed(3) + '，k = ' + P.k.toFixed(2) + '，Z0 = ' + P.z0.toFixed(2) + 'Ω。';
+}
+
+/* ---------- 渲染 ---------- */
+function renderAll(){
+  var P = params();
+  $('derived').innerHTML =
+      '<div>fr <b>'+(P.fr/1e3).toFixed(2)+'</b> kHz</div>'
+    + '<div>fn = fsw/fr <b>'+P.fn.toFixed(3)+'</b></div>'
+    + '<div>k = Lm/Lr <b>'+P.k.toFixed(3)+'</b></div>'
+    + '<div>Z0 <b>'+P.z0.toFixed(2)+'</b> Ω</div>'
+    + '<div>地板 k/(k+1) <b>'+(P.k/(P.k+1)).toFixed(4)+'</b></div>'
+    + '<div>周期 <b>'+(1e6/P.fsw).toFixed(1)+'</b> µs</div>';
+
+  var html='';
+  for(var i=0;i<rows.length;i++) html += rowHtml(rows[i], i);
+  $('tb').innerHTML = html;
+
+  readRows();
+  diagnose(P);
+  handoff(P);
+  draw(P);
+}
+
+/* ---------- 交互 ---------- */
+function addRow(d, vo, io){
+  rows.push({d:d===undefined?0.1:d, vo:vo===undefined?null:vo, io:io===undefined?3:io});
+  renderAll();
+}
+
+$('add').onclick = function(){ demoMode = false; addRow(0.1, null, 3); };
+
+$('clear').onclick = function(){ demoMode = false; rows=[]; renderAll(); };
+
+$('demo').onclick = function(){
+  demoMode = true;
+  var P = params();
+  var ds=[0.05,0.10,0.15,0.20,0.25,0.30,0.40];
+  var bias=[0.985,0.962,0.938,0.945,0.951,0.930,0.958];  // 模拟：整体偏低约 5-7%，用于演示"系数偏"的诊断
+  rows = ds.map(function(d,i){
+    var v = theoryVo(P, d, 40, 3);
+    v = theoryVo(P, d, v, 3);
+    return {d:d, vo:+(v*bias[i]).toFixed(1), io:3, demo:true};
+  });
+  renderAll();
+};
+
+$('csv').onclick = function(){
+  var P = params();
+  var lines = ['Duty,Vo_meas,Io_meas,Vo_theory,Dev_pct,M_FHA_eff,Pulse_ns'];
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    if(r.vo===null||r.io===null) continue;
+    var vt=theoryVo(P,r.d,r.vo,r.io);
+    var dv=(r.vo-vt)/vt*100;
+    var meff=8*r.vo/(P.vin*Math.sin(Math.PI*r.d));
+    lines.push([r.d, r.vo, r.io, vt.toFixed(2), dv.toFixed(1), meff.toFixed(4),
+                (r.d/P.fsw*1e9).toFixed(0)].join(','));
+  }
+  var blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='duty-vo-calibration.csv';
+  a.click();
+};
+
+// 表格输入（事件委托）
+$('tb').addEventListener('input', function(e){
+  var inp = e.target;
+  if(inp.tagName!=='INPUT') return;
+  var tr = inp.closest('tr');
+  var idx = Array.prototype.indexOf.call($('tb').querySelectorAll('tr'), tr);
+  demoMode = false;
+  var f = inp.getAttribute('data-f');
+  var val = parseFloat(inp.value);
+  if(!rows[idx]) return;
+  if(f==='d')  rows[idx].d  = isNaN(val)?0.1:val;
+  if(f==='vo') rows[idx].vo = isNaN(val)?null:val;
+  if(f==='io') rows[idx].io = isNaN(val)?null:val;
+  // 只更新派生列，不重建输入框（避免失焦）
+  var P = params();
+  var tds = tr.querySelectorAll('td');
+  var r = rows[idx];
+  if(r.vo!==null && r.io!==null){
+    var vt = theoryVo(P, r.d, r.vo, r.io);
+    var dv = (r.vo-vt)/vt*100;
+    tds[4].textContent = vt.toFixed(1);
+    tds[5].textContent = (dv>=0?'+':'')+dv.toFixed(1)+'%';
+    tds[5].className = 'dv ' + (Math.abs(dv)<=10?'ok':(Math.abs(dv)<=20?'mid':'bad'));
+    tds[6].textContent = (r.d/P.fsw*1e9).toFixed(0)+'ns';
+  }
+  diagnose(P);
+  handoff(P);
+  draw(P);
+});
+
+// 删除行
+$('tb').addEventListener('click', function(e){
+  if(!e.target.classList.contains('del')) return;
+  var i = +e.target.getAttribute('data-i');
+  rows.splice(i,1);
+  renderAll();
+});
+
+// 参数变化
+['n','lr','lm','cr','vin','fsw','td','vmin','vnom','vmax','vth','mg'].forEach(function(id){
+  $(id).addEventListener('input', function(){
+    readRows();
+    renderAll();
+  });
+});
+
+// 窗口尺寸
+var rt;
+window.addEventListener('resize', function(){
+  clearTimeout(rt);
+  rt = setTimeout(function(){ draw(params()); }, 120);
+});
+
+/* ---------- 初始化 ---------- */
+$('demo').click();
+
+})();
+</script>
+</body>
+</html>

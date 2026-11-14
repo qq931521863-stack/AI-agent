@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>半桥 LLC 增益曲线计算器（FHA）</title>
+<style>
+:root{--ink:#0f172a;--ink2:#475569;--ink3:#94a3b8;--line:#e2e8f0;--bg:#f8fafc;--blue:#185fa5;--blue2:#378add;--amber:#ba7517;--teal:#0f6e56;--red:#a32d2d}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:"Microsoft YaHei",system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.65}
+.wrap{max-width:1140px;margin:0 auto;padding:28px 24px 64px}
+h1{font-size:20px;font-weight:600;margin:0 0 6px}
+.sub{color:var(--ink2);font-size:13px;margin:0 0 22px}
+.grid{display:grid;grid-template-columns:290px 1fr;gap:18px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:#fff}
+.card h2{font-size:12px;font-weight:600;margin:0 0 14px;color:var(--ink3);letter-spacing:.04em}
+label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px;font-size:13px}
+label span{color:var(--ink2)}
+label em{font-style:normal;color:var(--ink3);font-size:11px;margin-left:4px}
+input[type=number]{width:92px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:Consolas,monospace;text-align:right;color:var(--ink);background:#fff}
+input[type=number]:focus{outline:none;border-color:var(--blue2);box-shadow:0 0 0 3px rgba(55,138,221,.12)}
+canvas{display:block;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:2px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{color:var(--ink3);font-weight:400;font-size:12px}
+td:first-child,th:first-child{text-align:left}
+tbody tr:last-child td{border-bottom:none}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+.kv div{border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--bg)}
+.kv b{display:block;font-size:11px;color:var(--ink3);font-weight:400;margin-bottom:1px}
+.kv strong{font-size:15px;font-weight:600;color:var(--ink)}
+.warn{margin-top:12px;padding:10px 12px;border-radius:8px;background:#fdf6ec;border:1px solid #f0d9b5;color:#854f0b;font-size:13px;display:none}
+.warn.on{display:block}
+.stack{display:grid;gap:18px;margin-top:18px}
+.notes{font-size:13px;color:var(--ink2)}
+.notes b{color:var(--ink)}
+.notes code{background:var(--bg);padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:12px;color:var(--blue)}
+.notes ol{margin:8px 0 0;padding-left:20px}
+.notes li{margin-bottom:5px}
+.tip{font-size:12px;color:var(--ink3);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>半桥 LLC 增益曲线计算器（FHA 基波近似）</h1>
+  <p class="sub">改左边任意参数，右边曲线立刻重画。用它反推你没有的那份计算书：先把实测的 Lr / Lm / Cr / 匝比填进去，看理论 fsw 范围能不能对上代码里的实际范围。</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>输入参数</h2>
+      <label><span>输入母线 Vin</span><input type="number" id="vin" value="400" step="1"><em>V</em></label>
+      <label><span>最低母线 Vin_min</span><input type="number" id="vmin" value="360" step="1"><em>V</em></label>
+      <label><span>最高母线 Vin_max</span><input type="number" id="vmax" value="410" step="1"><em>V</em></label>
+      <label><span>输出 Vo</span><input type="number" id="vo" value="50" step="1"><em>V</em></label>
+      <label><span>输出功率 Po</span><input type="number" id="po" value="1600" step="50"><em>W</em></label>
+      <label><span>谐振电感 Lr</span><input type="number" id="lr" value="12" step="0.1"><em>uH</em></label>
+      <label><span>励磁电感 Lm</span><input type="number" id="lm" value="80" step="0.1"><em>uH</em></label>
+      <label><span>谐振电容 Cr</span><input type="number" id="cr" value="136" step="1"><em>nF</em></label>
+      <label><span>匝比 n = Np/Ns</span><input type="number" id="n" value="4" step="0.1"><em>-</em></label>
+      <p class="tip">半桥 + 全桥整流时，谐振点输出 Vo = Vin / (2n)。</p>
+    </div>
+
+    <div class="card">
+      <canvas id="cv"></canvas>
+      <div class="legend">
+        <span><i style="background:#185fa5"></i>满载 100%</span>
+        <span><i style="background:#9fbcd8"></i>75% / 50% / 25%</span>
+        <span><i style="background:#ba7517"></i>轻载 10%</span>
+        <span><i style="background:#a32d2d;height:0;border-top:3px dashed #a32d2d;border-radius:0"></i>ZVS 分界</span>
+        <span><i style="background:#0f6e56;height:0;border-top:2px dashed #0f6e56;border-radius:0"></i>所需增益 M</span>
+      </div>
+      <p class="tip">峰值右侧（fn 偏大）是感性区，能 ZVS；越过峰值往左进容性区，硬开关、体二极管反恢复，就是炸机的那条路。</p>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <h2>推导结果</h2>
+      <div class="kv" id="kv"></div>
+      <div class="warn" id="warn"></div>
+    </div>
+
+    <div class="card">
+      <h2>四个角点的工作频率</h2>
+      <table>
+        <thead><tr><th>工况</th><th>Vin (V)</th><th>负载</th><th>所需 M</th><th>fn</th><th>fsw</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>公式与用法</h2>
+      <div class="notes">
+        <p><b>这里用的模型</b>：把半桥输出的方波只取基波，把整流侧折算成等效电阻，得到纯正弦下的传递函数。所以它叫 FHA（First Harmonic Approximation）。它不精确，但足够用来定 k、Q 和频率范围——工程上就是这么算的。</p>
+        <p style="font-family:Consolas,monospace;font-size:12px;color:#185fa5;background:#f8fafc;padding:10px 12px;border-radius:8px;line-height:2">
+          fr1 = 1 / (2&pi;&radic;(Lr&middot;Cr))&nbsp;&nbsp;&nbsp;fr2 = 1 / (2&pi;&radic;((Lr+Lm)&middot;Cr))<br>
+          k = Lm / Lr&nbsp;&nbsp;&nbsp;Z0 = &radic;(Lr/Cr)&nbsp;&nbsp;&nbsp;Rac = 8n&sup2;Vo&sup2; / (&pi;&sup2;Po)&nbsp;&nbsp;&nbsp;Q = Z0 / Rac<br>
+          M = 2n&middot;Vo / Vin
+        </p>
+        <p><b>反推计算书的顺序</b>（这就是你缺的那份东西）：</p>
+        <ol>
+          <li>副边开路，LCR 测原边 = Lr + Lm；副边短路，测原边 = Lr。两者相减得 Lm。</li>
+          <li>Cr 直接读丝印，或拆下来测。</li>
+          <li>匝比 n：副边加低压交流（5V / 1kHz），测原边电压，比值即 n。别用万用表直流档量。</li>
+          <li>把四个数填进左边，读出理论 fsw 范围。</li>
+          <li>去量产代码里找实际 fsw 范围，对比。对上了，说明你理解了这台机器；对不上，差异就是你要学的东西。</li>
+        </ol>
+        <p><b>参数怎么影响曲线</b>：k 变小（Lm 变小）→ 峰值增益变高、频率范围变宽，但励磁电流大、损耗高；Q 变大（负载重）→ 整条曲线往下压。这两个是 LLC 设计里唯一真正的两个自由度。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ids = ['vin','vmin','vmax','vo','po','lr','lm','cr','n'];
+  var el = {};
+  ids.forEach(function(id){ el[id] = document.getElementById(id); });
+
+  function readP(){
+    var p = {};
+    ids.forEach(function(id){ p[id] = parseFloat(el[id].value) || 0; });
+    return p;
+  }
+
+  function derive(p){
+    var Lr = p.lr * 1e-6, Lm = p.lm * 1e-6, Cr = p.cr * 1e-9;
+    var fr1 = 1 / (2 * Math.PI * Math.sqrt(Lr * Cr));
+    var fr2 = 1 / (2 * Math.PI * Math.sqrt((Lr + Lm) * Cr));
+    var k = Lm / Lr;
+    var z0 = Math.sqrt(Lr / Cr);
+    var rac = 8 * p.n * p.n * p.vo * p.vo / (Math.PI * Math.PI * p.po);
+    var q = z0 / rac;
+    return { fr1: fr1, fr2: fr2, k: k, z0: z0, rac: rac, q: q };
+  }
+
+  function Mreq(p, vin){ return 2 * p.n * p.vo / vin; }
+
+  function gain(fn, k, q){
+    var R = 1 / q, Xl = k * fn, Xs = fn - 1 / fn;
+    var D = R * R + Xl * Xl;
+    var Ap = Xl * Xl * R / D, Bp = Xl * R * R / D;
+    return Math.hypot(Ap, Bp) / Math.hypot(Ap, Bp + Xs);
+  }
+
+  function peak(k, q){
+    var best = 0, bf = 1;
+    for (var f = 0.05; f < 3; f += 0.001){
+      var m = gain(f, k, q);
+      if (m > best){ best = m; bf = f; }
+    }
+    return { fn: bf, M: best };
+  }
+
+  function crossRight(k, q, target){
+    var pk = peak(k, q);
+    if (target > pk.M) return null;
+    var prev = gain(pk.fn, k, q), prevF = pk.fn;
+    for (var f = pk.fn + 0.0005; f < 3; f += 0.0005){
+      var m = gain(f, k, q);
+      if (m <= target){
+        var den = prev - m;
+        if (Math.abs(den) < 1e-9) return f;
+        var t = (prev - target) / den;
+        return prevF + (f - prevF) * t;
+      }
+      prev = m; prevF = f;
+    }
+    return null;
+  }
+
+  function fmtFreq(f){
+    if (!isFinite(f)) return '--';
+    if (f >= 1e6) return (f / 1e6).toFixed(2) + ' MHz';
+    if (f >= 1e3) return (f / 1e3).toFixed(1) + ' kHz';
+    return f.toFixed(0) + ' Hz';
+  }
+
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+
+  function draw(){
+    var p = readP(), d = derive(p);
+    var w = cv.clientWidth || 640;
+    var h = Math.max(320, Math.round(w * 0.6));
+    var dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
+    cv.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    var L = 54, R = 22, T = 18, B = 42;
+    var x0 = L, x1 = w - R, y0 = T, y1 = h - B;
+    var fxMin = 0.4, fxMax = 2.2, fyMin = 0, fyMax = 2.4;
+    function X(f){ return x0 + (f - fxMin) / (fxMax - fxMin) * (x1 - x0); }
+    function Y(m){ return y1 - (m - fyMin) / (fyMax - fyMin) * (y1 - y0); }
+
+    ctx.font = '12px "Microsoft YaHei", system-ui, sans-serif';
+
+    ctx.strokeStyle = '#eef2f6';
+    ctx.lineWidth = 1;
+    for (var gx = 0.5; gx <= 2.05; gx += 0.25){
+      ctx.beginPath(); ctx.moveTo(X(gx), y0); ctx.lineTo(X(gx), y1); ctx.stroke();
+    }
+    for (var gy = 0.5; gy <= 2.05; gy += 0.5){
+      ctx.beginPath(); ctx.moveTo(x0, Y(gy)); ctx.lineTo(x1, Y(gy)); ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x1, y1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.stroke();
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (var tx = 0.5; tx <= 2.05; tx += 0.25){
+      ctx.fillText(tx.toFixed(2), X(tx), y1 + 8);
+    }
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (var ty = 0; ty <= 2.05; ty += 0.5){
+      ctx.fillText(ty.toFixed(1), x0 - 8, Y(ty));
+    }
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('归一化频率  fn = fsw / fr1', (x0 + x1) / 2, y1 + 26);
+    ctx.save();
+    ctx.translate(14, (y0 + y1) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('电压增益 M', 0, 0);
+    ctx.restore();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x0, y0, x1 - x0, y1 - y0);
+    ctx.clip();
+
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(X(1), y0); ctx.lineTo(X(1), y1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x0, Y(1)); ctx.lineTo(x1, Y(1)); ctx.stroke();
+    ctx.setLineDash([]);
+
+    var loads = [1, 0.75, 0.5, 0.25, 0.1];
+    var colors = ['#185fa5', '#9fbcd8', '#9fbcd8', '#9fbcd8', '#ba7517'];
+    var widths = [2.2, 1.3, 1.3, 1.3, 1.3];
+
+    for (var i = 0; i < loads.length; i++){
+      var q = d.q * loads[i];
+      if (q <= 0) continue;
+      ctx.beginPath();
+      ctx.strokeStyle = colors[i];
+      ctx.lineWidth = widths[i];
+      var started = false;
+      for (var f = fxMin; f <= fxMax; f += 0.002){
+        var m = gain(f, d.k, q);
+        if (m > fyMax * 1.35) { started = false; continue; }
+        var px = X(f), py = Y(m);
+        if (!started){ ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#a32d2d';
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    var first = true;
+    for (var qi = 0; qi <= 40; qi++){
+      var qv = 0.06 * Math.pow(1.6 / 0.06, qi / 40);
+      var pk = peak(d.k, qv);
+      if (pk.M > fyMax * 1.3){ first = true; continue; }
+      var px2 = X(pk.fn), py2 = Y(pk.M);
+      if (first){ ctx.moveTo(px2, py2); first = false; }
+      else ctx.lineTo(px2, py2);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    var mMin = Mreq(p, p.vmin), mMax = Mreq(p, p.vmax);
+    var lines = [
+      { m: mMin, c: '#0f6e56', label: 'M @ Vin_min = ' + mMin.toFixed(3) },
+      { m: mMax, c: '#7fb3a3', label: 'M @ Vin_max = ' + mMax.toFixed(3) }
+    ];
+    for (var li = 0; li < lines.length; li++){
+      var ln = lines[li];
+      if (ln.m > fyMax || ln.m < 0) continue;
+      ctx.strokeStyle = ln.c;
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(x0, Y(ln.m)); ctx.lineTo(x1, Y(ln.m)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = ln.c;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(ln.label, x1 - 6, Y(ln.m) - 4);
+    }
+
+    var corners = [
+      { vin: p.vmin, load: 1 },
+      { vin: p.vmax, load: 0.1 }
+    ];
+    for (var ci = 0; ci < corners.length; ci++){
+      var cc = corners[ci];
+      var qq = d.q * cc.load;
+      var fnv = crossRight(d.k, qq, Mreq(p, cc.vin));
+      if (fnv === null) continue;
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#0f6e56';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(X(fnv), Y(Mreq(p, cc.vin)), 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    render(p, d);
+  }
+
+  function render(p, d){
+    var kv = document.getElementById('kv');
+    var mMin = Mreq(p, p.vmin), mMax = Mreq(p, p.vmax);
+    var fnLo = crossRight(d.k, d.q, mMin);
+    var fnHi = crossRight(d.k, d.q * 0.1, mMax);
+
+    var items = [
+      ['fr1', fmtFreq(d.fr1)],
+      ['fr2', fmtFreq(d.fr2)],
+      ['k = Lm/Lr', d.k.toFixed(2)],
+      ['Q 满载', d.q.toFixed(2)],
+      ['特征阻抗 Z0', d.z0.toFixed(1) + ' \u03a9'],
+      ['折算电阻 Rac', d.rac.toFixed(2) + ' \u03a9']
+    ];
+    var html = '';
+    for (var i = 0; i < items.length; i++){
+      html += '<div><b>' + items[i][0] + '</b><strong>' + items[i][1] + '</strong></div>';
+    }
+    kv.innerHTML = html;
+
+    var rows = [
+      ['最低母线 + 满载', p.vmin, '100%', mMin, fnLo],
+      ['最低母线 + 轻载', p.vmin, '10%', mMin, crossRight(d.k, d.q * 0.1, mMin)],
+      ['额定母线 + 满载', p.vin, '100%', Mreq(p, p.vin), crossRight(d.k, d.q, Mreq(p, p.vin))],
+      ['最高母线 + 满载', p.vmax, '100%', mMax, crossRight(d.k, d.q, mMax)],
+      ['最高母线 + 轻载', p.vmax, '10%', mMax, fnHi]
+    ];
+    var tb = '';
+    for (var r = 0; r < rows.length; r++){
+      var row = rows[r];
+      var fn = row[4];
+      tb += '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td><td>' + row[2] + '</td><td>' +
+            row[3].toFixed(3) + '</td><td>' + (fn === null ? '--' : fn.toFixed(3)) +
+            '</td><td>' + (fn === null ? '增益不足' : fmtFreq(fn * d.fr1)) + '</td></tr>';
+    }
+    document.getElementById('tb').innerHTML = tb;
+
+    var warn = document.getElementById('warn');
+    var pk = peak(d.k, d.q);
+    if (mMin > pk.M){
+      warn.className = 'warn on';
+      warn.innerHTML = '满载需要的增益 ' + mMin.toFixed(3) + ' 超过了这条曲线的峰值 ' + pk.M.toFixed(3) +
+        '。这台设计在最低母线满载时会掉出调节范围，通常的做法是减小 k（降 Lm）或者加大 Cr。';
+    } else if (fnLo !== null && fnLo < d.fr2 / d.fr1) {
+      warn.className = 'warn on';
+      warn.innerHTML = '工作点已经跑到 fr2 以下，进入容性区，实际会硬开关、效率塌、器件应力暴涨。要么加大 k，要么缩窄输入范围。';
+    } else {
+      warn.className = 'warn';
+      warn.innerHTML = '';
+    }
+  }
+
+  ids.forEach(function(id){
+    el[id].addEventListener('input', draw);
+  });
+  window.addEventListener('resize', draw);
+  draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>M18 加热材料储存箱 完整需求规格 v1.0</title>
+<style>
+  body { font-family: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", sans-serif; font-size: 10.5pt; line-height: 1.75; color: #1f2328; margin: 0; }
+  h1 { font-size: 22pt; color: #B3121C; border-bottom: 3px solid #B3121C; padding-bottom: 8px; margin: 0 0 6px 0; letter-spacing: 0.5px; }
+  h2 { font-size: 15pt; color: #B3121C; margin: 26px 0 10px 0; padding-left: 10px; border-left: 5px solid #B3121C; }
+  h3 { font-size: 12pt; color: #24292f; margin: 18px 0 8px 0; }
+  h4 { font-size: 10.5pt; color: #444d56; margin: 14px 0 6px 0; }
+  p { margin: 6px 0; }
+  .sub { color: #57606a; font-size: 9.5pt; margin-bottom: 18px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 14px 0; font-size: 9pt; }
+  th { background: #F3F4F6; border: 1px solid #C9CFD6; padding: 6px 7px; text-align: left; font-weight: 600; color: #24292f; }
+  td { border: 1px solid #D8DEE4; padding: 6px 7px; vertical-align: top; }
+  tr:nth-child(even) td { background: #FAFBFC; }
+  .id { font-family: Consolas, "Courier New", monospace; font-weight: 700; color: #B3121C; white-space: nowrap; }
+  .p0 { color: #B3121C; font-weight: 700; }
+  .p1 { color: #B26B00; font-weight: 700; }
+  .p2 { color: #6E7781; font-weight: 700; }
+  .note { background: #FFF8E6; border-left: 4px solid #D4A017; padding: 8px 12px; margin: 12px 0; font-size: 9.5pt; }
+  .warn { background: #FDF0F0; border-left: 4px solid #B3121C; padding: 8px 12px; margin: 12px 0; font-size: 9.5pt; }
+  .ok { background: #F0F7F1; border-left: 4px solid #2E7D4F; padding: 8px 12px; margin: 12px 0; font-size: 9.5pt; }
+  .mono { font-family: Consolas, "Courier New", monospace; font-size: 9pt; }
+  .toc { background: #FAFBFC; border: 1px solid #D8DEE4; padding: 12px 18px; font-size: 9.5pt; line-height: 2; }
+  .cap { font-size: 8.5pt; color: #6E7781; margin: -8px 0 14px 0; }
+  ul, ol { margin: 6px 0 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+
+<h1>M18 加热材料储存箱<br>完整需求规格（SRS v1.0）</h1>
+<p class="sub">Heated Material Storage · 由 IPI 需求文档 + UI 标注图双向提取整合 · 2026-11-05</p>
+
+<table>
+<tr><th style="width:16%">项目</th><th>内容</th></tr>
+<tr><td>产品代号</td><td>M18 Heated Material Storage（加热材料储存箱 / Material Warmer）</td></tr>
+<tr><td>需求来源 A</td><td>《M18 Material Warming IPI Final 20261027》共 23 页（用户研究、CTQ、UI/UX 要求）</td></tr>
+<tr><td>需求来源 B</td><td>UI 标注图 2 张（显示面板符号说明 / 按键与设定说明）</td></tr>
+<tr><td>文档性质</td><td>系统级需求规格，覆盖结构、热、电、固件、HMI 五个子系统</td></tr>
+<tr><td>编号规则</td><td><span class="mono">REQ-&lt;模块码&gt;-&lt;两位序号&gt;</span>；模块码见第二章</td></tr>
+<tr><td>优先级</td><td><span class="p0">P0</span> 必须（不可裁剪）／<span class="p1">P1</span> 应该（可降级）／<span class="p2">P2</span> 可选（探索）</td></tr>
+<tr><td>追溯原则</td><td>每条需求标注来源：<span class="mono">[IPI p.xx]</span> / <span class="mono">[UI-1]</span> / <span class="mono">[UI-2]</span> / <span class="mono">[推导]</span></td></tr>
+</table>
+
+<div class="toc">
+<strong>目录</strong><br>
+一、产品定义与范围　二、系统架构与模块划分　三、需求条目（M1–M12）<br>
+四、UI 显示规格（布局 / 图标字典 / 状态机 / 优先级 / 交互矩阵）<br>
+五、数值与控制算法　六、需求追溯矩阵　七、冲突与待确认清单（Gap List）　八、验收测试要点
+</div>
+
+<h2>一、产品定义与范围</h2>
+
+<h3>1.1 一句话定位</h3>
+<p>一台可堆叠、可电池供电、可插电、能自动控温的硬质保温箱，让技工在前一晚或通勤途中把胶管、PVC 胶、发泡胶、油漆等材料维持在 40–80°F 的可用温度，第二天到场即开工。</p>
+
+<h3>1.2 北极星目标（WIG）</h3>
+<div class="ok"><strong>消除住宅与服务类技工在冬季的"晨间备料"环节，并最大限度减少材料冻结。</strong><span class="mono"> [IPI p.16]</span></div>
+
+<h3>1.3 目标用户</h3>
+<table>
+<tr><th style="width:22%">用户群</th><th style="width:38%">典型场景</th><th>核心痛点</th></tr>
+<tr><td>住宅 / 服务类技工（主）</td><td>电工、水暖、HVAC、木工、屋面、门窗安装；材料放车厢，隔夜冻结</td><td>每天 1–2 小时等材料回温；当天不知道去哪，无法提前备料</td></tr>
+<tr><td>商业工地（次）</td><td>工具箱供料，整托材料进场，任务提前排定</td><td>材料可在现场过夜，需要大容量与防盗</td></tr>
+<tr><td>电力公司（垂直）</td><td>地下作业车；电缆润滑剂、熔接包、绑带</td><td>现场无电源，材料必须持续保温</td></tr>
+</table>
+
+<h3>1.4 价值量化（用于验收与卖点对齐）</h3>
+<table>
+<tr><th style="width:34%">指标</th><th style="width:22%">数值</th><th>来源</th></tr>
+<tr><td>单次备料浪费工时</td><td>1–2 小时</td><td class="mono">[IPI p.10]</td></tr>
+<tr><td>每周发生频次</td><td>平均 3 次 → 每周 3–6 小时</td><td class="mono">[IPI p.10]</td></tr>
+<tr><td>人工计费</td><td>$150–200 / 小时</td><td class="mono">[IPI p.10]</td></tr>
+<tr><td>单季节材料损失（单工种）</td><td>液钉 $1,000+／防火密封胶 $1,149</td><td class="mono">[IPI p.10]</td></tr>
+<tr><td>受影响材料种类</td><td>20+ 种（胶管、PVC 胶/底涂、发泡胶、胶带、油漆、木胶…）</td><td class="mono">[IPI p.4]</td></tr>
+</table>
+
+<h3>1.5 范围边界</h3>
+<table>
+<tr><th style="width:14%">类别</th><th>内容</th></tr>
+<tr><td><strong>范围内</strong></td><td>整机（箱体、保温、加热、双电池、AC 混合供电、控温固件、段码 LCD 与按键、PACKOUT 集成、锁具与提手）</td></tr>
+<tr><td><strong>明确不做</strong></td><td>M18 电池充电功能（<span class="mono">Out of scope: M18 Charging</span>，p.17）；<br>面向"给电池保温"的营销定位（p.18，仅作技术交互考虑）</td></tr>
+<tr><td><strong>探索项</strong></td><td>远程温度 / 续航监控（p.22 标注为 Explore，P2）</td></tr>
+</table>
+
+<h2>二、系统架构与模块划分</h2>
+
+<h3>2.1 子系统分层</h3>
+<table>
+<tr><th style="width:8%">层</th><th style="width:20%">子系统</th><th style="width:34%">职责</th><th>包含模块</th></tr>
+<tr><td>S1</td><td>结构与箱体</td><td>容积、开合、密封、承重、防盗、清洁</td><td>M8 结构与容量、M9 PACKOUT 与运输</td></tr>
+<tr><td>S2</td><td>热管理</td><td>加热、保温、均温、过温保护</td><td>M2 加热与温控</td></tr>
+<tr><td>S3</td><td>电源与配电</td><td>双电池、AC 混合、切换、保护</td><td>M1 电源系统</td></tr>
+<tr><td>S4</td><td>传感与检测</td><td>温度、开盖、电池、故障</td><td>M3 传感与检测</td></tr>
+<tr><td>S5</td><td>控制与固件</td><td>状态机、控温算法、低功耗、记忆</td><td>M4 显示、M7 低功耗与记忆</td></tr>
+<tr><td>S6</td><td>人机界面</td><td>LCD、按键、蜂鸣、告警</td><td>M5 按键交互、M6 提示与告警</td></tr>
+<tr><td>S7</td><td>可靠性与合规</td><td>跌落、环境、IP、安全</td><td>M10 耐久、M11 安全合规</td></tr>
+</table>
+
+<h3>2.2 模块清单</h3>
+<table>
+<tr><th style="width:10%">模块码</th><th style="width:26%">模块名称</th><th style="width:12%">条数</th><th>说明</th></tr>
+<tr><td class="id">PWR</td><td>M1 电源系统</td><td>13</td><td>双 M18 电池 + AC 混合供电、SOC、保护</td></tr>
+<tr><td class="id">THM</td><td>M2 加热与温控</td><td>14</td><td>40–80°F 控温、过温、开盖停机</td></tr>
+<tr><td class="id">SEN</td><td>M3 传感与检测</td><td>7</td><td>温度、开盖、电池、过载、自检</td></tr>
+<tr><td class="id">UI</td><td>M4 显示系统</td><td>18</td><td>段码 LCD 布局、图标、可读性</td></tr>
+<tr><td class="id">HMI</td><td>M5 按键与交互</td><td>11</td><td>4 键、组合键、防误触、手感</td></tr>
+<tr><td class="id">ALM</td><td>M6 提示与告警</td><td>7</td><td>蜂鸣策略、静音、告警分级</td></tr>
+<tr><td class="id">PWRM</td><td>M7 低功耗与记忆</td><td>8</td><td>5 分钟低功耗、唤醒、掉电记忆</td></tr>
+<tr><td class="id">STR</td><td>M8 结构与容量</td><td>17</td><td>装载规格、开合、锁、提手、重量</td></tr>
+<tr><td class="id">PKT</td><td>M9 PACKOUT 与运输</td><td>8</td><td>堆叠、锁附、车载、壁挂</td></tr>
+<tr><td class="id">DUR</td><td>M10 耐久与环境</td><td>5</td><td>跌落、温度、IP、振动</td></tr>
+<tr><td class="id">SAF</td><td>M11 安全与合规</td><td>4</td><td>材料安全、电池安全、认证</td></tr>
+<tr><td class="id">EXP</td><td>M12 探索项</td><td>3</td><td>远程监控、续航预估、数据记录</td></tr>
+</table>
+
+<h2>三、需求条目</h2>
+
+<h3>3.1 M1 电源系统（PWR）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">PWR-01</td><td>双 M18 电池仓，支持 1 节或 2 节电池运行</td><td>单节 / 双节均可正常开机加热</td><td class="p0">P0</td><td class="mono">p.17</td></tr>
+<tr><td class="id">PWR-02</td><td>双电池扩展续航：一节耗尽后自动切换另一节，无需停机换电</td><td>切换过程中加热输出中断 &lt; 500ms，无告警</td><td class="p0">P0</td><td class="mono">p.16/17</td></tr>
+<tr><td class="id">PWR-03</td><td>放电顺序：默认先放 Battery 2，再放 Battery 1；Battery 2 缺失或失效时直接使用 Battery 1</td><td>两节满电同时装入，电量条 2 先下降</td><td class="p1">P1</td><td class="mono">UI-2（待确认）</td></tr>
+<tr><td class="id">PWR-04</td><td>AC 优先：插电时仅使用 AC，即使仓内有电池</td><td>插电瞬间电流切换至 AC，电池不放电</td><td class="p0">P0</td><td class="mono">p.17 / UI-2</td></tr>
+<tr><td class="id">PWR-05</td><td>不做 M18 充电功能</td><td>插电时电池 SOC 不上升</td><td class="p0">P0</td><td class="mono">p.17</td></tr>
+<tr><td class="id">PWR-06</td><td>AC 插拔不断热：切换过程中加热输出不中断</td><td>插拔 AC 时内部温度曲线无跌落</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">PWR-07</td><td>两路独立 4 段电量条显示（Battery 1 / Battery 2）</td><td>与实际 SOC 误差 ≤ 1 段</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">PWR-08</td><td>电池未插入或已失效时，对应电量条关闭</td><td>空仓时该路电量条全灭</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">PWR-09</td><td>续航：单节 12.0Ah 电池维持 24 小时（40–80°F 环温条件）</td><td>台架 24h 测试通过</td><td class="p0">P0</td><td class="mono">p.16/17</td></tr>
+<tr><td class="id">PWR-10</td><td>每周电池更换次数 ≤ 1.5 次（2 节电池组）</td><td>模拟一周工况验证</td><td class="p1">P1</td><td class="mono">p.17</td></tr>
+<tr><td class="id">PWR-11</td><td>低电量预警：剩余电量低于阈值时，对应电量条闪烁提示</td><td>阈值待定（建议 ≤ 25%），闪烁周期待定</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">PWR-12</td><td>电池低温适应性：电池仓需保温或被动加热，避免 -20°F 下容量骤降</td><td>-20°F 环境 24h 续航衰减 ≤ 目标值</td><td class="p1">P1</td><td class="mono">p.17</td></tr>
+<tr><td class="id">PWR-13</td><td>电气保护：反接、短路、过流、过温保护</td><td>故障注入测试不失效、不起火</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>3.2 M2 加热与温控（THM）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">THM-01</td><td>目标温度可调范围 40–80°F，步进 5°F</td><td>边界值可设定且不可越界</td><td class="p0">P0</td><td class="mono">p.17 / UI-1</td></tr>
+<tr><td class="id">THM-02</td><td>↑/↓ 短按单步 +5/−5°F；长按 200ms 连发</td><td>长按 1s 至少步进 4 次</td><td class="p0">P0</td><td class="mono">UI-1</td></tr>
+<tr><td class="id">THM-03</td><td>到达 40°F 或 80°F 后按键无效，显示不越界</td><td>连续长按不出现 35°F / 85°F</td><td class="p0">P0</td><td class="mono">UI-1</td></tr>
+<tr><td class="id">THM-04</td><td>内部温度实时显示，分辨率 1°F</td><td>与标准温度计偏差 ≤ 1°F</td><td class="p0">P0</td><td class="mono">p.21 / UI-2</td></tr>
+<tr><td class="id">THM-05</td><td>控温精度：稳态波动带 ±3°F（建议值，待确认）</td><td>恒温箱测试温度曲线</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">THM-06</td><td>过温保护：内部温度超过保护阈值（建议 85°F 或设定值 +5°F，取大者）立即停止加热并点亮过温图标</td><td>超温后 5s 内加热关断</td><td class="p0">P0</td><td class="mono">p.17 / UI-2</td></tr>
+<tr><td class="id">THM-07</td><td>材料安全：任何工况下不得使箱内可燃材料超过 80°F 或引发燃烧</td><td>失效模式分析 + 实测</td><td class="p0">P0</td><td class="mono">p.17</td></tr>
+<tr><td class="id">THM-08</td><td>不得熔化、变形或损伤上下左右相邻的 PACKOUT（需给出外壳表面温度上限）</td><td>满功率 8h 后表面温度 ≤ 限值</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+<tr><td class="id">THM-09</td><td>开盖 ≥ 60s 自动停止加热</td><td>计时准确 ±2s</td><td class="p0">P0</td><td class="mono">p.21 / UI-2</td></tr>
+<tr><td class="id">THM-10</td><td>关盖后自动恢复加热，恢复至原设定温度</td><td>关盖后 10s 内恢复输出</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">THM-11</td><td>预热能力：-20°F 环境从开机到箱内达 40°F 的时间目标（建议 ≤ 60min，需定义）</td><td>低温舱测试</td><td class="p1">P1</td><td class="mono">p.2/17</td></tr>
+<tr><td class="id">THM-12</td><td>开盖影响：一天开盖 12 次不影响整体维持能力</td><td>模拟开盖 12 次后温度仍达标</td><td class="p1">P1</td><td class="mono">p.17</td></tr>
+<tr><td class="id">THM-13</td><td>材料任意朝向摆放不影响热性能</td><td>横放 / 竖放 / 堆叠三组对比</td><td class="p0">P0</td><td class="mono">p.17</td></tr>
+<tr><td class="id">THM-14</td><td>箱内温度均匀性：各测点最大温差 ≤ 5°F（建议值，待确认）</td><td>9 点布温测试</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>3.3 M3 传感与检测（SEN）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">SEN-01</td><td>内部温度传感器（NTC），精度 ±1°F，数量与布置待定（建议 ≥ 2 点）</td><td>与标准件比对</td><td class="p0">P0</td><td class="mono">p.21</td></tr>
+<tr><td class="id">SEN-02</td><td>箱盖开合检测（霍尔 / 干簧 / 机械开关）</td><td>开合 10,000 次无误判</td><td class="p0">P0</td><td class="mono">p.21</td></tr>
+<tr><td class="id">SEN-03</td><td>电池在位检测（Battery 1 / Battery 2 独立）</td><td>拔插识别 &lt; 1s</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">SEN-04</td><td>电池温度检测，用于低温降额与保护</td><td>-20°F 下不误报</td><td class="p1">P1</td><td class="mono">p.17</td></tr>
+<tr><td class="id">SEN-05</td><td>过载检测：加热回路电流异常（开路 / 短路 / 过流）</td><td>故障注入 3 类均能识别</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">SEN-06</td><td>传感器自检：开路 / 短路故障可识别并上报</td><td>拔掉传感器后 10s 内报错</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SEN-07</td><td>采样周期 ≤ 1s（建议 500ms）</td><td>示波器验证</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>3.4 M4 显示系统（UI）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">UI-01</td><td>段码式 LCD（非点阵），含 2 位目标温度 + 2 位内部温度 + 状态图标区 + 2 路电量条</td><td>布局与标注图一致</td><td class="p0">P0</td><td class="mono">UI-1/UI-2</td></tr>
+<tr><td class="id">UI-02</td><td>目标温度区（小字，左上）显示设定值</td><td>调整时实时刷新</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">UI-03</td><td>内部温度区（大字，左下）显示实测值</td><td>1s 刷新</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">UI-04</td><td>单位指示 °C / °F 紧邻目标温度区显示</td><td>与当前单位一致</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">UI-05</td><td>设定值标识符号（准星 ⊕）需明确定义语义（建议：表示该数值为"设定值"而非实测值）</td><td>规格书中给出定义</td><td class="p0">P0</td><td class="mono">UI-1/UI-2（缺口）</td></tr>
+<tr><td class="id">UI-06</td><td>加热中图标（红色波浪）：加热输出时以 1000ms 周期闪烁，停止加热时熄灭</td><td>示波器 + 目视</td><td class="p0">P0</td><td class="mono">UI-2 / p.21</td></tr>
+<tr><td class="id">UI-07</td><td><strong>维持模式图标</strong>：内部温度达到设定温度后，显示"已达标 / 保温中"图标（区别于"未加热"）</td><td>达标瞬间点亮，跌出回差熄灭</td><td class="p0">P0</td><td class="mono">p.21（<strong>UI 缺</strong>）</td></tr>
+<tr><td class="id">UI-08</td><td>开盖图标（风扇图形）：开盖时点亮；≥30s 转为 350ms 闪烁</td><td>时序误差 ±2s</td><td class="p0">P0</td><td class="mono">UI-2 / p.21</td></tr>
+<tr><td class="id">UI-09</td><td>过温图标（红色温度计）：过温时常亮，恢复后熄灭</td><td>与 THM-06 联动</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">UI-10</td><td>AC 供电图标（插头）：插电时常亮，切回电池时熄灭</td><td>与 PWR-04 联动</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">UI-11</td><td>过载图标（红色三角）：故障状态常亮</td><td>与 SEN-05 联动</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">UI-12</td><td>电量条 1 / 2：4 段显示，段数对应 SOC 区间（需给出映射表）</td><td>4 段映射表评审通过</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">UI-13</td><td>阳光下可读：含雪地反射工况，对比度 ≥ 7:1（建议值）</td><td>100,000 lux 环境目视</td><td class="p0">P0</td><td class="mono">p.22</td></tr>
+<tr><td class="id">UI-14</td><td>低温性能：-20°F 下无迟滞、无失效、无变暗</td><td>低温舱连续 8h</td><td class="p0">P0</td><td class="mono">p.22</td></tr>
+<tr><td class="id">UI-15</td><td>上电自检：全段点亮 1s 后进入工作画面</td><td>目视</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">UI-16</td><td>异常显示：传感器故障 / 超范围时显示 <span class="mono">--</span> 或 <span class="mono">Err</span>（需定义）</td><td>故障注入验证</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">UI-17</td><td>夜间可读：暗光环境下按键与屏幕可辨识</td><td>5 lux 环境目视</td><td class="p1">P1</td><td class="mono">p.21/22</td></tr>
+<tr><td class="id">UI-18</td><td>图标语言无关（不依赖文字），符合"技工重度依赖图标"的使用习惯</td><td>可用性测试 ≥ 8/10 正确理解</td><td class="p0">P0</td><td class="mono">p.22</td></tr>
+</table>
+
+<h3>3.5 M5 按键与交互（HMI）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">HMI-01</td><td>电源键：短按开机 / 关机</td><td>响应 &lt; 300ms</td><td class="p0">P0</td><td class="mono">UI-1</td></tr>
+<tr><td class="id">HMI-02</td><td><strong>防误触开机</strong>：运输中不得被挤压开机（长按 1.5s 开机 / 或机械锁止，方案待定）</td><td>振动台 + 堆叠挤压测试不误开机</td><td class="p0">P0</td><td class="mono">p.21（<strong>UI 缺</strong>）</td></tr>
+<tr><td class="id">HMI-03</td><td>关机记忆：再次开机恢复上次设定温度</td><td>断电 24h 后开机值不变</td><td class="p0">P0</td><td class="mono">UI-1</td></tr>
+<tr><td class="id">HMI-04</td><td>OK 键：提交当前目标温度；若目标值 = 当前值则不动作</td><td>与 UI-1 描述一致</td><td class="p0">P0</td><td class="mono">UI-1</td></tr>
+<tr><td class="id">HMI-05</td><td><strong>提交反馈</strong>：按 OK 后需有明确反馈（蜂鸣 1 声 或 目标温度闪 2 次）</td><td>盲操作可感知</td><td class="p0">P0</td><td class="mono">[推导]（<strong>UI 缺</strong>）</td></tr>
+<tr><td class="id">HMI-06</td><td>↑/↓ 键调整目标温度（见 THM-02）</td><td>—</td><td class="p0">P0</td><td class="mono">UI-1</td></tr>
+<tr><td class="id">HMI-07</td><td>同时长按 ↑ + ↓ 750ms 切换 °F / °C；切换时新单位以 150ms 周期闪 3 次</td><td>组合键识别率 100%</td><td class="p0">P0</td><td class="mono">UI-1</td></tr>
+<tr><td class="id">HMI-08</td><td>按键手感：戴手套可操作，凸起高度 / 行程 / 操作力需定义（建议行程 ≥ 1.0mm，力 3–5N）</td><td>手套可用性测试</td><td class="p0">P0</td><td class="mono">p.21</td></tr>
+<tr><td class="id">HMI-09</td><td>按键寿命 ≥ 50,000 次</td><td>寿命台</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">HMI-10</td><td>按键区防护等级 ≥ IP54</td><td>与整机同测</td><td class="p0">P0</td><td class="mono">p.16</td></tr>
+<tr><td class="id">HMI-11</td><td>调整态超时：调整后 5s 内未按 OK 的处理策略（自动保存 / 回退原值，需定义）</td><td>规格书中给出定义</td><td class="p1">P1</td><td class="mono">[推导]（缺口）</td></tr>
+</table>
+
+<h3>3.6 M6 提示与告警（ALM）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">ALM-01</td><td>开盖持续 30s → 蜂鸣提示（与图标闪烁同步）</td><td>计时 ±2s</td><td class="p0">P0</td><td class="mono">p.21 / UI-2</td></tr>
+<tr><td class="id">ALM-02</td><td>开盖持续 60s → 停止加热，蜂鸣停止（避免持续扰民）</td><td>60s 时加热关断</td><td class="p0">P0</td><td class="mono">p.21 / UI-2</td></tr>
+<tr><td class="id">ALM-03</td><td>关盖后告警解除，全部功能恢复</td><td>关盖 2s 内静音</td><td class="p0">P0</td><td class="mono">UI-2</td></tr>
+<tr><td class="id">ALM-04</td><td>蜂鸣声压 ≥ 65dB @ 1m，音色不刺耳</td><td>声级计实测</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">ALM-05</td><td>是否提供静音 / 静音后自动恢复时长（建议：静音 10min 后恢复）</td><td>规格书中给出定义</td><td class="p1">P1</td><td class="mono">UI-2（"if applicable"含糊）</td></tr>
+<tr><td class="id">ALM-06</td><td>过温 / 过载是否伴随蜂鸣（建议：过载鸣叫，过温仅图标）</td><td>告警矩阵评审</td><td class="p1">P1</td><td class="mono">[推导]（缺口）</td></tr>
+<tr><td class="id">ALM-07</td><td>按键音（可选，可关闭）</td><td>—</td><td class="p2">P2</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>3.7 M7 低功耗与记忆（PWRM / MEM）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">PWRM-01</td><td>连续运行 5 分钟无操作 → 进入低功耗模式：屏幕变暗</td><td>计时 ±10s</td><td class="p0">P0</td><td class="mono">p.21</td></tr>
+<tr><td class="id">PWRM-02</td><td>低功耗下仅在<strong>右下角</strong>显示设定温度，其余熄灭</td><td>与 UI 布局冲突，见第七章 G-01</td><td class="p0">P0</td><td class="mono">p.21（<strong>与 UI 冲突</strong>）</td></tr>
+<tr><td class="id">PWRM-03</td><td>箱内达到设定温度时，屏幕自动点亮提示一次，随后回到低功耗</td><td>达标唤醒 &lt; 1s</td><td class="p0">P0</td><td class="mono">p.21</td></tr>
+<tr><td class="id">PWRM-04</td><td>任意按键唤醒至全亮</td><td>唤醒 &lt; 300ms</td><td class="p0">P0</td><td class="mono">p.21</td></tr>
+<tr><td class="id">PWRM-05</td><td>低功耗期间控温与保护功能不得降级</td><td>低功耗下超温仍能关断</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">PWRM-06</td><td>掉电保存设定温度</td><td>见 HMI-03</td><td class="p0">P0</td><td class="mono">UI-1</td></tr>
+<tr><td class="id">PWRM-07</td><td>掉电保存单位偏好（°F / °C）</td><td>断电后单位不变</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">PWRM-08</td><td>存储介质擦写寿命 ≥ 100,000 次（或采用磨损均衡 / 仅变更时写入）</td><td>寿命计算书</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>3.8 M8 结构与容量（STR）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">STR-01</td><td>可容纳 12 支 28oz 胶管 / 液钉（单箱，屋面与框架工最常见）</td><td>实物装载验证</td><td class="p0">P0</td><td class="mono">p.18</td></tr>
+<tr><td class="id">STR-02</td><td>可容纳 24 支 10oz 胶管（MEP 最常见）</td><td>实物装载验证</td><td class="p0">P0</td><td class="mono">p.18</td></tr>
+<tr><td class="id">STR-03</td><td>可容纳 3 桶 1qt PVC 胶 + 3 桶 1qt 底涂，且必须能<strong>直立</strong>放置</td><td>实物装载验证</td><td class="p0">P0</td><td class="mono">p.18</td></tr>
+<tr><td class="id">STR-04</td><td>可容纳 20 包 3/4" 电工胶带</td><td>实物装载验证</td><td class="p0">P0</td><td class="mono">p.18</td></tr>
+<tr><td class="id">STR-05</td><td>可容纳 10 包 2" 电工胶带（电力公司向）</td><td>实物装载验证</td><td class="p0">P0</td><td class="mono">p.18</td></tr>
+<tr><td class="id">STR-06</td><td>可容纳 24 罐 12oz 发泡胶</td><td>实物装载验证</td><td class="p0">P0</td><td class="mono">p.18</td></tr>
+<tr><td class="id">STR-07</td><td>可容纳 2 桶 1 加仑油漆</td><td>实物装载验证</td><td class="p0">P0</td><td class="mono">p.18</td></tr>
+<tr><td class="id">STR-08</td><td>前开门设计，28oz 胶管可整体取出；中堆叠 / 运输 / 壁挂状态下均可取料</td><td>三种场景实测</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+<tr><td class="id">STR-09</td><td>上盖可完全开启，便于整批装卸</td><td>开合角度 ≥ 100°</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+<tr><td class="id">STR-10</td><td>开门时材料不得跌落或滚出（需挡边 / 分层设计）</td><td>开门 30° / 60° 实测</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+<tr><td class="id">STR-11</td><td>可拆卸内衬，便于清理泼洒</td><td>5min 内可拆装</td><td class="p0">P0</td><td class="mono">p.20</td></tr>
+<tr><td class="id">STR-12</td><td>提手：支持单人及双人搬运；满载 100lb 时不得失效</td><td>100lb 静载 + 搬运测试</td><td class="p0">P0</td><td class="mono">p.20</td></tr>
+<tr><td class="id">STR-13</td><td>空机重量 ≤ 25lb（裸机）</td><td>称重</td><td class="p0">P0</td><td class="mono">p.20</td></tr>
+<tr><td class="id">STR-14</td><td>电池仓与加热机构不得干扰材料取放</td><td>满载取放测试</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+<tr><td class="id">STR-15</td><td>锁具：可挂挂锁锁住内容物；外部有可穿链条 / 车锁的固定点，能抵抗徒手与手工具（钢丝钳、断线钳、锤、螺丝刀）</td><td>破坏性测试</td><td class="p0">P0</td><td class="mono">p.20</td></tr>
+<tr><td class="id">STR-16</td><td>绑扎点：适配棘轮带、RTIC 绑带、弹力绳，用于车载固定</td><td>拉力测试</td><td class="p0">P0</td><td class="mono">p.20</td></tr>
+<tr><td class="id">STR-17</td><td>整机密封：前门与上盖开合处防水防尘（配合 IP54）</td><td>IP54 测试</td><td class="p0">P0</td><td class="mono">p.16/19</td></tr>
+</table>
+
+<h3>3.9 M9 PACKOUT 与运输（PKT）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">PKT-01</td><td>底部可锁附于下方 PACKOUT 箱体</td><td>符合 PACKOUT 标准</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+<tr><td class="id">PKT-02</td><td>顶部可承载上方 PACKOUT 箱体</td><td>满载 100lb 静压</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+<tr><td class="id">PKT-03</td><td>运输中上下箱体不得脱离</td><td>颠簸路面 50km 测试</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+<tr><td class="id">PKT-04</td><td>可放置于 PACKOUT 推车运输</td><td>推车适配</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+<tr><td class="id">PKT-05</td><td>适配新一代车载支架系统（Gen 1 与 Gen 2）</td><td>装车实测</td><td class="p1">P1</td><td class="mono">p.19</td></tr>
+<tr><td class="id">PKT-06</td><td>可挂装于车间 / 车厢壁挂板</td><td>壁挂测试</td><td class="p1">P1</td><td class="mono">p.19</td></tr>
+<tr><td class="id">PKT-07</td><td>中堆叠状态下 UI 可见、可操作（最常见的堆叠位形）</td><td>中堆叠目视 + 操作</td><td class="p0">P0</td><td class="mono">p.19/21</td></tr>
+<tr><td class="id">PKT-08</td><td>遵守 PACKOUT 的 Keep In / Keep Out 区域与运输等级要求</td><td>标准评审</td><td class="p0">P0</td><td class="mono">p.19</td></tr>
+</table>
+
+<h3>3.10 M10 耐久与环境（DUR）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">DUR-01</td><td>-20°F 环境下 36"（3/4 吨皮卡货箱高度）跌落后仍可正常工作</td><td>6 面跌落</td><td class="p0">P0</td><td class="mono">p.23</td></tr>
+<tr><td class="id">DUR-02</td><td>工作温度 -20°F ~ 120°F（最低要求）；拉伸目标 -40°F ~ 120°F</td><td>环境舱测试</td><td class="p0">P0</td><td class="mono">p.16/23</td></tr>
+<tr><td class="id">DUR-03</td><td>-40°F 存储后不开裂、不变形、功能正常</td><td>冷热冲击 10 循环</td><td class="p1">P1</td><td class="mono">p.23</td></tr>
+<tr><td class="id">DUR-04</td><td>防护等级 ≥ IP54</td><td>第三方测试</td><td class="p0">P0</td><td class="mono">p.16</td></tr>
+<tr><td class="id">DUR-05</td><td>运输振动与堆叠冲击测试通过</td><td>ISTA 类标准</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>3.11 M11 安全与合规（SAF）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">SAF-01</td><td>可燃材料温控安全：任何单一故障下箱内温度不得失控</td><td>FMEA + 单点故障测试</td><td class="p0">P0</td><td class="mono">p.16/17</td></tr>
+<tr><td class="id">SAF-02</td><td>电池热失控隔离：电池仓与材料仓隔离，异常时可排气泄压</td><td>热失控试验</td><td class="p1">P1</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SAF-03</td><td>目标市场认证（UL / CE / UKCA 等，按销售区域确定）</td><td>证书</td><td class="p0">P0</td><td class="mono">[推导]</td></tr>
+<tr><td class="id">SAF-04</td><td>误操作防护：儿童 / 非授权人员无法轻易开机或改温</td><td>与 HMI-02 合并评审</td><td class="p2">P2</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h3>3.12 M12 探索项（EXP）</h3>
+<table>
+<tr><th style="width:9%">ID</th><th style="width:46%">需求描述</th><th style="width:26%">验收标准</th><th style="width:7%">优先级</th><th>来源</th></tr>
+<tr><td class="id">EXP-01</td><td>远程查看温度与剩余续航（蓝牙 / App），需评估成本与可靠性权衡</td><td>可行性报告</td><td class="p2">P2</td><td class="mono">p.16/22</td></tr>
+<tr><td class="id">EXP-02</td><td>剩余运行时间估算（小时级），比纯电量格更直观</td><td>误差 ≤ 20%</td><td class="p1">P1</td><td class="mono">p.21（UI 缺）</td></tr>
+<tr><td class="id">EXP-03</td><td>运行数据记录（温度曲线 / 开盖次数 / 电池循环）</td><td>—</td><td class="p2">P2</td><td class="mono">[推导]</td></tr>
+</table>
+
+<h2>四、UI 显示规格</h2>
+
+<h3>4.1 显示分区</h3>
+<table>
+<tr><th style="width:10%">分区</th><th style="width:20%">位置</th><th style="width:30%">内容</th><th>说明</th></tr>
+<tr><td>L1 目标温度区</td><td>左上（小字）</td><td>2 位数字 + ⊕ 设定符号 + °C/°F</td><td>显示设定值；调整时实时刷新</td></tr>
+<tr><td>L2 内部温度区</td><td>左下（大字）</td><td>2 位数字 + °</td><td>显示实测值，视觉权重最高</td></tr>
+<tr><td>L3 状态图标区</td><td>中上 / 右上</td><td>开盖 / 加热 / 过温 / AC / 过载</td><td>5 个状态图标，颜色区分</td></tr>
+<tr><td>L4 电量区</td><td>右侧</td><td>2 条 4 段电量条（编号 1 / 2）</td><td>对应两个电池仓</td></tr>
+<tr><td>L5 按键区</td><td>面板中列</td><td>▲ / OK / ▼</td><td>电源键独立在左</td></tr>
+</table>
+
+<h3>4.2 图标字典（UI 的唯一权威定义）</h3>
+<table>
+<tr><th style="width:12%">图标</th><th style="width:14%">图形</th><th style="width:16%">含义</th><th style="width:7%">颜色</th><th style="width:19%">显示方式</th><th style="width:20%">触发 / 清除</th><th style="width:6%">ID</th></tr>
+<tr><td>目标温度</td><td>2 位数字 + ⊕ 准星</td><td>当前设定温度</td><td>白</td><td>常亮；调整时闪</td><td>开机即显示 / 关机灭</td><td class="id">UI-02</td></tr>
+<tr><td>内部温度</td><td>2 位数字 + °</td><td>箱内实测温度</td><td>白</td><td>常亮，1s 刷新</td><td>开机即显示</td><td class="id">UI-03</td></tr>
+<tr><td>单位</td><td>°C / °F</td><td>当前温标</td><td>白</td><td>常亮；切换时 150ms 闪 3 次</td><td>长按 ↑+↓ 750ms</td><td class="id">UI-04</td></tr>
+<tr><td>加热中</td><td>红色波浪（三条）</td><td>加热元件正在工作</td><td>红</td><td>1000ms 周期闪烁</td><td>输出 ON 起 / 输出 OFF 灭</td><td class="id">UI-06</td></tr>
+<tr><td>维持中</td><td><strong>待设计</strong></td><td>已达设定温度、保温中</td><td>待定</td><td>常亮</td><td>达标点亮 / 跌出回差熄灭</td><td class="id">UI-07</td></tr>
+<tr><td>开盖</td><td>风扇 / 气流</td><td>上盖未关闭</td><td>白</td><td>0–30s 常亮；≥30s 转 350ms 闪</td><td>开盖点亮 / 关盖灭</td><td class="id">UI-08</td></tr>
+<tr><td>过温</td><td>红色温度计</td><td>箱内温度超保护阈值</td><td>红</td><td>常亮</td><td>超阈值亮 / 回落熄灭</td><td class="id">UI-09</td></tr>
+<tr><td>AC 供电</td><td>白色插头</td><td>当前由市电供电</td><td>白</td><td>常亮</td><td>插电亮 / 拔电灭</td><td class="id">UI-10</td></tr>
+<tr><td>过载 / 故障</td><td>红色三角 + "!"</td><td>加热回路故障</td><td>红</td><td>常亮</td><td>故障亮 / 复位后灭</td><td class="id">UI-11</td></tr>
+<tr><td>电量条 1</td><td>4 段横条 + "1"</td><td>Battery 1 SOC</td><td>红</td><td>4/3/2/1 段；低电量闪</td><td>在位显示 / 空仓灭</td><td class="id">UI-12</td></tr>
+<tr><td>电量条 2</td><td>4 段横条 + "2"</td><td>Battery 2 SOC</td><td>红</td><td>同上</td><td>同上</td><td class="id">UI-12</td></tr>
+</table>
+<div class="note"><strong>颜色语义（建议补入规格）</strong>：白 = 状态 / 数值 / 供电方式；红 = 能量流动与异常（加热中、过温、过载、电量）。当前 UI 中"加热中"与"过温/过载"同为红色，建议将"加热中"改为橙红或降低饱和度，避免与故障告警混淆。</div>
+
+<h3>4.3 系统状态机</h3>
+<table>
+<tr><th style="width:8%">状态</th><th style="width:22%">进入条件</th><th style="width:26%">显示</th><th style="width:12%">加热输出</th><th style="width:10%">蜂鸣</th><th>退出条件</th></tr>
+<tr><td>S0 关机</td><td>短按电源键 / 超时关机</td><td>全灭</td><td>OFF</td><td>无</td><td>按电源键</td></tr>
+<tr><td>S1 待机</td><td>开机完成自检</td><td>L1 + L2 + 单位 + 电量</td><td>OFF（已达温则维持）</td><td>无</td><td>低于回差 → S2</td></tr>
+<tr><td>S2 加热中</td><td>内部温度 &lt; 设定 − 回差</td><td>+ 加热图标 1000ms 闪</td><td>ON</td><td>无</td><td>达设定 → S3</td></tr>
+<tr><td>S3 维持中</td><td>内部温度 ≥ 设定</td><td>+ 维持图标常亮</td><td>OFF</td><td>无</td><td>跌破回差 → S2</td></tr>
+<tr><td>S4 开盖提示</td><td>开盖 0–30s</td><td>+ 开盖图标常亮</td><td>按 S1–S3 逻辑</td><td>无</td><td>关盖 → 回原状态</td></tr>
+<tr><td>S5 开盖告警</td><td>开盖 ≥ 30s</td><td>开盖图标 350ms 闪</td><td>保持</td><td>鸣叫</td><td>关盖 或 ≥60s</td></tr>
+<tr><td>S6 开盖停机</td><td>开盖 ≥ 60s</td><td>开盖图标 350ms 闪</td><td><strong>OFF</strong></td><td>停止</td><td>关盖 → 回 S2/S3</td></tr>
+<tr><td>S7 过温保护</td><td>内部温度 ≥ 保护阈值</td><td>+ 温度计常亮</td><td><strong>OFF</strong></td><td>待定（ALM-06）</td><td>回落至阈值 − 回差</td></tr>
+<tr><td>S8 过载故障</td><td>电流异常 / 回路故障</td><td>+ 三角常亮</td><td><strong>OFF 并锁定</strong></td><td>建议鸣叫</td><td>断电重启 / 故障消失</td></tr>
+<tr><td>S9 低功耗</td><td>运行 5min 无操作</td><td>变暗，仅右下角显示设定值</td><td>不受影响</td><td>按原逻辑</td><td>按键 / 达标 / 告警</td></tr>
+<tr><td>S10 调整中</td><td>按 ↑ / ↓</td><td>目标温度闪，L2 保持</td><td>不受影响</td><td>无</td><td>按 OK / 5s 超时</td></tr>
+</table>
+
+<h3>4.4 状态优先级（并发时谁说了算）</h3>
+<table>
+<tr><th style="width:8%">优先级</th><th style="width:24%">状态</th><th style="width:34%">显示规则</th><th>理由</th></tr>
+<tr><td>1（最高）</td><td>S8 过载故障</td><td>独占显示：三角常亮，数字可显示 <span class="mono">Err</span>，加热锁定</td><td>硬件失效，必须立即停机</td></tr>
+<tr><td>2</td><td>S7 过温保护</td><td>温度计常亮，其余状态图标可共存，加热关断</td><td>材料安全（THM-07）</td></tr>
+<tr><td>3</td><td>S6 开盖停机</td><td>开盖图标闪烁，与过温图标可共存</td><td>防止热量流失与误判</td></tr>
+<tr><td>4</td><td>S5 开盖告警</td><td>开盖图标闪烁 + 蜂鸣</td><td>用户可自行消除</td></tr>
+<tr><td>5</td><td>S2 / S3 加热·维持</td><td>与开盖、AC 图标并存</td><td>正常工作状态</td></tr>
+<tr><td>6（最低）</td><td>S9 低功耗</td><td>任何告警都强制唤醒至全亮</td><td>告警优先于省电</td></tr>
+</table>
+<div class="note"><strong>说明</strong>：AC 供电图标（UI-10）与电量条属于"并行状态"，不参与优先级竞争，任何状态下均可显示。</div>
+
+<h3>4.5 按键交互矩阵</h3>
+<table>
+<tr><th style="width:22%">操作</th><th style="width:24%">生效条件</th><th>结果</th></tr>
+<tr><td>短按电源键</td><td>关机态</td><td>开机 → 自检 1s → 恢复上次设定温度（HMI-03）</td></tr>
+<tr><td>长按电源键 1.5s</td><td>关机态</td><td>开机（防误触方案，待定，见 HMI-02）</td></tr>
+<tr><td>短按电源键</td><td>开机态</td><td>关机，保存设定值与单位</td></tr>
+<tr><td>短按 ▲ / ▼</td><td>开机态</td><td>目标温度 ±5°F，进入 S10 调整态</td></tr>
+<tr><td>长按 ▲ / ▼</td><td>开机态</td><td>每 200ms 连发 ±5°F，至 80°F / 40°F 停止</td></tr>
+<tr><td>短按 OK</td><td>调整态</td><td>提交设定，蜂鸣 1 声（HMI-05）</td></tr>
+<tr><td>短按 OK</td><td>非调整态，设定 ≠ 当前</td><td>无动作（UI-1 原文：若 Target = Set 则不动作）</td></tr>
+<tr><td>长按 ▲ + ▼ 750ms</td><td>开机态</td><td>切换 °F / °C，新单位 150ms 闪 3 次</td></tr>
+<tr><td>任意键</td><td>低功耗态</td><td>唤醒至全亮（PWRM-04）</td></tr>
+</table>
+
+<h2>五、数值与控制算法</h2>
+
+<h3>5.1 温度基准与单位换算（需决策）</h3>
+<p>40–80°F 以 5°F 为步进共 9 档：40 / 45 / 50 / 55 / 60 / 65 / 70 / 75 / 80。换算为整数 °C 后为 4 / 7 / 10 / 13 / 16 / 18 / 21 / 24 / 27，<strong>并非 2°C 等步进</strong>。</p>
+<div class="warn">
+<strong>矛盾点</strong>：IPI 原文写"5°F (2°C)"、"Max 80°F (28°C)"、"Min 40°F (6°C)"，三处均不自洽（40°F≈4.4°C、80°F≈26.7°C、5°F≈2.8°C）。<br>
+<strong>建议方案</strong>：以 °F 整数为内部唯一基准（9 档），°C 仅做显示换算并四舍五入；若目标市场含公制区，则改为以 2°C 为基准（4–28°C，13 档），°F 显示取整。二者不可混用，否则切换单位后设定值会跳变。
+</div>
+
+<h3>5.2 关键参数表</h3>
+<table>
+<tr><th style="width:34%">参数</th><th style="width:22%">数值</th><th>出处 / 备注</th></tr>
+<tr><td>目标温度范围</td><td>40–80°F</td><td class="mono">p.17 / UI-1</td></tr>
+<tr><td>温度步进</td><td>5°F</td><td class="mono">UI-1</td></tr>
+<tr><td>长按连发周期</td><td>200ms</td><td class="mono">UI-1</td></tr>
+<tr><td>单位切换长按时长</td><td>750ms</td><td class="mono">UI-1</td></tr>
+<tr><td>单位切换闪烁周期</td><td>150ms</td><td class="mono">UI-1</td></tr>
+<tr><td>加热图标闪烁周期</td><td>1000ms</td><td class="mono">UI-2</td></tr>
+<tr><td>开盖告警闪烁周期</td><td>350ms</td><td class="mono">UI-2</td></tr>
+<tr><td>开盖蜂鸣延时</td><td>30s</td><td class="mono">p.21 / UI-2</td></tr>
+<tr><td>开盖停止加热</td><td>60s</td><td class="mono">p.21 / UI-2</td></tr>
+<tr><td>低功耗进入时间</td><td>5min 无操作</td><td class="mono">p.21</td></tr>
+<tr><td>内部温度分辨率</td><td>1°F</td><td class="mono">UI-2</td></tr>
+<tr><td>单节 12.0Ah 维持时间</td><td>24h</td><td class="mono">p.16/17</td></tr>
+<tr><td>工作温度</td><td>-20°F ~ 120°F（拉伸 -40°F）</td><td class="mono">p.16</td></tr>
+<tr><td>空机重量</td><td>≤ 25lb</td><td class="mono">p.20</td></tr>
+<tr><td>搬运承重</td><td>100lb</td><td class="mono">p.20</td></tr>
+<tr><td>跌落高度</td><td>36" @ -20°F</td><td class="mono">p.23</td></tr>
+<tr><td>防护等级</td><td>IP54</td><td class="mono">p.16</td></tr>
+</table>
+
+<h3>5.3 控制策略（建议）</h3>
+<ul>
+<li><strong>回差控制</strong>：达到设定值停热，低于设定值 − 3°F 恢复，避免频繁启停（THM-05）。</li>
+<li><strong>过温保护</strong>：内部温度 ≥ min(85°F, 设定值 + 5°F) 立即关断并锁存 60s（THM-06）。</li>
+<li><strong>开盖联动</strong>：开盖计时与加热输出解耦，60s 后强制 OFF，关盖自动恢复（THM-09/10）。</li>
+<li><strong>低功耗降级边界</strong>：仅降低背光与刷新，<u>不得</u>降低采样与保护逻辑（PWRM-05）。</li>
+</ul>
+
+<h2>六、需求追溯矩阵</h2>
+<table>
+<tr><th style="width:30%">用户 CTQ（IPI 原文）</th><th style="width:26%">对应需求</th><th style="width:20%">UI 体现</th><th>状态</th></tr>
+<tr><td>能看到并调整设定温度（堆叠时）</td><td class="id">UI-02 / UI-03 / HMI-06</td><td>L1 / L2 双数字区</td><td>已覆盖</td></tr>
+<tr><td>能理解何时开机、何时在加热</td><td class="id">UI-06 / HMI-01</td><td>加热波浪图标</td><td>已覆盖</td></tr>
+<tr><td>有"已达设定温度"的维持图标</td><td class="id">UI-07</td><td><strong>无</strong></td><td class="p0">缺口</td></tr>
+<tr><td>能理解电池剩余续航</td><td class="id">UI-12 / EXP-02</td><td>4 段电量条</td><td class="p1">部分</td></tr>
+<tr><td>可切换 °F / °C</td><td class="id">HMI-07 / UI-04</td><td>°C/°F 指示</td><td>已覆盖</td></tr>
+<tr><td>运输中不误开机</td><td class="id">HMI-02</td><td><strong>无</strong></td><td class="p0">缺口</td></tr>
+<tr><td>5 分钟后进入低功耗，仅右下角显示设定温度</td><td class="id">PWRM-01/02/03</td><td><strong>无</strong></td><td class="p0">缺口 + 冲突</td></tr>
+<tr><td>开盖 &gt;30s 蜂鸣、&gt;1min 停热、有开盖图标</td><td class="id">UI-08 / ALM-01/02/03 / THM-09</td><td>风扇图标</td><td>已覆盖</td></tr>
+<tr><td>阳光 / 雪地反光下可读</td><td class="id">UI-13</td><td>—</td><td class="p1">待指标化</td></tr>
+<tr><td>低温不迟滞、不失能</td><td class="id">UI-14 / DUR-02</td><td>—</td><td class="p1">待指标化</td></tr>
+<tr><td>按键有手感、暗光可用</td><td class="id">HMI-08 / UI-17</td><td>4 键布局</td><td>已覆盖</td></tr>
+<tr><td>图标易懂、技工依赖图标</td><td class="id">UI-18</td><td>全图标化</td><td>需可用性验证</td></tr>
+<tr><td>双电池免换电续续航</td><td class="id">PWR-01/02/03</td><td>电量条 1/2</td><td>已覆盖</td></tr>
+<tr><td>插电优先、不充电池</td><td class="id">PWR-04/05</td><td>插头图标</td><td>已覆盖</td></tr>
+<tr><td>材料不超 80°F、不低于 40°F</td><td class="id">THM-01/06/07</td><td>过温温度计</td><td>已覆盖</td></tr>
+<tr><td>远程查看温度与续航</td><td class="id">EXP-01</td><td>—</td><td class="p2">探索</td></tr>
+</table>
+
+<h2>七、冲突与待确认清单（Gap List）</h2>
+<p>以下 10 项为"需求文档与 UI 不一致"或"双方均未定义"的地方，建议在规格评审会上逐条关闭。</p>
+<table>
+<tr><th style="width:7%">编号</th><th style="width:26%">问题</th><th style="width:22%">冲突 / 缺失点</th><th style="width:10%">影响</th><th>建议</th></tr>
+<tr><td class="id">G-01</td><td>低功耗时设定温度显示位置</td><td>IPI 要求"仅右下角"，UI 布局在左上</td><td>中</td><td>改为右下角，或修订 IPI 表述</td></tr>
+<tr><td class="id">G-02</td><td>缺"维持 / 已达温"图标</td><td>IPI 明确要求（p.21），UI 无此图形</td><td>高</td><td>新增图标，与加热图标区分（如常亮 vs 闪烁）</td></tr>
+<tr><td class="id">G-03</td><td>缺防误触开机方案</td><td>IPI 要求（p.21），UI 仅"短按开机"</td><td>高</td><td>长按 1.5s 开机 或 机械锁止</td></tr>
+<tr><td class="id">G-04</td><td>无剩余续航时间</td><td>IPI 要求"理解电池续航"，UI 仅 4 段条</td><td>中</td><td>先接受 SOC 近似，列入 EXP-02</td></tr>
+<tr><td class="id">G-05</td><td>单位换算数值不自洽</td><td>40°F=6°C / 80°F=28°C / 5°F=2°C 均不成立</td><td>高</td><td>确定唯一基准单位（见 5.1）</td></tr>
+<tr><td class="id">G-06</td><td>过温阈值未定义</td><td>UI 有图标，无阈值与回差</td><td>高</td><td>定为 85°F 或设定+5°F</td></tr>
+<tr><td class="id">G-07</td><td>过载判定条件未定义</td><td>UI 有三角图标，无触发逻辑</td><td>高</td><td>电流 / 回路阻抗双判据</td></tr>
+<tr><td class="id">G-08</td><td>多状态并发规则缺失</td><td>两条说明各自独立，无优先级</td><td>高</td><td>采用 4.4 优先级表</td></tr>
+<tr><td class="id">G-09</td><td>准星符号语义未定义</td><td>UI 有图形，无文字说明</td><td>中</td><td>定义为"设定值"标识</td></tr>
+<tr><td class="id">G-10</td><td>开盖图标图形易误读</td><td>用"风扇/气流"表示"盖子未关"</td><td>中</td><td>改用箱盖开启图形，或增加文字图例</td></tr>
+</table>
+
+<h2>八、验收测试要点</h2>
+<table>
+<tr><th style="width:16%">测试项</th><th style="width:44%">方法</th><th>通过判据</th></tr>
+<tr><td>续航</td><td>-20°F 环境舱，单节 12.0Ah，设定 40°F</td><td>≥ 24h 维持</td></tr>
+<tr><td>控温精度</td><td>恒温箱稳态记录 8h</td><td>波动 ≤ ±3°F</td></tr>
+<tr><td>过温保护</td><td>人为覆盖传感器 / 强制加热</td><td>5s 内关断并锁存</td></tr>
+<tr><td>开盖时序</td><td>开盖计时，记录蜂鸣与加热状态</td><td>30s 鸣叫、60s 停热、关盖恢复</td></tr>
+<tr><td>跌落</td><td>-20°F 冷透后 36" 六面跌落</td><td>功能正常，无裂纹</td></tr>
+<tr><td>IP54</td><td>防尘 + 防溅水</td><td>内部无进水，功能正常</td></tr>
+<tr><td>显示可读性</td><td>100,000 lux 强光 + 雪地反射背景</td><td>1m 内清晰辨认数字</td></tr>
+<tr><td>按键</td><td>戴防寒手套盲操作</td><td>10 次操作全成功</td></tr>
+<tr><td>图标理解度</td><td>10 名目标用户，不看说明书</td><td>≥ 8 人正确解释每个图标</td></tr>
+</table>
+
+<p style="margin-top:26px; font-size:8.5pt; color:#6E7781;">本文件由 IPI 需求文档（2026-10-27 版）与 UI 标注图整合生成，供内部规格评审使用。标注"待确认""建议值""缺口"的条目需在评审会上关闭后方可进入设计冻结。</p>
+
+</body>
+</html>

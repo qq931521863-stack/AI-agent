@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>600W 半桥 LLC 数字电源充电机 · 个人设计与学习计划</title>
+<style>
+:root{
+  --ink:#1c1c1a; --ink2:#4a4a46; --ink3:#7a7a74;
+  --line:#e3e1da; --line2:#d0cec5;
+  --bg:#ffffff; --bg2:#f7f6f2;
+  --amber:#ba7517; --amber-bg:#faeeda; --amber-ink:#633806;
+  --green:#639922; --green-bg:#eaf3de; --green-ink:#27500a;
+  --blue:#378add; --blue-bg:#e6f1fb; --blue-ink:#185fa5;
+  --red:#a32d2d; --red-bg:#fcebeb;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; padding:0 24px 80px;
+  background:var(--bg); color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  font-size:14px; line-height:1.75; font-weight:400;
+}
+.wrap{max-width:880px;margin:0 auto;}
+
+header{padding:56px 0 32px;border-bottom:2px solid var(--ink);margin-bottom:36px;}
+header .kicker{font-size:12px;letter-spacing:.14em;color:var(--ink3);margin-bottom:14px;}
+header h1{font-size:28px;line-height:1.35;font-weight:500;margin:0 0 12px;letter-spacing:-.01em;}
+header .sub{font-size:13px;color:var(--ink2);margin:0;}
+header .sub span{display:inline-block;margin-right:18px;}
+
+h2{font-size:17px;font-weight:500;margin:48px 0 6px;padding-bottom:8px;border-bottom:1px solid var(--line2);}
+h2 .num{color:var(--ink3);font-size:13px;margin-right:10px;font-variant-numeric:tabular-nums;}
+h3{font-size:15px;font-weight:500;margin:0;}
+p{margin:10px 0;}
+ul{margin:8px 0;padding-left:20px;}
+li{margin:5px 0;}
+b,strong{font-weight:500;}
+code{font-family:ui-monospace,"SF Mono",Consolas,monospace;font-size:12.5px;background:var(--bg2);padding:1px 5px;border-radius:3px;}
+
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 8px;}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+.card .k{font-size:11px;color:var(--ink3);letter-spacing:.05em;margin-bottom:6px;}
+.card .v{font-size:14px;font-weight:500;line-height:1.5;}
+.card .n{font-size:11.5px;color:var(--ink3);margin-top:4px;}
+
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;}
+th{text-align:left;font-weight:500;color:var(--ink2);font-size:12px;letter-spacing:.03em;
+   border-bottom:1px solid var(--line2);padding:8px 10px;background:var(--bg2);}
+td{border-bottom:1px solid var(--line);padding:9px 10px;vertical-align:top;}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap;}
+tr:last-child td{border-bottom:1px solid var(--line2);}
+.tbd{color:var(--amber);font-size:12px;}
+.dim{color:var(--ink3);}
+
+.phase{border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:8px;margin:18px 0;overflow:hidden;}
+.phase.hi{border-left-color:var(--amber);}
+.phase.mid{border-left-color:var(--blue);}
+.phase.par{border-left-color:var(--green);}
+.phase-head{display:flex;align-items:baseline;gap:12px;padding:14px 18px;background:var(--bg2);border-bottom:1px solid var(--line);}
+.phase-head .tag{font-size:11.5px;font-weight:500;color:#fff;background:var(--ink2);border-radius:4px;padding:2px 7px;letter-spacing:.05em;}
+.phase.hi .phase-head .tag{background:var(--amber);}
+.phase.mid .phase-head .tag{background:var(--blue);}
+.phase.par .phase-head .tag{background:var(--green);}
+.phase-head .wk{margin-left:auto;font-size:12px;color:var(--ink3);white-space:nowrap;}
+.phase-body{padding:6px 18px 16px;}
+.blk{margin:14px 0 0;}
+.blk .lbl{font-size:11px;letter-spacing:.08em;color:var(--ink3);margin-bottom:5px;}
+.gate,.pit{border-radius:6px;padding:10px 14px;margin-top:14px;font-size:13px;}
+.gate{background:var(--green-bg);color:var(--green-ink);border:1px solid #c0dd97;}
+.pit{background:var(--amber-bg);color:var(--amber-ink);border:1px solid #fac775;}
+.gate b,.pit b{display:block;font-size:11px;letter-spacing:.08em;margin-bottom:3px;opacity:.85;}
+
+.callout{background:var(--blue-bg);border:1px solid #b5d4f4;border-radius:8px;padding:14px 18px;margin:18px 0;font-size:13.5px;color:#0c447c;}
+.callout b{color:#042c53;}
+.warn{background:var(--red-bg);border:1px solid #f7c1c1;border-radius:8px;padding:14px 18px;margin:18px 0;font-size:13.5px;color:#501313;}
+.warn b{color:#791f1f;}
+
+.steps{counter-reset:s;list-style:none;padding:0;margin:16px 0;}
+.steps li{counter-increment:s;position:relative;padding-left:34px;margin:12px 0;}
+.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:22px;height:22px;border-radius:50%;
+  background:var(--ink);color:#fff;font-size:11.5px;text-align:center;line-height:22px;}
+
+.chk{list-style:none;padding-left:0;}
+.chk li{position:relative;padding-left:24px;}
+.chk li::before{content:"";position:absolute;left:0;top:6px;width:11px;height:11px;border:1px solid var(--line2);border-radius:2px;}
+
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--ink3);}
+
+@media print{
+  body{padding:0;font-size:11pt;}
+  .phase{break-inside:avoid;}
+  h2{break-after:avoid;}
+  header{padding-top:0;}
+}
+@media (max-width:720px){
+  .summary{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">个人设计计划 · 第一版</div>
+  <h1>600W 半桥 LLC 数字电源充电机<br>设计与学习计划</h1>
+  <p class="sub">
+    <span>输入 90–264VAC</span>
+    <span>输出 54.6V / 11A（13S 锂电）</span>
+    <span>参考资产：1600W 原理图 + 企业级源码</span>
+  </p>
+</header>
+
+<div class="summary">
+  <div class="card"><div class="k">目标功率</div><div class="v">600W</div><div class="n">CC-CV 充电</div></div>
+  <div class="card"><div class="k">总周期</div><div class="v">约 21 周</div><div class="n">业余 10–15 h/周</div></div>
+  <div class="card"><div class="k">最紧约束</div><div class="v">LLC 增益 1.5:1</div><div class="n">39–54.6V 宽输出</div></div>
+  <div class="card"><div class="k">最大风险</div><div class="v">宽压 PFC</div><div class="n">90V 满载 7.3A</div></div>
+</div>
+
+<h2><span class="num">01</span>设计输入表</h2>
+<p>这是整个项目的地基。<b>没有这张表，后面所有计算都是在猜。</b>下表已按你的选择填好默认值，橙色项需要你在一周内拍板。</p>
+
+<table>
+<thead><tr><th style="width:24%">项目</th><th style="width:26%">目标值</th><th>说明 / 影响</th></tr></thead>
+<tbody>
+<tr><td>输入电压</td><td class="num">90–264 VAC，47–63 Hz</td><td>宽压输入，<b>必须带主动 PFC</b></td></tr>
+<tr><td>输入功率</td><td class="num">≈ 640 W @ 满载</td><td>按整机效率 94% 反推</td></tr>
+<tr><td>PFC 母线电压</td><td class="num">400 VDC（390–405）</td><td>LLC 的输入，范围越窄越好</td></tr>
+<tr><td>输出电压</td><td class="num">39 – 54.6 VDC</td><td>13 串：3.0–4.2 V/节</td></tr>
+<tr><td>输出电流</td><td class="num">0 – 11 A（恒流段）</td><td>满载点 = 54.6V × 11A</td></tr>
+<tr><td>充电模式</td><td class="num">CC → CV</td><td>可选：预充、浮充、涓流</td></tr>
+<tr><td>目标效率</td><td class="num">≥94% @220V；≥91% @90V</td><td>PFC 97% × LLC 96.5%</td></tr>
+<tr><td>待机功耗</td><td class="num">&lt; 1 W</td><td>影响辅助电源与 PFC 突发模式</td></tr>
+<tr><td>绝缘等级</td><td class="num">加强绝缘</td><td>初次级爬电 ≥8 mm、间隙 ≥5.5 mm（GB 4943.1）</td></tr>
+<tr><td>保护项</td><td class="num">OVP/UVP/OCP/SCP/OTP/反接</td><td>阈值随 600W 重新标定</td></tr>
+<tr><td>通信</td><td class="num tbd">待确认</td><td>沿用 1600W 的 CAN 或 UART 协议</td></tr>
+<tr><td>保持时间</td><td class="num tbd">建议不要求</td><td>充电机通常无 holdup 需求，母线电容可从 470µF 降到 330µF</td></tr>
+<tr><td>冷却方式</td><td class="num tbd">待确认</td><td>自然冷 / 风冷，决定外壳与热设计</td></tr>
+<tr><td>认证要求</td><td class="num tbd">待确认</td><td>自用可只做安全项，不做 EMI 认证</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<b>三个必须先回答的问题</b>
+① 要不要保持时间？——不要，母线电容能省 1/3 体积。<br>
+② 要不要风扇？——600W 自然冷很难，建议风冷，否则外壳设计会返工。<br>
+③ 通信协议用哪套？——直接决定固件能不能复用 1600W 的通信层。
+</div>
+
+<h2><span class="num">02</span>1600W → 600W 复用矩阵</h2>
+<p>这是整个计划里最重要的一张表。很多初学者失败的原因，是以为"有参考方案"就等于"能抄"，结果把 1600W 的功率级参数直接缩放到 600W——这在 LLC 上是行不通的。</p>
+
+<table>
+<thead><tr><th style="width:22%">模块</th><th style="width:34%">1600W 里有什么</th><th style="width:32%">600W 怎么办</th><th style="width:12%">复用度</th></tr></thead>
+<tbody>
+<tr><td>EMI 滤波 / 软启动</td><td>完整两级滤波 + 继电器软启动</td><td>结构照搬，共模电感与 X/Y 电容按 600W 重选</td><td class="num">高</td></tr>
+<tr><td>整流桥</td><td>大电流桥堆或并联</td><td>降为 800V/15A 单桥</td><td class="num">中</td></tr>
+<tr><td>主动 PFC</td><td>按 1600W 设计，电流是 600W 的 2.7 倍</td><td><b>全部重算</b>；电感、开关管、升压二极管、采样都要换</td><td class="num">低</td></tr>
+<tr><td>母线电容</td><td>大容量，可能为 holdup 设计</td><td>330µF/450V 即可</td><td class="num">中</td></tr>
+<tr><td>LLC 原边</td><td>可能是全桥，也可能是半桥</td><td>若为全桥 → 驱动、电流采样、变压器全部重做</td><td class="num">低</td></tr>
+<tr><td>谐振腔 Lr / Cr</td><td>按 1600W 增益需求设计</td><td><b>完全重算</b>，与功率不成比例</td><td class="num">无</td></tr>
+<tr><td>主变压器</td><td>磁芯、匝比、绕法固定</td><td><b>完全重设计</b>（匝比由 400V/54.6V 决定）</td><td class="num">无</td></tr>
+<tr><td>同步整流</td><td>多管并联，可能 100V 器件</td><td>减为 2 只 150V/8mΩ（中心抽头）</td><td class="num">中</td></tr>
+<tr><td>电压电流采样</td><td>分压 + 采样电阻 / 霍尔</td><td>拓扑照搬，标定系数全部重算</td><td class="num">高</td></tr>
+<tr><td>数字控制框架</td><td>完整工程：时钟、PWM、ADC、状态机</td><td>框架复用，参数重配</td><td class="num">高</td></tr>
+<tr><td>保护逻辑</td><td>完整，含逐周期限流</td><td>逻辑复用，阈值按 600W 重定</td><td class="num">高</td></tr>
+<tr><td>辅助电源</td><td>12V / 5V 反激</td><td>基本可直接照搬</td><td class="num">高</td></tr>
+<tr><td>通信协议</td><td>完整帧格式与命令集</td><td>直接照搬</td><td class="num">高</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<b>结论：真正能"抄"的只有控制层，功率级几乎全部要重算。</b>
+这就是为什么计划把 60% 的精力放在「计算书 + 仿真」上，而不是「画图」上。画图是最容易的一步，也是唯一不能出错的一步——因为一次打样就是两周和几百块。
+</div>
+
+<h2><span class="num">03</span>八阶段执行计划</h2>
+
+<div class="phase hi">
+  <div class="phase-head"><span class="tag">S0</span><h3>冻结规格 &amp; 拆解参考机</h3><span class="wk">第 1–2 周 · 高风险</span></div>
+  <div class="phase-body">
+    <div class="blk"><div class="lbl">目标</div><p>把"我想做个 600W"变成"一张可执行的规格表 + 一张参考机地图"。</p></div>
+    <div class="blk"><div class="lbl">关键任务</div>
+      <ul>
+        <li>填完第 01 节的设计输入表，把所有"待确认"清零</li>
+        <li>把 1600W 原理图按 9 个功能块切开，逐块标注：功能 / 关键器件型号 / 工作点 / 能否复用</li>
+        <li>源码做六步逆向（见第 04 节）</li>
+        <li>建立《参数计算书》Excel 空壳，把公式框架先搭好</li>
+      </ul>
+    </div>
+    <div class="blk"><div class="lbl">交付物</div>
+      <ul class="chk">
+        <li>设计输入表（1 页，无待确认项）</li>
+        <li>参考机分块框图（1 页 A3）</li>
+        <li>源码模块地图（1 页，含调用关系）</li>
+        <li>计算书骨架（Excel，空白公式已就位）</li>
+      </ul>
+    </div>
+    <div class="gate"><b>验收门</b>能脱稿讲清楚 1600W 每一块在干什么、为什么这么设计；能从源码里直接指出 CC→CV 切换发生在哪个函数、阈值是多少。</div>
+    <div class="pit"><b>常见坑</b>一上来就照着原理图开始画自己的图；只看原理图不看源码里的常量表（那里藏着原机的真实设计点）。</div>
+  </div>
+</div>
+
+<div class="phase par">
+  <div class="phase-head"><span class="tag">S1</span><h3>理论补课</h3><span class="wk">第 1–4 周 · 并行，每周 5h</span></div>
+  <div class="phase-body">
+    <div class="blk"><div class="lbl">必须搞懂的六件事</div>
+      <ul>
+        <li>为什么 600W 选半桥而不是全桥 / 移相全桥（器件数量、驱动复杂度、效率）</li>
+        <li>LLC 增益曲线 M(fn, k, Q)：感性区 / 容性区边界、ZVS 成立条件</li>
+        <li>k = Lm/Lr 的取舍：k 小 → 增益范围宽但环流损耗大；k 大 → 效率好但带不动低压段</li>
+        <li>谐振参数与 fr 的选择逻辑（为什么 600W 常落在 85–120 kHz）</li>
+        <li>变压器设计：AP 法、磁芯损耗、集肤效应、漏感如何当 Lr 用</li>
+        <li>数字控制：定点运算、2P2Z 补偿器、调频（PFM）vs 移相</li>
+      </ul>
+    </div>
+    <div class="gate"><b>验收门</b>能自己画出 M–fn 曲线并解释工作点随电池电压如何移动；能手算出一组 fr / Lr / Cr 并说清每个值的来源。</div>
+    <div class="pit"><b>常见坑</b>刷视频刷了三周没动笔。每学一个公式，立刻填进计算书。</div>
+  </div>
+</div>
+
+<div class="phase hi">
+  <div class="phase-head"><span class="tag">S2</span><h3>参数计算书</h3><span class="wk">第 3–5 周 · 高风险</span></div>
+  <div class="phase-body">
+    <div class="blk"><div class="lbl">计算顺序（不可打乱）</div>
+      <ol class="steps">
+        <li>母线电压范围 → 确定 LLC 输入窗口</li>
+        <li>变压器匝比 n = Np/Ns（中心抽头全波：Vout = Vin / 2n）</li>
+        <li>增益范围 M<sub>min</sub> ~ M<sub>max</sub>（由 39V 和 54.6V 两端决定）</li>
+        <li>选定 k = Lm/Lr 与满载 Q → 反查 M–fn 曲线确认增益够用</li>
+        <li>算 Lr、Cr、Lm，取标准值并回代验证</li>
+        <li>算原边谐振电流 rms、副边 SR 电流、变压器窗口</li>
+        <li>器件选型：原边 MOS、SR MOS、驱动、PFC 开关管与 SiC 二极管</li>
+        <li>磁件详细设计：磁芯、匝数、气隙、绕法、漏感控制</li>
+        <li>损耗预算与温升初算，确认 ≥94% 可达</li>
+      </ol>
+    </div>
+    <div class="blk"><div class="lbl">交付物</div><ul><li>15–25 页计算书（每个参数都有出处和裕量说明）+ BOM 初稿</li></ul></div>
+    <div class="gate"><b>验收门</b>每个数字都能回答"为什么是这个值"；效率预估 ≥94%；39V 低压段和 90VAC 输入两个极端工况都算过。</div>
+    <div class="pit"><b>常见坑</b>只算额定点。LLC 的成败在两端：最高增益点（39V 电池 + 380V 母线）和最低增益点（54.6V + 405V 母线）。</div>
+  </div>
+</div>
+
+<div class="phase mid">
+  <div class="phase-head"><span class="tag">S3</span><h3>仿真验证</h3><span class="wk">第 5–8 周</span></div>
+  <div class="phase-body">
+    <div class="blk"><div class="lbl">工具与模型</div>
+      <ul>
+        <li>LLC 用 <b>Simplis</b>（最接近真实开关行为）或 PLECS；LTspice 也行但收敛慢</li>
+        <li>PFC 可用平均电流模型，LLC <b>必须开关级</b></li>
+        <li>器件模型带寄生参数：Coss、体二极管、变压器漏感与绕组电阻</li>
+      </ul>
+    </div>
+    <div class="blk"><div class="lbl">仿真内容</div>
+      <ul>
+        <li>开环扫频，画出 M–fn 曲线，与手算对比（偏差应 &lt;5%）</li>
+        <li>满载 ZVS 检查：看 Vds 下降沿是否在开通前归零</li>
+        <li>启动、短路、负载跳变、电池反接</li>
+        <li>闭环扫 Bode，确认相位裕度 &gt;45°、增益裕度 &gt;10 dB</li>
+      </ul>
+    </div>
+    <div class="gate"><b>验收门</b>仿真与计算书偏差表完成；满载 ZVS 成立；短路电流被限制在器件 SOA 内。</div>
+    <div class="pit"><b>常见坑</b>用理想器件仿真，结果漂亮但一上板就炸。寄生参数不是可选项。</div>
+  </div>
+</div>
+
+<div class="phase mid">
+  <div class="phase-head"><span class="tag">S4</span><h3>原理图与 PCB</h3><span class="wk">第 8–11 周</span></div>
+  <div class="phase-body">
+    <div class="blk"><div class="lbl">以 1600W 为模板改写，重点在布局而不是连线</div>
+      <ul>
+        <li>功率回路面积最小化：母线电容 → 半桥 → 谐振腔 的环路</li>
+        <li>驱动回路独立、短、加负压关断或米勒钳位</li>
+        <li>采样 Kelvin 走线；功率地与信号地单点连接</li>
+        <li>安规：初次级爬电 ≥8 mm，开槽或挡墙；Y 电容位置</li>
+        <li>散热：MOS 与 SR 的铜箔面积、过孔阵列</li>
+      </ul>
+    </div>
+    <div class="gate"><b>验收门</b>DRC 全过；关键环路面积达标；安规距离逐项核对；有完整装配图与位号图。</div>
+    <div class="pit"><b>常见坑</b>第一版就打满功率板。建议<b>首版按 300W 调试余量设计</b>，成功后再改版升到 600W。</div>
+  </div>
+</div>
+
+<div class="phase par">
+  <div class="phase-head"><span class="tag">S5</span><h3>数字控制固件</h3><span class="wk">第 9.5–13 周 · 与打样并行</span></div>
+  <div class="phase-body">
+    <div class="blk"><div class="lbl">从 1600W 源码里抽出最小可用工程，按顺序点亮</div>
+      <ol class="steps">
+        <li>时钟 + 点灯，确认工程能跑</li>
+        <li>PWM 定频输出，示波器看死区与互补性</li>
+        <li>ADC 多通道采样 + 标定（用标准源反推系数）</li>
+        <li>开环扫频：手动改频率，记录输出电压 → 得到实测 M–fn</li>
+        <li>电压环闭环（先空载、再轻载）</li>
+        <li>电流环 + CC/CV 切换逻辑</li>
+        <li>保护：逐周期限流、OVP、OTP、软启动</li>
+      </ol>
+    </div>
+    <div class="gate"><b>验收门</b>假负载上能稳定调压；CC/CV 切换无过冲；每一项保护都能人为触发并可靠关断。</div>
+    <div class="pit"><b>常见坑</b>把 1600W 全部代码搬过来改。正确做法是<b>只搬框架，逻辑自己重写</b>——否则你永远不知道为什么它不工作。</div>
+  </div>
+</div>
+
+<div class="phase hi">
+  <div class="phase-head"><span class="tag">S6</span><h3>分阶段调试</h3><span class="wk">第 11–17 周 · 最耗时</span></div>
+  <div class="phase-body">
+    <div class="blk"><div class="lbl">上电顺序（每一步都要能停下来）</div>
+      <ol class="steps">
+        <li>只装辅助电源与 MCU，不装功率管，确认 12V/5V 与程序运行</li>
+        <li>PFC 开环低压：调压器从 30VAC 起，母线缓慢升到 400V，看驱动与电感电流</li>
+        <li>LLC 开环：母线用<b>外部直流电源</b>供电，先 100V 小功率，看谐振波形</li>
+        <li>闭环轻载 → 半载 → 满载，每级稳定 30 min 再往上</li>
+        <li>效率、温升、关键波形（Vds / 谐振电流 / SR 时序 / 死区）</li>
+        <li>保护与异常：短路、过载、电池反接、风扇堵转</li>
+      </ol>
+    </div>
+    <div class="gate"><b>验收门</b>满载连续 4 h 稳定；效率达标；关键波形无异常振铃与直通风险；所有保护可复现。</div>
+    <div class="pit"><b>常见坑</b>一次上满压。400V 母线 + 600W，第一次上电必须串限流（白炽灯或功率电阻），并且每次断电后验电。</div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-head"><span class="tag">S7</span><h3>优化与验证</h3><span class="wk">第 17–21 周</span></div>
+  <div class="phase-body">
+    <div class="blk"><div class="lbl">内容</div>
+      <ul>
+        <li>效率优化：SR 开通/关断时序、死区微调、磁件与绕组优化</li>
+        <li>热：满载 4 h 温升记录，热点定位</li>
+        <li>EMI 预测试（传导优先），必要时加共模电感或调整 Y 电容</li>
+        <li>动态响应：负载 10%→90% 跳变，看跌落与恢复</li>
+        <li>保护全项复测 + 老化（高温满载 24 h）</li>
+      </ul>
+    </div>
+    <div class="gate"><b>验收门</b>形成一份完整的测试报告，能回答"这台机器在什么条件下不安全"。</div>
+  </div>
+</div>
+
+<h2><span class="num">04</span>第一步：未来 7 天做什么</h2>
+<p>你说的"第一步"，不是看公式，也不是画图。是<b>把参考机彻底拆开，同时把自己的规格钉死</b>。这两件事做完，你才知道该学什么、该算什么。</p>
+
+<table>
+<thead><tr><th style="width:12%">时间</th><th style="width:34%">动作</th><th style="width:12%">耗时</th><th>产出</th></tr></thead>
+<tbody>
+<tr><td>第 1 天</td><td>填完设计输入表，把三个"待确认"拍板</td><td class="num">2 h</td><td>规格表 v1</td></tr>
+<tr><td>第 2–3 天</td><td>原理图打印成 A3，用荧光笔按 9 块切分，每块写四行注释</td><td class="num">6 h</td><td>分块框图</td></tr>
+<tr><td>第 4 天</td><td><b>确认 1600W 的原边拓扑</b>：全桥还是半桥？几个管子？这决定你还能复用多少</td><td class="num">2 h</td><td>复用度结论</td></tr>
+<tr><td>第 5–6 天</td><td>源码六步逆向（见下）</td><td class="num">6 h</td><td>源码模块地图</td></tr>
+<tr><td>第 7 天</td><td>写 2 页《参考基线报告》，建计算书 Excel 骨架</td><td class="num">3 h</td><td>报告 + 骨架</td></tr>
+</tbody>
+</table>
+
+<h3 style="margin-top:28px;">源码逆向的六个动作</h3>
+<ol class="steps">
+<li><b>找控制节拍。</b>从 <code>main()</code> 和中断向量表入手，确认 PWM 中断频率——这个数字直接告诉你原机的开关频率和控制带宽。</li>
+<li><b>画状态机。</b>找出 INIT / STANDBY / PRECHARGE / CC / CV / FAULT / DONE 的迁移条件，这就是充电流程的骨架。</li>
+<li><b>做 ADC 通道映射表。</b>哪个通道对应母线电压、输出电压、输出电流、原边电流、NTC，各自的增益与偏置是多少。</li>
+<li><b>找环路补偿器。</b>定位 2P2Z 或 PI 的实现，记录系数与定点 Q 格式——这是原机的环路带宽。</li>
+<li><b>翻保护阈值常量表。</b>这是<b>最有价值的一步</b>：OVP/OCP/OTP 的原始数值加上 ADC 标定系数，能直接反推出原机的电压电流设计点。没有实物时，这是你唯一能"看到"原机工作状态的地方。</li>
+<li><b>解析通信帧。</b>命令字、数据长度、校验方式，直接决定你的固件能不能和上位机/电池 BMS 对话。</li>
+</ol>
+
+<div class="callout">
+<b>为什么第 4 天单独留出来？</b>
+如果 1600W 是<b>全桥 LLC</b>，那原边从 4 管变 2 管，驱动电路、电流采样、变压器绕法全部要重做，复用度只剩控制层；如果是<b>半桥 LLC</b>，功率级结构可以直接缩放，能省下 2–3 周。这个答案会改变整个计划的权重，必须最先知道。
+</div>
+
+<h2><span class="num">05</span>参数落点自检表</h2>
+<p>初学者最大的痛苦是"算完了不知道对不对"。下表是你算完之后应该落进去的区间——如果差很远，说明某一步假设错了，回去查，别往下走。</p>
+
+<table>
+<thead><tr><th style="width:34%">参数</th><th style="width:26%">预期落点</th><th style="width:26%">依据</th><th style="width:14%">你的值</th></tr></thead>
+<tbody>
+<tr><td>PFC 母线电压</td><td class="num">390 – 405 V</td><td>宽压输入标准取值</td><td></td></tr>
+<tr><td>变压器匝比 n = Np/Ns</td><td class="num">3.4 – 3.8</td><td>n ≈ Vin / (2 × Vout)</td><td></td></tr>
+<tr><td>LLC 增益范围 M</td><td class="num">0.69 – 1.02</td><td>39V 与 54.6V 两端</td><td></td></tr>
+<tr><td>谐振频率 fr</td><td class="num">85 – 120 kHz</td><td>600W 数字控制的常见区间</td><td></td></tr>
+<tr><td>谐振电感 Lr</td><td class="num">28 – 42 µH</td><td>由 Q 与 fr 反推</td><td></td></tr>
+<tr><td>谐振电容 Cr</td><td class="num">60 – 90 nF</td><td>同上</td><td></td></tr>
+<tr><td>励磁电感 Lm</td><td class="num">110 – 180 µH</td><td>k = Lm/Lr 取 3–4.5</td><td></td></tr>
+<tr><td>满载 Q</td><td class="num">0.35 – 0.5</td><td>宽增益需求下必须偏小</td><td></td></tr>
+<tr><td>原边谐振电流 rms</td><td class="num">2.5 – 3.5 A</td><td>约 1.5 × 输入平均电流</td><td></td></tr>
+<tr><td>原边 MOS</td><td class="num">600/650 V，0.19–0.28 Ω</td><td>半桥两管承受全母线电压</td><td></td></tr>
+<tr><td>同步整流管</td><td class="num">150 V，≤8 mΩ ×2</td><td>中心抽头反压 = 2 × Vout</td><td></td></tr>
+<tr><td>母线电容</td><td class="num">270 – 470 µF / 450 V</td><td>无 holdup 取小值</td><td></td></tr>
+<tr><td>PFC 电感</td><td class="num">350 – 500 µH</td><td>按 90VAC 峰值电流 10.4A 设计</td><td></td></tr>
+<tr><td>输入保险丝</td><td class="num">T8 – T10 A</td><td>90V 满载 7.3A rms</td><td></td></tr>
+</tbody>
+</table>
+
+<h2><span class="num">06</span>学习资源（少而精）</h2>
+<table>
+<thead><tr><th style="width:26%">资源</th><th style="width:18%">类型</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>ST AN2450《LLC resonant half-bridge converter design guideline》</td><td>应用笔记</td><td><b>首选</b>，从规格到参数一条线走完，公式可直接套</td></tr>
+<tr><td>TI《Designing an LLC resonant half-bridge power converter》</td><td>应用笔记</td><td>增益曲线与 k/Q 取舍讲得最清楚</td></tr>
+<tr><td>Infineon《Resonant LLC converter: operation and design》</td><td>应用笔记</td><td>波形与工作模式分析，配合仿真看</td></tr>
+<tr><td>Pressman《开关电源设计》</td><td>书</td><td>磁件设计与损耗计算的基础</td></tr>
+<tr><td>徐德鸿《电力电子系统建模及控制》</td><td>书</td><td>数字环路与小信号建模</td></tr>
+<tr><td>TI C2000 Digital Power 培训</td><td>课程</td><td>2P2Z 补偿器、定点实现、ADC 标定</td></tr>
+<tr><td>Simplis / PLECS 官方教程</td><td>工具</td><td>搭 LLC 开关级模型</td></tr>
+</tbody>
+</table>
+<p class="dim">中文视频课只挑 1–2 个系统的看，不要贪多。看十个碎片化视频，不如把 AN2450 从头推一遍。</p>
+
+<h2><span class="num">07</span>风险清单与安全红线</h2>
+
+<table>
+<thead><tr><th style="width:6%">#</th><th style="width:34%">风险</th><th>应对</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td>1600W 是全桥而非半桥</td><td>第 4 天必须确认；若是全桥，功率级复用度归零，计划需延长 3 周</td></tr>
+<tr><td class="num">2</td><td>宽压 PFC 是隐藏难点</td><td>建议直接用成熟模拟控制 IC（如 UCC28180 类），把学习精力留给 LLC 与数字控制</td></tr>
+<tr><td class="num">3</td><td>39–54.6V 宽输出压缩 LLC 设计空间</td><td>接受低压段效率下降；必要时在 39V 附近降额到 8A</td></tr>
+<tr><td class="num">4</td><td>没有实物，无法实测反推</td><td>仿真不可省；把源码常量表当作设计点的唯一证据</td></tr>
+<tr><td class="num">5</td><td>首版直接打 600W 满功率板</td><td>首版按 300W 调试余量设计，跑通后再改版</td></tr>
+<tr><td class="num">6</td><td>调试期炸机</td><td>分阶段上电 + 限流 + 每次只改一个变量</td></tr>
+</tbody>
+</table>
+
+<div class="warn">
+<b>安全红线（400V 母线 + 600W，不是闹着玩的）</b>
+① 必须使用隔离变压器给被测板供电，禁止直接接市电；<br>
+② 测原边波形必须用差分探头或隔离探头，<b>绝不能用普通无源探头的地夹去夹浮地节点</b>；<br>
+③ 母线电容必须装放电电阻，每次断电后<b>验电</b>再动手；<br>
+④ 首次上电串限流（白炽灯 / 功率电阻），不要直接合闸；<br>
+⑤ 单手操作，摘掉手表戒指，站在绝缘垫上；<br>
+⑥ 输出接电池时必须有防反灌二极管或继电器，避免电池电流倒灌回已断电的变换器。
+</div>
+
+<footer>
+本计划基于：输入 90–264VAC、输出 54.6V/11A（13S 锂电）、参考资产为 1600W 原理图与企业级源码（无实物样机）、实验条件含示波器/差分探头/电子负载/隔离变压器。<br>
+参数落点区间为典型值参考，最终以你的计算书与仿真结果为准。
+</footer>
+
+</div>
+</body>
+</html>
