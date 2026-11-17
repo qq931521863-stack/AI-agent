@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>半桥 LLC + 同步整流 · 仿真打通与独立设计计划</title>
+<style>
+:root{
+  --bg:#faf8f3; --card:#fff; --ink:#2b2b2b; --ink2:#4a4a4a; --ink3:#6b6b6b;
+  --line:#e4e2dd; --line2:#d6d2c8; --soft:#f6f3ec;
+  --accent:#8a4b2a; --accent2:#1f4e5f; --accent3:#b8873a;
+  --ok:#2f5d3a; --warn:#8a6a2a; --fail:#8c2f1f;
+  --mono:"SF Mono",Consolas,"Courier New",monospace;
+  --serif:Georgia,"Songti SC","SimSun",serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:15px;line-height:1.78;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:52px 34px 90px}
+
+header{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:12px}
+h1{font-size:27px;font-weight:600;letter-spacing:.01em;margin:0 0 10px;line-height:1.38}
+.sub{color:var(--ink3);font-size:14.5px;margin:0}
+.sub b{color:var(--accent2);font-weight:600}
+
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:26px 0 8px}
+.hc{background:var(--card);padding:18px 22px}
+.hc .k{font-size:11px;color:var(--ink3);letter-spacing:.08em;font-family:var(--mono);margin-bottom:6px}
+.hc .v{font-size:25px;font-family:var(--mono);color:var(--accent2);font-weight:500;line-height:1.2}
+.hc .v small{font-size:12px;color:var(--ink3);font-weight:400;margin-left:4px;font-family:var(--serif)}
+.hc .n{font-size:12px;color:var(--ink3);margin-top:5px;line-height:1.5}
+
+h2{font-size:17px;font-weight:600;letter-spacing:.05em;color:var(--accent2);margin:48px 0 16px;padding-left:12px;border-left:3px solid var(--accent)}
+h2 .n{font-family:var(--mono);font-size:12px;color:var(--accent3);margin-right:9px;letter-spacing:.12em}
+h3{font-size:14.5px;font-weight:600;margin:26px 0 10px;color:var(--ink)}
+p{margin:0 0 12px}
+
+.lede{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);padding:20px 24px;margin:20px 0 0}
+.lede p{margin:0 0 10px;font-size:15.5px}
+.lede p:last-child{margin-bottom:0}
+.lede b{color:var(--accent2)}
+
+.tbwrap{background:var(--card);border:1px solid var(--line);overflow-x:auto;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--soft);font-weight:600;font-size:11.5px;letter-spacing:.06em;color:var(--ink2);padding:10px 12px;text-align:left;border-bottom:1px solid var(--line2);white-space:nowrap;font-family:var(--mono)}
+td{padding:9px 12px;border-bottom:1px solid #f0eee9;color:var(--ink2);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fdfbf6}
+td.mono,th.mono{font-family:var(--mono);font-size:12.5px}
+td b{color:var(--ink)}
+.chip{display:inline-block;padding:1px 7px;border-radius:2px;font-size:11px;font-family:var(--mono);white-space:nowrap}
+.chip.ok{background:#e8f0e8;color:var(--ok)}
+.chip.warn{background:#f7efdc;color:var(--warn)}
+.chip.fail{background:#f7e3e0;color:var(--fail)}
+.chip.gray{background:#eeeee9;color:var(--ink3)}
+.chip.del{background:#f0eae8;color:#8c2f1f;text-decoration:line-through}
+
+/* 甘特 */
+.gantt{background:var(--card);border:1px solid var(--line);padding:22px 20px 14px;margin:14px 0;overflow-x:auto}
+.g-inner{min-width:820px}
+.g-scale{display:flex;margin-left:172px;margin-bottom:8px;font-family:var(--mono);font-size:10px;color:#a8a29a;position:relative;height:14px}
+.g-scale span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.g-scale span:first-child{transform:none}
+.g-scale span:last-child{transform:translateX(-100%)}
+.g2-row{display:flex;align-items:center;margin-bottom:6px}
+.g2-label{width:172px;flex:0 0 172px;font-size:12.5px;color:var(--ink2);line-height:1.35;padding-right:12px}
+.g2-label b{color:var(--ink);font-family:var(--mono);font-size:11.5px;font-weight:600}
+.g2-track{flex:1;height:24px;position:relative;background:#f7f5ef;border-radius:1px;overflow:hidden}
+.g2-bar{position:absolute;top:0;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-family:var(--mono);color:#fff;white-space:nowrap;overflow:hidden}
+.g2-ms{position:absolute;top:3px;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:13px solid var(--fail);transform:translateX(-9px)}
+.g2-note{font-size:11.5px;color:var(--ink3);margin-top:10px;line-height:1.6;font-family:var(--serif)}
+
+/* 阶段卡 */
+.ph{background:var(--card);border:1px solid var(--line);margin:16px 0}
+.ph-h{display:flex;align-items:baseline;gap:12px;padding:15px 20px;border-bottom:1px solid var(--line);background:#fdfcfa;flex-wrap:wrap}
+.ph-h .id{font-family:var(--mono);font-size:11.5px;color:#fff;background:var(--accent2);padding:2px 8px;border-radius:2px;letter-spacing:.06em}
+.ph-h .ttl{font-size:16px;font-weight:600;color:var(--ink)}
+.ph-h .wk{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-left:auto}
+.ph-h.core{border-left:3px solid var(--accent)}
+.ph-h.ext{background:#fbf7ee}
+.ph-h.ext .id{background:var(--accent3)}
+.ph-b{padding:18px 20px 16px}
+.ph-b .goal{font-size:14.5px;color:var(--ink2);margin-bottom:14px}
+.ph-b .goal b{color:var(--accent2)}
+.ph-b h4{font-size:12px;letter-spacing:.1em;color:var(--accent3);font-family:var(--mono);margin:16px 0 8px;font-weight:600}
+.ph-b h4:first-child{margin-top:0}
+.wlist{list-style:none;margin:0;padding:0}
+.wlist li{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:7px 0;border-bottom:1px dotted #eae7e0;font-size:13.5px;line-height:1.62}
+.wlist li:last-child{border-bottom:none}
+.wlist .w{font-family:var(--mono);font-size:11.5px;color:var(--accent);padding-top:2px}
+.wlist b{color:var(--ink);font-weight:600}
+.deliver{background:#f8fafb;border-left:3px solid var(--accent2);padding:12px 16px;margin:14px 0 0;font-size:13.5px}
+.deliver b{color:var(--accent2)}
+.accept{background:#fbf7ee;border-left:3px solid var(--accent3);padding:12px 16px;margin:10px 0 0;font-size:13.5px}
+.accept b{color:var(--accent3)}
+.accept code{font-family:var(--mono);font-size:12.5px;background:#f2ece0;padding:1px 5px;border-radius:2px}
+
+/* 里程碑 */
+.ms{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:16px 0}
+.msc{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--fail);padding:17px 19px}
+.msc .h{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.msc .h .t{font-family:var(--mono);font-size:12px;color:#fff;background:var(--fail);padding:2px 7px;border-radius:2px}
+.msc .h .w{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-left:auto}
+.msc .q{font-size:13.5px;color:var(--ink);margin-bottom:9px;line-height:1.62}
+.msc .p{font-size:12.5px;color:var(--ink3);line-height:1.6}
+.msc .p b{color:var(--fail)}
+
+/* 可信度 */
+.cred{background:var(--card);border:1px solid var(--line);margin:14px 0;overflow:hidden}
+.cr{display:grid;grid-template-columns:104px 1fr 1fr;border-bottom:1px solid var(--line)}
+.cr:last-child{border-bottom:none}
+.cr>div{padding:13px 16px;font-size:13px;line-height:1.62}
+.cr .lv{font-family:var(--mono);font-weight:600;font-size:14px;display:block;padding-top:14px}
+.cr .lv.a{color:var(--ok)}.cr .lv.b{color:var(--warn)}.cr .lv.c{color:var(--fail)}
+.cr>div:nth-child(2){border-right:1px solid var(--line);background:#fbfcfb}
+.cr>div:nth-child(3){background:#fdfaf8}
+@media(max-width:700px){.cr{grid-template-columns:70px 1fr}.cr>div:nth-child(3){grid-column:2;border-top:1px solid var(--line)}}
+
+/* 变更清单 */
+.chg{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin:14px 0}
+.chg>div{background:var(--card);padding:18px 20px}
+.chg h4{margin:0 0 10px;font-size:12px;letter-spacing:.1em;font-family:var(--mono)}
+.chg .del h4{color:var(--fail)}
+.chg .add h4{color:var(--ok)}
+.chg ul{margin:0;padding-left:18px;font-size:13px;line-height:1.75;color:var(--ink2)}
+.chg li{margin-bottom:6px}
+.chg li:last-child{margin-bottom:0}
+.chg b{color:var(--ink)}
+@media(max-width:700px){.chg{grid-template-columns:1fr}}
+
+/* 风险 */
+.risk{background:var(--card);border:1px solid var(--line);margin:14px 0}
+.rk{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.rk:last-child{border-bottom:none}
+.rk>div{padding:14px 18px;font-size:13.5px;line-height:1.65}
+.rk>div:first-child{border-right:1px solid var(--line);background:#fdfaf7}
+.rk .r{color:var(--fail);font-weight:600}
+.rk .b{color:var(--ok);font-weight:600}
+@media(max-width:700px){.rk{grid-template-columns:1fr}.rk>div:first-child{border-right:none;border-bottom:1px solid var(--line)}}
+
+.dont{background:#fdf7f4;border:1px solid #eddcd4;padding:18px 22px;margin:16px 0}
+.dont .tag{font-family:var(--mono);font-size:11px;color:var(--fail);letter-spacing:.1em;display:block;margin-bottom:10px}
+.dont ol{margin:0;padding-left:20px}
+.dont li{margin-bottom:9px;font-size:14px;line-height:1.7}
+.dont li:last-child{margin-bottom:0}
+.dont b{color:var(--fail)}
+
+.ledger{background:var(--card);border:1px solid var(--line);margin:14px 0;overflow-x:auto}
+.ledger table{font-size:12.5px}
+.ledger td{font-family:var(--mono)}
+.ledger td.t{font-family:var(--serif)}
+.tools{display:flex;gap:10px;margin:12px 0 0;flex-wrap:wrap;align-items:center}
+button{padding:8px 16px;border:1px solid var(--line2);background:var(--card);color:var(--ink2);font-family:var(--serif);font-size:13px;cursor:pointer;border-radius:2px;transition:.15s}
+button:hover{border-color:var(--accent2);color:var(--accent2);background:#f8fafb}
+button.pri{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+button.pri:hover{background:#17414f;color:#fff}
+.tip{font-size:12px;color:var(--ink3);font-family:var(--mono)}
+
+footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:#9a948a;font-family:var(--mono);line-height:1.9}
+
+@media(max-width:760px){
+  .wrap{padding:30px 16px 60px}
+  h1{font-size:21px}
+  .g2-label{width:120px;flex:0 0 120px;font-size:11px}
+  .g-scale{margin-left:120px}
+  .g-inner{min-width:640px}
+}
+@media print{
+  body{background:#fff;font-size:10.5pt}
+  .wrap{padding:0;max-width:none}
+  .ph,.msc,.lede,.gantt,.tbwrap,.risk,.ledger,.cred,.chg{break-inside:avoid}
+  button{display:none}
+  h2{break-after:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>半桥 LLC + 同步整流 · 仿真打通与独立设计计划</h1>
+  <p class="sub">定位重排：<b>无实机、以 PLECS 闭环仿真为唯一验证手段</b> · 前期打通整机与 SR · 后期自己做实机 · 最终独立设计新规格</p>
+</header>
+
+<div class="hero">
+  <div class="hc"><div class="k">MAIN LINE</div><div class="v">26<small>周</small></div><div class="n">仿真打通全链路，130 小时</div></div>
+  <div class="hc"><div class="k">EXTENDED</div><div class="v">38<small>周</small></div><div class="n">含独立设计 + 实机，190 小时</div></div>
+  <div class="hc"><div class="k">MINIMUM</div><div class="v">21<small>周</small></div><div class="n">只求"打通并理解"，W2–W22</div></div>
+  <div class="hc"><div class="k">CASH</div><div class="v">¥0<small>前期</small></div><div class="n">实机阶段才花钱，约 ¥800 起</div></div>
+</div>
+
+<div class="lede">
+  <p><b>这次改的不是排期，是验证手段。</b>上一版把"实测反推"和"上电验证"当成必经环节，那需要公司样机、LCR 表、差分探头——你现在一样都没有。而你有另一样更稀缺的东西：<b>能把 C 代码编译成 DLL，挂进 PLECS 跑闭环。</b></p>
+  <p>这条路对你不只是"退而求其次"，它其实是<b>更快的路</b>：仿真里能看到的量，实测根本看不到——磁通密度、每个开关的瞬时损耗、谐振腔内部节点电流、任意故障注入。而且不用等样机、不用抢仪器、不用看别人排期。</p>
+  <p>代价必须说清：<b>仿真通过不等于实机能跑。</b>模型里没有寄生参数、没有温升、没有 EMI。所以计划里专门有一节"仿真可信度分级"，告诉你哪些结论可以直接用，哪些只能当趋势。</p>
+</div>
+
+<h2><span class="n">01</span>定位对照：从实测驱动改为仿真驱动</h2>
+
+<div class="tbwrap">
+<table>
+  <thead><tr><th style="width:18%"></th><th style="width:41%">旧（实测驱动）</th><th style="width:41%">新（仿真驱动）</th></tr></thead>
+  <tbody>
+    <tr><td><b>验证手段</b></td><td>公司样机上电实测</td><td>PLECS 闭环 + DLL 在环</td></tr>
+    <tr><td><b>关键工具</b></td><td>LCR 表、差分探头、示波器</td><td>PLECS、C 编译器、调试器</td></tr>
+    <tr><td><b>你的角色</b></td><td>学习者：读别人的代码</td><td><b>作者：写控制代码，仿真里验证</b></td></tr>
+    <tr><td><b>前置条件</b></td><td>样机权限、仪器、同事时间</td><td>一台能跑 PLECS 的电脑</td></tr>
+    <tr><td><b>卡点</b></td><td>借不到样机就停摆</td><td>模型不准会自我欺骗</td></tr>
+    <tr><td><b>能看到</b></td><td>外部波形、效率、温度</td><td>内部节点、瞬时损耗、磁通、任意故障</td></tr>
+    <tr><td><b>看不到</b></td><td>内部量（除非加打点）</td><td>寄生振荡、EMI、尖峰、真实温升</td></tr>
+    <tr><td><b>前期花钱</b></td><td class="mono">¥2000–6000</td><td class="mono">¥0</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>一句话：<b>旧计划卡在"没有实机"，新计划把这个约束变成设计前提，然后绕开它。</b>实机不再是前置条件，而是最后的验收。</p>
+
+<h2><span class="n">02</span>你手里的牌</h2>
+
+<div class="tbwrap">
+<table>
+  <thead><tr><th style="width:24%">资产</th><th style="width:44%">状态</th><th style="width:32%">在这条路上的作用</th></tr></thead>
+  <tbody>
+    <tr><td><b>PLECS</b></td><td>已有两个模型：PSM 闭环、PWM 开环</td><td><span class="chip ok">主战场</span> 全部验证在这里做</td></tr>
+    <tr><td><b>DLL 能力</b></td><td>10 年嵌入式 C，能写能调能编译</td><td><span class="chip ok">杀手锏</span> 硬件工程师做不了这一步</td></tr>
+    <tr><td><b>控制代码</b></td><td>量产工程可读，链路已理清</td><td><span class="chip ok">素材</span> 抽核心逻辑进 DLL</td></tr>
+    <tr><td><b>设计参数</b></td><td>n=4 / Lr=12µH / Lm=80µH / Cr=136nF / fr=124.6kHz</td><td><span class="chip ok">已完成</span> 模型照这个搭</td></tr>
+    <tr><td><b>原理图</b></td><td>第一版，丝印完整</td><td><span class="chip warn">参考</span> 拓扑照抄，参数以设计书为准</td></tr>
+    <tr><td><b>实机</b></td><td>没有，后期自己做</td><td><span class="chip fail">已排除</span> 不在前 32 周的依赖里</td></tr>
+    <tr><td><b>仪器</b></td><td>无 LCR 表、无差分探头</td><td><span class="chip fail">已排除</span> 移到 S8，届时再买</td></tr>
+    <tr><td><b>磁件经验</b></td><td>零</td><td><span class="chip warn">可后置</span> 仿真能算磁通与损耗，绕法到实机再说</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2><span class="n">03</span>38 周全景</h2>
+
+<div class="gantt">
+<div class="g-inner">
+  <div class="g-scale">
+    <span style="left:0%">W1</span>
+    <span style="left:34.21%">W14</span>
+    <span style="left:65.79%">W26</span>
+    <span style="left:100%">W38</span>
+  </div>
+
+  <div class="g2-row"><div class="g2-label"><b>S0</b> 环境与账本</div>
+    <div class="g2-track"><div class="g2-bar" style="left:0%;width:2.63%;background:#9a948a"></div></div></div>
+
+  <div class="g2-row"><div class="g2-label"><b>S1</b> 虚拟样机（开环）</div>
+    <div class="g2-track"><div class="g2-bar" style="left:2.63%;width:7.89%;background:#1f4e5f">3 周</div></div></div>
+
+  <div class="g2-row"><div class="g2-label"><b>S2</b> 闭环（PI + PFM）</div>
+    <div class="g2-track"><div class="g2-bar" style="left:10.53%;width:10.53%;background:#2f5d3a">4 周</div></div></div>
+
+  <div class="g2-row"><div class="g2-label"><b>S3</b> DLL 在环</div>
+    <div class="g2-track"><div class="g2-bar" style="left:21.05%;width:13.16%;background:#8a4b2a">5 周</div></div></div>
+
+  <div class="g2-row"><div class="g2-label"><b>S4</b> 整机联调（含故障注入）</div>
+    <div class="g2-track"><div class="g2-bar" style="left:34.21%;width:13.16%;background:#8c2f1f">5 周</div></div></div>
+
+  <div class="g2-row"><div class="g2-label"><b>S5</b> 参数标定</div>
+    <div class="g2-track"><div class="g2-bar" style="left:47.37%;width:10.53%;background:#6b5b95">4 周</div></div></div>
+
+  <div class="g2-row"><div class="g2-label"><b>S6</b> 磁件与损耗仿真</div>
+    <div class="g2-track"><div class="g2-bar" style="left:57.89%;width:10.53%;background:#b8873a">4 周</div></div></div>
+
+  <div class="g2-row"><div class="g2-label"><b>S7</b> 独立设计新规格</div>
+    <div class="g2-track"><div class="g2-bar" style="left:68.42%;width:15.79%;background:#3d3d3d">6 周</div></div></div>
+
+  <div class="g2-row"><div class="g2-label"><b>S8</b> 实机验证（支线）</div>
+    <div class="g2-track"><div class="g2-bar" style="left:84.21%;width:15.79%;background:#a8a49a">6 周</div></div></div>
+
+  <div class="g2-row"><div class="g2-label" style="color:var(--fail)">里程碑</div>
+    <div class="g2-track">
+      <div class="g2-ms" style="left:10.53%"></div>
+      <div class="g2-ms" style="left:34.21%"></div>
+      <div class="g2-ms" style="left:57.89%"></div>
+      <div class="g2-ms" style="left:84.21%"></div>
+    </div></div>
+
+  <div class="g2-note">▾ 红色三角是四个里程碑，分别在 W4 末、W13 末、W22 末、W32 末；最左侧灰色小方块是 S0（仅 1 周）。S1–S6 是主线（26 周，全部仿真）；S7–S8 是延伸（独立设计与实机）。<b>主线不依赖任何硬件。</b></div>
+</div>
+</div>
+
+<p style="font-size:13.5px;color:var(--ink3)"><b style="color:var(--ink)">最小达标路径</b>是 S1–S5（W2–W22，21 周，105 小时）：走完就能"打通并理解整机闭环"，这是及格线。S6 磁件、S7 独立设计、S8 实机是加分项。</p>
+
+<h2><span class="n">04</span>八个阶段，逐周拆开</h2>
+
+<!-- S0 -->
+<div class="ph">
+  <div class="ph-h"><span class="id">S0</span><span class="ttl">环境与账本</span><span class="wk">W1 · 5h</span></div>
+  <div class="ph-b">
+    <div class="goal">这一周只做三件准备。软件工程师对这个流程很熟：<b>先把编译链跑通，再写业务代码</b>。</div>
+    <h4>周任务</h4>
+    <ul class="wlist">
+      <li><span class="w">2h</span><span><b>确认 PLECS 的 C 编译链。</b>PLECS 的 C-Script 有"解释执行"和"编译执行"两种模式，编译模式需要外部 C 编译器（Windows 上通常配 GCC/MinGW）。在 Preferences 里找 Compiler 相关设置，<b>先写一个 Hello World 级别的 C-Script 模块，确认能编译、能跑</b>。这一步不通，S3 全部做不了。</span></li>
+      <li><span class="w">2h</span><span><b>建三列参数账本。</b>列改成：理论值 / 仿真值 / 实机值（最后一列长期留空）。8 个关键参数先填理论值，来源写清是丝印还是反推。<b>后面每验证一次，就在"仿真值"那列填一个数，并记偏差。</b></span></li>
+      <li><span class="w">1h</span><span><b>把现有两个模型各跑一遍，截图存档。</b>不改参数，只看现状——记录当前模型的 Vo、fsw、效率、SR 是否启用。<b>这是你的"基线"，后面所有改动都要和它比。</b></span></li>
+    </ul>
+    <div class="deliver"><b>交付物：</b>一张能编译 C-Script 的截图 + 三列账本（理论列填满）+ 两份基线运行记录。</div>
+    <div class="accept"><b>验收：</b>能说出"我的 PLECS 用的是哪个编译器、编译模式怎么开"。说不出来，先解决这个，别往下走。</div>
+  </div>
+</div>
+
+<!-- S1 -->
+<div class="ph">
+  <div class="ph-h"><span class="id">S1</span><span class="ttl">虚拟样机：先让开环跑对</span><span class="wk">W2–W4 · 15h</span></div>
+  <div class="ph-b">
+    <div class="goal">把仿真模型改造成"等于你设计书里那台机器"，然后用 FHA 校核它。<b>开环是唯一能干净对照理论的工况</b>——闭环会把误差藏进环路里。</div>
+    <h4>周任务</h4>
+    <ul class="wlist">
+      <li><span class="w">W2</span><span><b>改参数，对齐设计书。</b>C22 从 200nF 改 <b>136nF</b>，母线设 <b>380V</b>，n=4、Lr=12µH、Lm=80µH。先跑 PWM 开环那个模型，扫 60k–250k，每 5k 记一个 Vo。<b>改完先看 fr 是不是落在 124.6kHz 附近——这是模型对不对的第一道关。</b></span></li>
+      <li><span class="w">W3</span><span><b>和 FHA 叠图。</b>把仿真点导成 CSV，与 <code>llc-gain-curve.html</code> 的理论值画在一张图上。看三件事：分叉点在哪、分叉方向是高还是低、fn=1 附近是否重合。<b>典型结果是满载区仿真略低于 FHA（死区与压降），轻载区偏差更大。</b></span></li>
+      <li><span class="w">W4</span><span><b>补上同步整流模型。</b>这一步是新增的重点：确认副边用的是"MOSFET + 体二极管"模型而不是理想二极管，加上栅极驱动信号（由副边电流过零 + 延时决定）。<b>先把 SR 设成"永不开通"，跑一遍；再设成"理想时序"，跑一遍，对比效率差多少。</b>这个差值就是你后面要优化的空间。然后做 M1。</span></li>
+    </ul>
+    <div class="deliver"><b>交付物：</b>一张"仿真 vs FHA"叠图 + 一张 SR 开/关的效率对比（两个工况即可）+ 三句话结论。</div>
+    <div class="accept"><b>验收：</b>能回答"为什么仿真在满载区比 FHA 低"。答"因为损耗"不算答对，要说出是哪种损耗、在哪个区间更明显。</div>
+  </div>
+</div>
+
+<!-- S2 -->
+<div class="ph">
+  <div class="ph-h"><span class="id">S2</span><span class="ttl">闭环：PI 与 PFM 怎么咬合</span><span class="wk">W5–W8 · 20h</span></div>
+  <div class="ph-b">
+    <div class="goal">这一阶段的目的不是"跑出稳定输出"，是<b>亲手体会"PI 输出就是频率"这件事</b>。你在代码里见过 <code>flvOut = out×50000</code>，但只有自己搭一遍，才知道那个 50000 是怎么来的。</div>
+    <h4>周任务</h4>
+    <ul class="wlist">
+      <li><span class="w">W5</span><span><b>用 PLECS 自带模块搭 PI + 限幅 + 周期换算。</b>不要一上来就写 C。先用传递函数模块搭，把 <code>Vo误差 → PI → 频率 → 周期 → 占空比</code> 这条链跑通。<b>重点：给 PI 输出加限幅 60k–250k，看限幅触发时输出怎么失守。</b></span></li>
+      <li><span class="w">W6</span><span><b>测环路。</b>做三件事：① 负载 10%→100% 跳变，看恢复时间和过冲；② 母线 380→410V 跳变，看抗扰；③ 扫 PI 的 Kp/Ki，画出响应面。<b>你会看到"Kp 太大就振荡、太小就慢"这条老规律，在 LLC 上还多一层——Kp 必须随频率变。</b></span></li>
+      <li><span class="w">W7</span><span><b>验证"为什么 Kp 要随频率变 130 倍"。</b>把 <code>M_CoeffiFp</code> 表的几个点（102kHz 的 0.0018、300kHz 的 0.24）代进去，分别在对应频率下测阶跃响应。<b>如果固定一个 Kp 跑全频段，一定会在某一端振荡或迟钝——这就是那张表存在的理由。</b></span></li>
+      <li><span class="w">W8</span><span><b>加 SR 闭环时序。</b>让 SR 的开关由副边电流过零检测 + 延时决定，扫延时值看效率与直通风险。<b>这一步要小心：SR 时序错了会直通，仿真里表现为电流尖峰暴涨——这正好是你要学会识别的现象。</b></span></li>
+    </ul>
+    <div class="deliver"><b>交付物：</b>三条响应曲线（负载跳变 / 母线跳变 / Kp 扫描）+ 一段"为什么 Kp 要随频率变"的解释（300 字）+ SR 延时-效率曲线。</div>
+    <div class="accept"><b>验收：</b>能说出"如果把 M_CoeffiFp 表全部改成同一个值，会在哪个频段先出问题"。这是理解增益调度的标志。</div>
+  </div>
+</div>
+
+<!-- S3 -->
+<div class="ph">
+  <div class="ph-h core"><span class="id">S3</span><span class="ttl">DLL 在环：把真实控制代码挂进仿真</span><span class="wk">W9–W13 · 25h</span></div>
+  <div class="ph-b">
+    <div class="goal">整条路线的技术制高点，也是<b>你比硬件工程师强的地方</b>。目标：不是"仿真里有个 PI"，而是<b>仿真里跑的就是你写的那份 C 代码</b>。做到这一步，改一行代码就能看波形变化，这比读一百遍代码有用。</div>
+    <h4>周任务</h4>
+    <ul class="wlist">
+      <li><span class="w">W9</span><span><b>定接口。</b>列出 DLL 需要哪些输入、哪些输出、哪些状态：输入是 Vo、Io、Vin、故障标志；输出是 PWM 周期与占空比、SR 使能；状态是 PI 积分、状态机、计数器。<b>写成一张表，先纸上定，别急着写代码。</b></span></li>
+      <li><span class="w">W10</span><span><b>抽核心逻辑，写成独立 C 模块。</b>从 <code>mathR02.c</code> 抽三块：PI + 限幅 + 频率换算、状态机、SR 时序。**去掉所有 HAL 和寄存器操作**，只留纯计算。<b>这一步做完，你会第一次看清"控制逻辑"和"硬件操作"其实是两层。</b></span></li>
+      <li><span class="w">W11</span><span><b>编译成 DLL，挂进 PLECS。</b>用 C-Script 的编译模式或 DLL 模块，把模块接上。第一次跑大概率不工作——常见原因是端口顺序、数据类型（int/double）、初始化顺序。<b>用最简单的开环测试先验证通道通不通，再上闭环。</b></span></li>
+      <li><span class="w">W12</span><span><b>对齐。</b>同样的负载和母线，DLL 跑出的稳态波形要和 S2 里 PLECS 自带控制器<b>基本一致</b>（Vo 误差 &lt;2%，fsw 误差 &lt;3%）。不一致就查：是 PI 参数不同、是限幅不同、还是采样延时不同。<b>这个"查差异"的过程，就是你把代码读透的过程。</b></span></li>
+      <li><span class="w">W13</span><span><b>加故障与保护。</b>把 <code>ProtectionLLC.c</code> 的阈值表搬进去：过压、欠压、过流、过温、SR 直通。逐个注入验证动作。<b>然后做 M2。</b></span></li>
+    </ul>
+    <div class="deliver"><b>交付物：</b>一份可编译的 C 模块（含接口说明）+ 一张 DLL vs 自带控制器的对比波形 + 一张"故障注入-动作"对照表。</div>
+    <div class="accept"><b>验收：</b>改一行 PI 参数，重新编译，波形在 5 分钟内发生变化。<b>做到这个，你就有了一个"可以随便试"的实验台</b>——这是整个计划里最值钱的能力。</div>
+  </div>
+</div>
+
+<!-- S4 -->
+<div class="ph">
+  <div class="ph-h core"><span class="id">S4</span><span class="ttl">整机联调：母线不再是理想源</span><span class="wk">W14–W18 · 25h</span></div>
+  <div class="ph-b">
+    <div class="goal">之前所有仿真都假设母线是理想电压源。真实整机里，母线有 100Hz 纹波、有内阻、有动态跌落。<b>"整机"和"单级"的区别全在这里。</b></div>
+    <h4>周任务</h4>
+    <ul class="wlist">
+      <li><span class="w">W14</span><span><b>搭 PFC 级。</b>先用平均模型（快，够看动态），母线设 380V 带 100Hz 纹波（幅度按 5–10V 估）。<b>看 LLC 的环路能不能抑制这个纹波——输出纹波会直接反映 PFC 纹波的传递率。</b></span></li>
+      <li><span class="w">W15</span><span><b>母线动态。</b>做三个场景：① 输入 90V 低压满载（母线跌到 360V）；② 264V 高压轻载（母线升到 410V）；③ 输入掉电 20ms（母线跌到 300V 以下）。<b>第③个场景是实机最容易炸的，仿真里先看一遍。</b></span></li>
+      <li><span class="w">W16</span><span><b>30–40V 硬开关段。</b>把 Duty 从 0.02 扫到 0.40，验证 §5.4 的模型；再抓 40.2V 交接瞬间，看有没有电压台阶。<b>这是设计书里唯一还没被验证的推断，仿真能给你第一手答案。</b></span></li>
+      <li><span class="w">W17</span><span><b>故障注入。</b>按清单逐个打：输出短路、SR 直通、母线跌落、负载突变、过温。记录每个故障下 DLL 的动作是否符合预期。<b>重点看"故障恢复"——能不能自动重试，还是会锁死。</b></span></li>
+      <li><span class="w">W18</span><span><b>全角点跑一遍。</b>Vin × Vo × 负载 的组合矩阵，记录每个点的 fsw、效率、峰值电流、磁通。<b>这张表就是你后面写设计书的底气。</b></span></li>
+    </ul>
+    <div class="deliver"><b>交付物：</b>整机模型（含 PFC 与 SR）+ 全角点工作点表（20 行以上）+ 故障注入记录 + 40.2V 交接结论。</div>
+    <div class="accept"><b>验收：</b>能说出"这台机器在哪个工况最危险"。<b>如果答案是"60V 满载"，并且能说出是磁通还是电流应力，说明你真的看懂了。</b></div>
+  </div>
+</div>
+
+<!-- S5 -->
+<div class="ph">
+  <div class="ph-h core"><span class="id">S5</span><span class="ttl">参数标定：把"调参"变成"算参"</span><span class="wk">W19–W22 · 20h</span></div>
+  <div class="ph-b">
+    <div class="goal">前面是"看懂"，这一阶段是"会改"。目标：给你一个性能指标，你能算出该动哪个参数、动多少。<b>这就是"能维护"和"能设计"的分界线。</b></div>
+    <h4>周任务</h4>
+    <ul class="wlist">
+      <li><span class="w">W19</span><span><b>Kp/Ki 响应面。</b>在 DLL 里扫 Kp × Ki 的网格（每维 5 个点，25 组），记录超调、恢复时间、稳态误差。<b>画成热力图，你就能看见"可用区"在哪。</b></span></li>
+      <li><span class="w">W20</span><span><b>SR 时序优化。</b>扫开通延时、关断提前量，看效率与直通裕度。<b>产出：一张"延时-效率-裕度"三维表，选出最优区。</b></span></li>
+      <li><span class="w">W21</span><span><b>保护阈值标定。</b>每个保护阈值都要回答两个问题：动作够不够快、会不会误动作。用仿真扫边界，找出"刚好不误动"的值。<b>这一步能解释为什么代码里那些阈值是现在这个数。</b></span></li>
+      <li><span class="w">W22</span><span><b>写标定报告，然后做 M3。</b>把三张表合成一份"参数-性能"手册：给定指标 → 该调什么 → 副作用是什么。<b>这是你最该带走的东西，比设计书更实用。</b></span></li>
+    </ul>
+    <div class="deliver"><b>交付物：</b>Kp/Ki 热力图 + SR 时序三维表 + 保护阈值标定表 + 一份标定手册（3–5 页）。</div>
+    <div class="accept"><b>验收：</b>能回答"客户抱怨轻载纹波大，你调什么、调多少、代价是什么"。答得出，这一阶段就过了。</div>
+  </div>
+</div>
+
+<!-- S6 -->
+<div class="ph">
+  <div class="ph-h"><span class="id">S6</span><span class="ttl">磁件与损耗：仿真能算的部分</span><span class="wk">W23–W26 · 20h</span></div>
+  <div class="ph-b">
+    <div class="goal">没有实机，磁件靠仿真 + 解析算。<b>能算的是磁通、气隙、损耗、温升趋势；算不了的是绕法、层间电容、工艺分散性。</b>把界限划清，别在这里陷进去。</div>
+    <h4>周任务</h4>
+    <ul class="wlist">
+      <li><span class="w">W23</span><span><b>磁通与饱和。</b>在 PLECS 里读变压器磁通波形，算 60V 满载时的 Bmax（Ae 先按 PQ4035 的 ≈190mm² 估）。<b>目标：确认是否贴住 100°C 的饱和点（0.42–0.45T）。这是全机最紧的一项。</b></span></li>
+      <li><span class="w">W24</span><span><b>损耗分解。</b>用 PLECS 的热描述或手算，把损耗拆成：开关损耗、导通损耗、磁芯损耗、铜损、SR 损耗。<b>看哪一项占大头——通常是磁芯损耗和 SR 损耗，这会决定你后面优化谁。</b></span></li>
+      <li><span class="w">W25</span><span><b>磁芯选型与气隙。</b>给定 Lm=80µH、Lr=12µH、匝比 4:1，算需要多少匝、多大气隙、AL 值多少。<b>这一步是纯计算，不需要实物。</b></span></li>
+      <li><span class="w">W26</span><span><b>写磁件规格卡。</b>两页：磁芯型号、匝数、气隙、线径、绕制要求（三明治、层数）、预计损耗与温升。<b>这份东西到 S8 做实机时直接能用，也可以拿去问供应商。</b></span></li>
+    </ul>
+    <div class="deliver"><b>交付物：</b>Bmax 校核记录 + 损耗分解表 + 磁件规格卡（2 页）。</div>
+    <div class="accept"><b>验收：</b>能说出"这台机器的磁件如果重做，最该改哪一个量"。说不出，说明 W23 只是抄了数，没算。</div>
+  </div>
+</div>
+
+<!-- S7 -->
+<div class="ph">
+  <div class="ph-h ext"><span class="id">S7</span><span class="ttl">独立设计：给新规格从零走一遍</span><span class="wk">W27–W32 · 30h</span></div>
+  <div class="ph-b">
+    <div class="goal">这是唯一的真验收：<b>换一个功率和电压等级，不查旧答案，从规格推到仿真闭环跑通。</b>走完才算"会设计"。</div>
+    <h4>周任务</h4>
+    <ul class="wlist">
+      <li><span class="w">W27</span><span><b>自选规格并冻结。</b>建议 <b>600W / 48V / 400V 母线 / 恒压恒流</b>。刻意换功率等级和输出电压，避免下意识套用旧参数。写一页规格书，含全部边界。</span></li>
+      <li><span class="w">W28</span><span><b>定 n、k、fr。</b>按设计书 §6–8 的三条判据：峰值增益要够、地板要低、环流可接受。产出取舍表，写清每个选择的代价。</span></li>
+      <li><span class="w">W29</span><span><b>工作点表 + 器件选型。</b>全角点扫一遍，确定开关管应力、谐振电容耐压与电流、SR 选型。<b>这一步会逼你面对"参数一改，应力全变"的连锁。</b></span></li>
+      <li><span class="w">W30</span><span><b>搭新模型，先开环。</b>照 S1 的流程重搭一遍，用 FHA 校核。<b>你会发现这次快得多——因为你已经知道该看哪里。</b></span></li>
+      <li><span class="w">W31</span><span><b>挂 DLL，跑闭环。</b>复用 S3 的 C 模块，只改参数。<b>如果改参数就能跑通，说明你的模块抽象是对的；如果改不动，说明 S3 的接口设计有问题——回去重构。</b></span></li>
+      <li><span class="w">W32</span><span><b>写设计书 + 自评审。</b>六到八页：规格、推导、工作点、应力、软件映射、风险。<b>然后做 M4。</b></span></li>
+    </ul>
+    <div class="deliver"><b>交付物：</b>一份完整的新设计书（6–8 页）+ 一个能跑通的新仿真模型 + 一份软件设计说明。</div>
+    <div class="accept"><b>验收：</b>把设计书给懂行的人看，他能挑出细节问题，但<b>没有一条是"这个方向错了"</b>。挑细节说明及格，挑方向说明还要再来一台。</div>
+  </div>
+</div>
+
+<!-- S8 -->
+<div class="ph">
+  <div class="ph-h ext"><span class="id">S8</span><span class="ttl">实机验证：最小可行的一台</span><span class="wk">W33–W38 · 30h（支线）</span></div>
+  <div class="ph-b">
+    <div class="goal">不要一上来做 1600W。<b>做一台 100W 级别的验证板</b>，验证三件事：ZVS 有没有、SR 时序对不对、增益曲线和仿真像不像。这台板子的意义是"证明仿真没骗你"，不是"做出产品"。</div>
+    <h4>周任务</h4>
+    <ul class="wlist">
+      <li><span class="w">W33</span><span><b>选型与 BOM。</b>100W / 24V 输出 / 400V 母线。器件可以买模块（半桥驱动 + 谐振电感 + 变压器成品），<b>不必自己绕</b>。预算控制在 ¥800 以内。</span></li>
+      <li><span class="w">W34</span><span><b>买仪器。</b>现在才需要：手持 LCR 表（¥400–600，测 Lr/Lm/Cr）+ 高压差分探头（¥1500+，安全底线）。<b>示波器如果公司能借就借。</b></span></li>
+      <li><span class="w">W35</span><span><b>搭板 + 静态检查。</b>先不上电：量驱动供电、量死区、确认母线电容放电回路。<b>这一步不许省。</b></span></li>
+      <li><span class="w">W36</span><span><b>低压上电，开环。</b>母线先给 50V，看能不能起振、看谐振电流波形。<b>和仿真波形对比——这是"仿真可信度"的最终检验。</b></span></li>
+      <li><span class="w">W37</span><span><b>闭环 + SR。</b>挂上控制代码（可以就是 S3 那份，移植到 MCU），跑恒压，再开 SR。<b>看效率和仿真差多少。</b></span></li>
+      <li><span class="w">W38</span><span><b>写对比报告。</b>仿真 vs 实测：增益曲线、效率、SR 时序、ZVS 裕度。<b>差在哪，就是模型缺了什么。这份报告比任何设计书都值钱。</b></span></li>
+    </ul>
+    <div class="deliver"><b>交付物：</b>一台能跑的 100W 样机 + 一份"仿真 vs 实测"对比报告。</div>
+    <div class="accept"><b>验收：</b>仿真与实测的效率差在 5 个百分点以内、增益曲线趋势一致。<b>差太多不可怕，可怕的是不知道为什么差。</b></div>
+    <div class="accept" style="border-left-color:var(--fail);background:#fdf7f4"><b style="color:var(--fail)">这一阶段可以不做。</b>S7 结束时你已经达成"独立设计"。实机是加分项，什么时候有预算和整块时间再做。<b>不要因为想做实机而拖住主线。</b></div>
+  </div>
+</div>
+
+<h2><span class="n">05</span>四个里程碑</h2>
+
+<p>全部在仿真里完成，不需要任何硬件。<b>没过就回退，不许跳阶</b>——跳过去的每一阶，都会在后面变成"不知道为什么不对"。</p>
+
+<div class="ms">
+  <div class="msc">
+    <div class="h"><span class="t">M1</span><span style="font-size:13px;color:var(--ink2)">模型可信</span><span class="w">W4 末</span></div>
+    <div class="q">开环扫频曲线与 FHA 叠图，在 60–250kHz 范围内误差 &lt;15%，且能解释分叉方向。</div>
+    <div class="p"><b>判据：</b>满载区误差 &lt;10%，轻载区 &lt;20%，fn=1 处误差 &lt;3%。<br><b>没过：</b>模型参数错了，回 W2 逐项核对，别往下走。</div>
+  </div>
+  <div class="msc">
+    <div class="h"><span class="t">M2</span><span style="font-size:13px;color:var(--ink2)">代码在环</span><span class="w">W13 末</span></div>
+    <div class="q">DLL 跑出的稳态与 PLECS 自带控制器一致：Vo 误差 &lt;2%，fsw 误差 &lt;3%；五个故障都能正确动作。</div>
+    <div class="p"><b>判据：</b>改一行参数重新编译，波形在 5 分钟内变化。<br><b>没过：</b>接口或初始化有问题，回 W11 用开环通道测通断。</div>
+  </div>
+  <div class="msc">
+    <div class="h"><span class="t">M3</span><span style="font-size:13px;color:var(--ink2)">会算参数</span><span class="w">W22 末</span></div>
+    <div class="q">给一个性能指标（如"轻载纹波降到 1% 以内"），说出该动哪个参数、动多少、副作用是什么，且仿真验证误差 &lt;30%。</div>
+    <div class="p"><b>判据：</b>连续三个指标都能答对方向，且量级不差一个数量级。<br><b>没过：</b>标定表做得太浅，回 W19 把响应面画细。</div>
+  </div>
+  <div class="msc">
+    <div class="h"><span class="t">M4</span><span style="font-size:13px;color:var(--ink2)">能独立设计</span><span class="w">W32 末</span></div>
+    <div class="q">新规格（600W/48V）从零推出参数、搭出模型、挂上 DLL、全角点闭环达标，并写出设计书。</div>
+    <div class="p"><b>判据：</b>全角点 Vo 误差 &lt;2%、效率 &gt;92%、无保护误动作。<br><b>没过：</b>说明某个阶段有洞，回对应阶段补，别硬撑。</div>
+  </div>
+</div>
+
+<h2><span class="n">06</span>仿真可信度分级</h2>
+
+<p>这一节比任何技术细节都重要。<b>仿真的危险不在于不准，而在于你不知道哪里不准，然后把结论当事实用。</b>下面这张表贴在墙上，每次下结论前看一眼。</p>
+
+<div class="cred">
+  <div class="cr">
+    <div class="lv a">A 级<br><span style="font-size:10px;font-family:var(--serif);font-weight:400">可直接用</span></div>
+    <div><b>能信：</b>增益曲线形状、工作点频率、ZVS/容性区判定、环路稳定性趋势、状态机逻辑、SR 时序因果关系、保护动作顺序</div>
+    <div><b>不能信：</b>绝对值精度（±5% 以内可接受）</div>
+  </div>
+  <div class="cr">
+    <div class="lv b">B 级<br><span style="font-size:10px;font-family:var(--serif);font-weight:400">看趋势</span></div>
+    <div><b>能信：</b>损耗分解比例、效率相对高低、温升趋势、磁通峰值量级、SR 延时-效率曲线形状</div>
+    <div><b>不能信：</b>损耗绝对值（±30%）、结温绝对值（±20°C）、效率小数点后一位</div>
+  </div>
+  <div class="cr">
+    <div class="lv c">C 级<br><span style="font-size:10px;font-family:var(--serif);font-weight:400">只做定性</span></div>
+    <div><b>能信：</b>"会不会振荡"、"会不会直通"、"会不会饱和"这类是非判断</div>
+    <div><b>不能信：</b>任何尖峰幅值、振荡频率、EMI 表现、寄生参数效应、器件应力峰值</div>
+  </div>
+</div>
+
+<p>举个具体例子：仿真算出效率 94.2%，你只能说"这台机器效率在 94% 量级"（B 级）。但仿真说"60V 满载时磁通贴住饱和"（A 级判定），这个结论要当真——因为它是几何与电压决定的，不依赖模型精度。</p>
+
+<h2><span class="n">07</span>变更清单：删了什么、加了什么</h2>
+
+<div class="chg">
+  <div class="del">
+    <h4>DELETED · 删掉</h4>
+    <ul>
+      <li><b>S2 实测反推（4 周）</b>——没有实机，整段作废</li>
+      <li><b>S4 上电验证（4 周）</b>——同上，内容并入仿真验证</li>
+      <li><b>LCR 表、差分探头采购</b>——移到 S8，前期不需要</li>
+      <li><b>"样机权限"风险</b>——不再存在</li>
+      <li><b>"磁件必须人带"</b>——降级为"仿真先算，实机阶段再找同事"</li>
+      <li><b>UNK-2 母线是否跟随</b>——仿真里自己设定，不再是未知数</li>
+      <li><b>每周 2h"写产物"</b>——合并进各阶段交付物，不单列</li>
+    </ul>
+  </div>
+  <div class="add">
+    <h4>ADDED · 新增</h4>
+    <ul>
+      <li><b>S0 编译环境搭建</b>——DLL 的前置条件，1 周</li>
+      <li><b>S2 闭环阶段（4 周）</b>——原计划没有独立闭环环节</li>
+      <li><b>S3 DLL 在环（5 周）</b>——整条路线的核心，新增</li>
+      <li><b>S4 整机联调（5 周）</b>——PFC 母线动态 + 故障注入</li>
+      <li><b>S5 参数标定（4 周）</b>——响应面、时序优化、阈值标定</li>
+      <li><b>S6 磁件仿真（4 周）</b>——PLECS 算磁通与损耗</li>
+      <li><b>S7 独立设计（6 周）</b>——新规格从零走一遍</li>
+      <li><b>S8 最小实机（6 周）</b>——100W 验证板，支线</li>
+      <li><b>仿真可信度分级</b>——新增章节，防止自我欺骗</li>
+    </ul>
+  </div>
+</div>
+
+<h2><span class="n">08</span>参数账本（三列版）</h2>
+
+<p>比上一版多一列"仿真值"。<b>每次验证一个数，就在对应列填上并记偏差</b>——偏差本身就是知识：它告诉你模型缺了什么。</p>
+
+<div class="ledger">
+<table id="ledger">
+  <thead><tr>
+    <th style="width:15%">参数</th><th style="width:11%">理论值</th><th style="width:11%">仿真值</th><th style="width:11%">实机值</th>
+    <th style="width:9%">偏差</th><th style="width:24%">来源</th><th style="width:19%">置信度</th>
+  </tr></thead>
+  <tbody>
+    <tr><td class="t">匝比 n</td><td>4.00</td><td></td><td></td><td></td><td class="t">丝印 16T : 4T+4T</td><td class="t">高</td></tr>
+    <tr><td class="t">励磁电感 Lm</td><td>80 µH</td><td></td><td></td><td></td><td class="t">丝印 / 模型</td><td class="t">中</td></tr>
+    <tr><td class="t">谐振电感 Lr</td><td>12 µH</td><td></td><td></td><td></td><td class="t">丝印 L7 PQ2625</td><td class="t">中</td></tr>
+    <tr><td class="t">漏感 Llk</td><td>—</td><td></td><td></td><td></td><td class="t">未知，S6 估</td><td class="t">低</td></tr>
+    <tr><td class="t">谐振电容 Cr</td><td>136 nF</td><td></td><td></td><td></td><td class="t">C44/C50 并联（已确认）</td><td class="t">高</td></tr>
+    <tr><td class="t">谐振频率 fr</td><td>124.6 kHz</td><td></td><td></td><td></td><td class="t">计算值</td><td class="t">高</td></tr>
+    <tr><td class="t">母线电压 Vin</td><td>360–410 V</td><td></td><td></td><td></td><td class="t">S4 自行设定</td><td class="t">高（仿真）</td></tr>
+    <tr><td class="t">死区</td><td>176 ns</td><td></td><td></td><td></td><td class="t">代码 120 counts @ 680MHz</td><td class="t">高</td></tr>
+    <tr><td class="t">磁芯 Ae</td><td>≈190 mm²</td><td></td><td></td><td></td><td class="t">PQ4035 估算</td><td class="t">低，S6 查</td></tr>
+    <tr><td class="t">磁芯材质 Bs</td><td>—</td><td></td><td></td><td></td><td class="t">未知</td><td class="t">低，S6 必查</td></tr>
+    <tr><td class="t">满载效率</td><td>—</td><td></td><td></td><td></td><td class="t">S4 全角点表</td><td class="t">B 级</td></tr>
+    <tr><td class="t">60V 满载 Bmax</td><td>≈0.43 T</td><td></td><td></td><td></td><td class="t">S6 校核</td><td class="t">待定</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tools">
+  <button class="pri" onclick="copyTSV()">复制为 TSV（粘到 Excel）</button>
+  <span class="tip">表头 + 12 行，选中后直接 Ctrl+V 到 A1</span>
+</div>
+
+<h2><span class="n">09</span>风险与退路</h2>
+
+<div class="risk">
+  <div class="rk">
+    <div><span class="r">风险一：</span>PLECS 的编译链配不通，DLL 挂不上。<br><span style="color:var(--ink3);font-size:12.5px">这是 S3 的硬卡点，也是最可能出问题的一步。</span></div>
+    <div><span class="b">退路：</span>先用 C-Script 的解释模式跑通逻辑（慢 10–100 倍，但功能一样），<b>把"验证代码逻辑"和"跑得快"分开</b>。逻辑对了再解决编译。实在不行，用 PLECS 自带控制器 + 手写状态机，牺牲"代码在环"这一项。</div>
+  </div>
+  <div class="rk">
+    <div><span class="r">风险二：</span>仿真太理想，结论拿到实机上不成立。<br><span style="color:var(--ink3);font-size:12.5px">这是仿真驱动路线的固有缺陷。</span></div>
+    <div><span class="b">退路：</span>严格执行"可信度分级"——A 级结论才写进设计书，B 级只写趋势，C 级只做是非判断。<b>另外：每个关键结论都用两种方法交叉验证（FHA + 仿真、解析 + 仿真），两者都对才敢用。</b></div>
+  </div>
+  <div class="rk">
+    <div><span class="r">风险三：</span>没有实机，学到的东西"悬在空中"。<br><span style="color:var(--ink3);font-size:12.5px">仿真跑得再顺，摸不到板子会有虚的感觉。</span></div>
+    <div><span class="b">退路：</span>把 S8 提前到 S6 之后，先做一台 100W 小板。但<b>代价是主线被打断</b>，且要提前花 ¥2000+。建议先按原顺序走，S7 之后再决定。</div>
+  </div>
+  <div class="rk">
+    <div><span class="r">风险四：</span>工作挤占，连续几周没时间。<br><span style="color:var(--ink3);font-size:12.5px">项目到量产节点就是这样。</span></div>
+    <div><span class="b">退路：</span>砍 S6–S8，只走 S1–S5（21 周）。<b>这已经能"打通并理解整机闭环"，是多数电源软件工程师的水平。</b>剩下的明年再补。</div>
+  </div>
+</div>
+
+<h2><span class="n">10</span>三件别做的事</h2>
+
+<div class="dont">
+  <span class="tag">这三条能救你</span>
+  <ol>
+    <li><b>不要为了"仿真更真"而无限加细节。</b>寄生电感、结电容、驱动电阻——加一个就要调半天，收益递减。<b>加到"能解释你关心的现象"就停。</b>模型的目的是回答问题，不是复现现实。</li>
+    <li><b>不要在 DLL 里复刻整个工程。</b>你只需要 PI、状态机、SR 时序、保护四块。<b>把 HAL、通讯、Flash、看门狗全部剥掉</b>——它们对仿真没有贡献，只会让编译失败。</li>
+    <li><b>不要跳过 S2 直接上 DLL。</b>先用 PLECS 自带模块把闭环跑通，你才知道"对"是什么样。<b>没有基线的对比，等于没有对比。</b></li>
+  </ol>
+</div>
+
+<h2><span class="n">11</span>明天就能开始的第一步</h2>
+
+<div class="lede" style="border-left-color:var(--accent3)">
+  <p><b>只做一件事：打开 PLECS，写一个最简单的 C-Script 模块，确认它能编译、能跑。</b></p>
+  <p>不用写控制逻辑，就写 <code>y = u × 2</code> 这种。目的是确认<b>你的编译链是通的</b>。这一步不通，S3 那五周全部做不了；这一步通了，后面只是工作量问题。</p>
+  <p style="color:var(--ink3);font-size:14px">如果编译报错，把错误信息记下来——<b>这是你在这条路上遇到的第一个真正的技术障碍，解决它比读十页书有用。</b></p>
+</div>
+
+<footer>
+R02 1600W 平台 · n=4 / Lr=12µH / Lm=80µH / Cr=136nF / fr=124.6kHz · 配套：半桥LLC设计书_1600W_R02.html · llc-gain-curve.html · duty-vo-calibration.html<br>
+主线 26 周（130h）全部在仿真内完成，不依赖硬件；延伸 12 周含独立设计与实机。里程碑未过必须回退。
+</footer>
+
+</div>
+
+<script>
+function copyTSV(){
+  var rows = document.querySelectorAll('#ledger tr');
+  var out = [];
+  for(var i=0;i<rows.length;i++){
+    var cells = rows[i].querySelectorAll('th,td');
+    var line = [];
+    for(var j=0;j<cells.length;j++){
+      line.push(cells[j].innerText.replace(/\s+/g,' ').trim());
+    }
+    out.push(line.join('\t'));
+  }
+  var text = out.join('\n');
+  function done(){
+    var b = document.querySelector('.tools button.pri');
+    var old = b.textContent;
+    b.textContent = '已复制 ✓';
+    setTimeout(function(){ b.textContent = old; }, 1600);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done, fallback);
+  } else { fallback(); }
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ alert('复制失败，请手动选择表格内容'); }
+    document.body.removeChild(ta);
+  }
+}
+</script>
+</body>
+</html>
