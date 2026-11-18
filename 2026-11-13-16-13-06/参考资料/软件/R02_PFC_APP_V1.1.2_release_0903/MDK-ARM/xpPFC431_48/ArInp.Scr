@@ -1,0 +1,3 @@
+--create xpPFC431_48\math_pfc.lib
+xppfc431_48\consolefast.o
+xppfc431_48\consolemid.o

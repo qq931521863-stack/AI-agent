@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="docx-page-size" content="A4">
+<title>半桥 LLC 设计证据链计算书</title>
+<style>
+:root{
+  --fs-body:12pt; --fs-small:10pt; --fs-h1:18pt; --fs-h2:14pt; --fs-h3:12pt;
+  --ff-body:"SimSun","宋体",serif; --ff-head:SimHei,"黑体",sans-serif;
+  --ff-mono:"Consolas","Courier New",monospace;
+  --c-line:#c9ccd1; --c-bg:#f5f7fa; --c-ink:#000; --c-mute:#555; --c-accent:#1f4e79;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ff-body);font-size:var(--fs-body);line-height:1.62;color:var(--c-ink);background:#fff;max-width:15.6cm;margin:0 auto;padding:2cm 0}
+h1,h2,h3{font-family:var(--ff-head);line-height:1.3;font-weight:700;margin:1.6em 0 .7em}
+h1{font-size:var(--fs-h1);border-bottom:1.5px solid var(--c-accent);padding-bottom:.25em;page-break-before:always}
+h2{font-size:var(--fs-h2);margin-top:1.3em}
+h3{font-size:var(--fs-h3)}
+p{margin-bottom:.55em;text-indent:2em}
+ul,ol{margin:0 0 .7em 0;padding-left:2.4em}
+li{margin-bottom:.25em}
+table{border-collapse:collapse;width:100%;margin:.8em 0;font-size:10.5pt}
+th,td{border:1px solid var(--c-line);padding:.4em .55em;vertical-align:top;text-indent:0}
+th{background:var(--c-bg);font-weight:700;font-family:var(--ff-head)}
+td code,p code,li code{font-family:var(--ff-mono);font-size:10pt;background:var(--c-bg);padding:0 .2em}
+pre{font-family:var(--ff-mono);font-size:10pt;line-height:1.5;background:var(--c-bg);border-left:3px solid var(--c-accent);padding:.6em .8em;margin:.6em 0 .9em;white-space:pre-wrap;text-indent:0;page-break-inside:avoid}
+pre code{background:none;padding:0;font-size:10pt}
+.note{background:var(--c-bg);border-left:3px solid #b8860b;padding:.5em .8em;margin:.7em 0;text-indent:0;font-size:10.5pt}
+.note p{text-indent:0;margin:0}
+blockquote{margin:.6em 0 .8em 1.2em;padding-left:.8em;border-left:2px solid var(--c-line);font-size:10.5pt}
+blockquote p{text-indent:0;margin:0}
+.cover{text-align:center;padding-top:5.2cm}
+.cover .t1{font-family:var(--ff-head);font-size:26pt;font-weight:700;letter-spacing:.08em;text-indent:0;line-height:1.4}
+.cover .t2{font-size:13pt;color:var(--c-mute);margin-top:1.2em;text-indent:0}
+.cover .rule{width:8cm;height:1.5px;background:var(--c-accent);margin:1.6em auto}
+.cover .meta{font-size:11pt;line-height:2;margin-top:3.4em;text-indent:0}
+.doc-toc{padding:.4em 0}
+.toc-title{font-family:var(--ff-head);font-size:14pt;font-weight:700;margin-bottom:.8em;text-indent:0}
+.toc-list,.toc-list ol{list-style:none;list-style-type:none;padding-left:1.2em}
+.toc-list>li{margin-bottom:.18em;text-indent:0}
+.toc-list ol{margin-top:.18em}
+.toc-list a{color:var(--c-ink);text-decoration:none}
+@page{@top-right{content:"半桥 LLC 设计证据链计算书"}@bottom-center{content:"第 " counter(page) " 页"}}
+@page cover{@top-right{content:none}@bottom-center{content:none}}
+section[role="cover"]{page:cover}
+</style>
+</head>
+<body>
+
+<section role="cover">
+<div class="cover">
+<p class="t1">半桥 LLC<br>设计证据链计算书</p>
+<div class="rule"></div>
+<p class="t2">模型分级 · 闸门判定 · 证据台账 · 交付结论</p>
+<p class="meta">适用对象：400 V 母线 / 48 V·3 kW 半桥 LLC<br>版本：V1.0　　编制日期：2026-10-31</p>
+<p class="t2" style="font-size:11pt;margin-top:1.6em">本册<strong>不推导公式</strong>，只管理证据。<br>公式与数值推导见《半桥 LLC 谐振变换器计算书 V1.1》，两册并行使用，不混。</p>
+<p class="t2" style="font-size:10pt;margin-top:1.2em;color:#b8860b">交付结论：<strong>CONDITIONAL PASS（条件通过）</strong>　1 项 FAIL、1 项 WARN、1 项 UNKNOWN，处置见 12.3。</p>
+</div>
+</section>
+
+<section role="cover">
+<nav class="doc-toc" aria-label="文档目录">
+<p class="toc-title">目　录</p>
+<ol class="toc-list">
+<li><a href="#section-0">第 0 章　证据链的元规则</a>
+<ol>
+<li><a href="#s0-1">0.1　三类失败与各自的检出手段</a></li>
+<li><a href="#s0-2">0.2　五级保真度阶梯</a></li>
+<li><a href="#s0-3">0.3　ModelGrade：结论的可信等级</a></li>
+<li><a href="#s0-4">0.4　DataConfidence：数据的来路</a></li>
+<li><a href="#s0-5">0.5　证据编号规则</a></li>
+<li><a href="#s0-6">0.6　三条禁令</a></li>
+</ol></li>
+<li><a href="#section-1">第 1 章　规格冻结与未决项登记</a>
+<ol>
+<li><a href="#s1-1">1.1　规格冻结表</a></li>
+<li><a href="#s1-2">1.2　未决项登记（UNK）</a></li>
+<li><a href="#s1-3">1.3　未决项对结论的压制关系</a></li>
+</ol></li>
+<li><a href="#section-2">第 2 章　模型适用域声明</a>
+<ol>
+<li><a href="#s2-1">2.1　FHA 的四条前提</a></li>
+<li><a href="#s2-2">2.2　FHA 明确不能声称的六件事</a></li>
+<li><a href="#s2-3">2.3　模型选择表</a></li>
+</ol></li>
+<li><a href="#section-3">第 3 章　计算内核与口径台账</a>
+<ol>
+<li><a href="#s3-1">3.1　内核公式（引用，不推导）</a></li>
+<li><a href="#s3-2">3.2　工作点求解策略</a></li>
+<li><a href="#s3-3">3.3　口径台账（CAL）</a></li>
+<li><a href="#s3-4">3.4　口径不一致的量化后果</a></li>
+</ol></li>
+<li><a href="#section-4">第 4 章　FHA 与 TD 的有效性闸门</a>
+<ol>
+<li><a href="#s4-1">4.1　阈值表</a></li>
+<li><a href="#s4-2">4.2　判定逻辑</a></li>
+<li><a href="#s4-3">4.3　关键案例：闸门正确、口径错误</a></li>
+<li><a href="#s4-4">4.4　闸门 FAIL 的三条处置</a></li>
+</ol></li>
+<li><a href="#section-5">第 5 章　稳态闸门</a>
+<ol>
+<li><a href="#s5-1">5.1　收敛判据</a></li>
+<li><a href="#s5-2">5.2　未收敛时的结论上限</a></li>
+</ol></li>
+<li><a href="#section-6">第 6 章　约束引擎</a>
+<ol>
+<li><a href="#s6-1">6.1　约束登记表</a></li>
+<li><a href="#s6-2">6.2　四态语义与升级禁令</a></li>
+<li><a href="#s6-3">6.3　"不可达"算 FAIL 还是 UNKNOWN</a></li>
+<li><a href="#s6-4">6.4　本设计约束矩阵</a></li>
+</ol></li>
+<li><a href="#section-7">第 7 章　工作包络与容差角点</a>
+<ol>
+<li><a href="#s7-1">7.1　角点维度</a></li>
+<li><a href="#s7-2">7.2　角点扫描表</a></li>
+<li><a href="#s7-3">7.3　三个不同的"最恶劣"</a></li>
+</ol></li>
+<li><a href="#section-8">第 8 章　损耗的证据分级</a>
+<ol>
+<li><a href="#s8-1">8.1　LossTerm 结构</a></li>
+<li><a href="#s8-2">8.2　三项不许填零</a></li>
+<li><a href="#s8-3">8.3　电热迭代</a></li>
+<li><a href="#s8-4">8.4　本设计损耗台账</a></li>
+</ol></li>
+<li><a href="#section-9">第 9 章　ZVS 的电荷证据</a>
+<ol>
+<li><a href="#s9-1">9.1　换流电流的三种口径</a></li>
+<li><a href="#s9-2">9.2　Qoss 来源分级</a></li>
+<li><a href="#s9-3">9.3　余量与结论等级</a></li>
+</ol></li>
+<li><a href="#section-10">第 10 章　两阶段优化器</a>
+<ol>
+<li><a href="#s10-1">10.1　Stage A：FHA 网格粗筛</a></li>
+<li><a href="#s10-2">10.2　Stage B：Top-N 高保真复核</a></li>
+<li><a href="#s10-3">10.3　拒绝规则</a></li>
+</ol></li>
+<li><a href="#section-11">第 11 章　工具缺口与本册补全</a>
+<ol>
+<li><a href="#s11-1">11.1　缺口清单（G）</a></li>
+<li><a href="#s11-2">11.2　补全的证据项</a></li>
+<li><a href="#s11-3">11.3　补全后约束矩阵的变化</a></li>
+</ol></li>
+<li><a href="#section-12">第 12 章　证据台账与交付判定</a>
+<ol>
+<li><a href="#s12-1">12.1　证据台账总表</a></li>
+<li><a href="#s12-2">12.2　UNKNOWN 关闭计划</a></li>
+<li><a href="#s12-3">12.3　交付判定</a></li>
+<li><a href="#s12-4">12.4　与推导型计算书的边界</a></li>
+</ol></li>
+<li><a href="#section-13">附录 A　状态码速查</a></li>
+<li><a href="#section-14">附录 B　两册的分工边界</a></li>
+</ol>
+</nav>
+<div style="page-break-after:always"></div>
+</section>
+
+<section role="body" data-page-restart="1">
+
+<h1 id="section-0">第 0 章　证据链的元规则</h1>
+<p>一份计算书最容易骗人的地方，不是公式写错，而是<strong>没说清每个数字凭什么可信</strong>。本章先把"可信"这件事拆成可判定的四件事：模型等级、数据来路、证据编号、禁止事项。后面 12 章全部按这四件事登记。</p>
+
+<h2 id="s0-1">0.1　三类失败与各自的检出手段</h2>
+<table>
+<tr><th>类别</th><th>典型形态</th><th>为什么危险</th><th>检出手段</th></tr>
+<tr><td><strong>A 类：算错</strong></td><td>系数用错（半桥用成全桥）、单位错、括号错</td><td>数值明显偏离，容易被发现</td><td>回代校核、两种写法互验（见推导册 6.3）</td></tr>
+<tr><td><strong>B 类：模型不适用</strong></td><td>FHA 用在深断续区；用 FHA 声称 ZVS 精细余量</td><td>数值"看起来对"，但物理不成立；最危险</td><td><strong>有效性闸门</strong>（第 4 章）+ 模型适用域声明（第 2 章）</td></tr>
+<tr><td><strong>C 类：没算却当算过</strong></td><td><code>Qrr</code> 填 0、<code>Eoss</code> 忽略、<code>Qoss</code> 用 <code>Coss*V</code> 不标注</td><td>不报错，不偏大，只是悄悄少了十几瓦</td><td><strong>ModelGrade + DataConfidence</strong>（0.3、0.4）+ 损耗台账（第 8 章）</td></tr>
+</table>
+<p>本册的主要篇幅用在 B 类和 C 类。A 类靠推导册的校核表解决，不在这里重复。</p>
+
+<h2 id="s0-2">0.2　五级保真度阶梯</h2>
+<p>同一个问题，不同模型能给出的答案精度差好几个数量级。把模型按保真度排成阶梯，任何结论都要标注"我用的是第几级"。</p>
+<table>
+<tr><th>级别</th><th>方法</th><th>能回答</th><th>不能回答</th><th>本设计是否使用</th></tr>
+<tr><td>L0</td><td>FHA 相量法（基波近似）</td><td>增益、工作频率、基波电流、谐振腔阻抗</td><td>谐波、振铃、精确 ZVS 余量、开关损耗</td><td><strong>是</strong>（主设计工具）</td></tr>
+<tr><td>L1</td><td>非线性多谐波平衡</td><td>波形畸变、增益修正、谐波电流占比</td><td>瞬态、寄生振荡</td><td>否（仅作偏差评估）</td></tr>
+<tr><td>L2</td><td>内部开关时域（分段线性）</td><td>真实峰值电流、ZVS 波形、死区过程</td><td>器件非线性、寄生参数</td><td>否（无此工具）</td></tr>
+<tr><td>L3</td><td>共享 ngspice 时域</td><td>寄生振荡、SR 反向恢复、母线交互</td><td>器件热行为、磁芯损耗</td><td>否</td></tr>
+<tr><td>L4</td><td>器件级 SPICE（厂商模型）</td><td>开关损耗、EMI 源、栅极振铃</td><td>仍需热模型与磁模型配合</td><td>否</td></tr>
+<tr><td>L5</td><td>硬件实测</td><td>一切，但代价最高</td><td>—</td><td>否（打样前）</td></tr>
+</table>
+<div class="note"><p><strong>规则</strong>：结论的可信等级不得超过其所用模型的级别。L0 得出的"ZVS 余量 10 倍"只能是 <code>PARTIAL</code>，不能是 <code>ALIVE</code>——因为 FHA 看不见死区里的真实波形。这条规则是整册的地基，违反它的结论一律作废。</p></div>
+
+<h2 id="s0-3">0.3　ModelGrade：结论的可信等级</h2>
+<table>
+<tr><th>等级</th><th>含义</th><th>可否写进交付结论</th><th>典型场景</th></tr>
+<tr><td><code>ALIVE</code></td><td>模型在该工作点已通过有效性闸门，且数据来自手册或实测</td><td>可以，可直接作为设计依据</td><td>L0 在谐振点附近的增益</td></tr>
+<tr><td><code>PARTIAL</code></td><td>模型只覆盖了部分物理，或数据有一项是假定</td><td>可以，但必须带限定语</td><td>FHA 给的 ZVS 电荷余量</td></tr>
+<tr><td><code>APPROXIMATION</code></td><td>用了明确的近似公式，误差方向已知</td><td>可以，但必须标误差方向</td><td><code>Qoss ≈ Coss*V</code>、三角波等效纹波</td></tr>
+<tr><td><code>ESTIMATED</code></td><td>数量级可信，绝对值不可信</td><td>只能用于相对比较</td><td>磁芯损耗、绕组交流电阻</td></tr>
+<tr><td><code>UNKNOWN</code></td><td>没有数据，或模型不覆盖</td><td><strong>不可以</strong>，必须进未决项</td><td>SR 结温、母线纹波实测值</td></tr>
+</table>
+<p>关键点：<code>UNKNOWN</code> <strong>不等于 0</strong>，也<strong>不等于没问题</strong>。它只表示"这一项没有证据"，而一项没有证据的约束，在交付判定里按最坏处理。</p>
+
+<h2 id="s0-4">0.4　DataConfidence：数据的来路</h2>
+<table>
+<tr><th>置信度</th><th>来源</th><th>示例</th></tr>
+<tr><td><code>DATASHEET</code></td><td>器件手册的图表或表格，按实际工作点读取</td><td><code>Qoss(Vds=400V)</code>、<code>Rds(on)@Tj=100°C</code></td></tr>
+<tr><td><code>MEASURED</code></td><td>本机实测（含打样后的复测）</td><td>变压器漏感、绕组直流电阻</td></tr>
+<tr><td><code>DERIVED</code></td><td>由其他证据推导，链条可追</td><td><code>Rac</code> 由 <code>Vo/Po/Vf</code> 推出</td></tr>
+<tr><td><code>ASSUMED</code></td><td>工程假定，无来源</td><td><code>Rdson = 30 mΩ</code>、<code>Pcore = 8 W</code></td></tr>
+<tr><td><code>MISSING</code></td><td>应当有但没有</td><td>磁芯手册缺 <code>k_st/alpha/beta</code></td></tr>
+</table>
+<p>组合规则：<code>ModelGrade</code> 取"模型等级"与"数据置信度"中较低的一个。例如 FHA（PARTIAL）× <code>Qoss</code> 用近似（APPROXIMATION）→ 该 ZVS 结论的最高等级是 <code>APPROXIMATION</code>。</p>
+
+<h2 id="s0-5">0.5　证据编号规则</h2>
+<pre><code>EV-&lt;域&gt;-&lt;两位序号&gt;
+
+域代码：
+  SPEC  规格与需求        MOD   模型适用域
+  CAL   口径定义          CALC  计算中间量
+  GATE  闸门判定          SIM   仿真或高保真复核
+  LOSS  损耗项            ZVS   零电压开通
+  OPT   优化器候选        UNK   未决项
+  GAP   工具缺口</code></pre>
+<p>每个进入结论的数字，背后必须有一个 <code>EV</code> 号；每个 <code>EV</code> 号必须能追到"哪一级模型 + 什么数据来源 + 谁判定的"。第 12 章的台账就是全部 <code>EV</code> 的汇总。</p>
+
+<h2 id="s0-6">0.6　三条禁令</h2>
+<ol>
+<li><strong>禁止把 FAIL 改名成 PASS</strong>。判据不通过就是不通过，只能改设计、改判据并<strong>留痕</strong>，不能改结论文字。历史上最常见的做法是把"未通过"写成"满足要求（有裕量）"，这属于造假。</li>
+<li><strong>禁止把 UNKNOWN 当成 0 或当成"没问题"</strong>。没有证据的项，在交付判定里按最坏处理；要么补证据，要么显式接受风险并签字。</li>
+<li><strong>禁止用近似值冒充手册值</strong>。凡是用 <code>Coss*V</code> 代替 <code>Qoss(V)</code>、用直流电阻代替交流电阻的，必须在同一行标 <code>ModelSource</code>；不标即视为造假。</li>
+</ol>
+<div class="note"><p><strong>为什么单独立一章讲"管理"</strong>：工程上真正翻车的项目，多数不是算不出来，而是<strong>算出来的东西被当成了另一回事</strong>——FHA 的余量被当成实测余量，假定的损耗被当成实测效率，未做的校核被当成已做。证据链的作用就是让这种"偷换"无处藏身。</p></div>
+
+<h1 id="section-1">第 1 章　规格冻结与未决项登记</h1>
+
+<h2 id="s1-1">1.1　规格冻结表</h2>
+<p>规格一旦冻结，后续所有计算都以冻结版为准。改规格必须出新版本号，不能在原表上改数字——否则证据链断裂。</p>
+<table>
+<tr><th>编号</th><th>字段</th><th>冻结值</th><th>来源</th><th>Confidence</th></tr>
+<tr><td>EV-SPEC-01</td><td><code>Vbus</code> 额定</td><td>400 V</td><td>PFC 级输出</td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-SPEC-02</td><td><code>Vbus</code> 范围</td><td>380 ～ 420 V</td><td>PFC 容差 + 纹波</td><td><code>ASSUMED</code></td></tr>
+<tr><td>EV-SPEC-03</td><td><code>Vbus</code> 保持终点</td><td>330 V</td><td>保持时间要求反推</td><td><code>ASSUMED</code></td></tr>
+<tr><td>EV-SPEC-04</td><td><code>Vo</code> / <code>Po</code></td><td>48 V / 3000 W</td><td>负载规格</td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-SPEC-05</td><td>整流侧压降 <code>Vf</code></td><td>0.4 V</td><td>同步整流估算</td><td><code>ASSUMED</code></td></tr>
+<tr><td>EV-SPEC-06</td><td>拓扑</td><td>半桥（桥臂增益 0.5）</td><td>方案确定</td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-SPEC-07</td><td>死区 <code>t_dead</code></td><td>200 ns</td><td>驱动配置</td><td><code>ASSUMED</code></td></tr>
+<tr><td>EV-SPEC-08</td><td><code>Coss</code>（单管）</td><td>200 pF</td><td>待选器件</td><td><code>ASSUMED</code></td></tr>
+</table>
+<div class="note"><p><strong>注意 EV-SPEC-03 与 EV-SPEC-05 都是 <code>ASSUMED</code></strong>。这两个假定后面直接决定了"保持时间能不能做到"和"<code>Rac</code> 偏多少"，属于高杠杆假定。高杠杆 + 低置信度 = 必须优先关闭的未决项，见 1.3。</p></div>
+
+<h2 id="s1-2">1.2　未决项登记（UNK）</h2>
+<table>
+<tr><th>编号</th><th>未决内容</th><th>当前用什么顶着</th><th>影响哪个结论</th><th>关闭方式</th></tr>
+<tr><td>EV-UNK-01</td><td><code>Qoss(Vds)</code> 实测曲线</td><td><code>Coss*Vbus</code> 线性近似</td><td>ZVS 电荷余量（C-04/C-05）</td><td>定器件后查手册 <code>Qoss</code> 表</td></tr>
+<tr><td>EV-UNK-02</td><td>磁芯损耗系数 <code>k_st/alpha/beta</code></td><td>按经验值 8 W 直给</td><td>效率（第 8 章）</td><td>查磁芯手册或厂家损耗曲线</td></tr>
+<tr><td>EV-UNK-03</td><td>SR 管 <code>Rds(on)@Tj</code></td><td>2 mΩ 常温值</td><td>副边损耗、结温</td><td>定器件 + 电热迭代收敛</td></tr>
+<tr><td>EV-UNK-04</td><td>母线 100 Hz 纹波实测幅值</td><td>按 ±5 V 假定</td><td>输出低频纹波、包络传递</td><td>PFC 联调实测</td></tr>
+<tr><td>EV-UNK-05</td><td>变压器漏感分布（原/副）</td><td>忽略，全部计入 <code>Lr</code></td><td>实际 <code>fr</code>、<code>Lm</code> 有效值</td><td>打样后测短路电感</td></tr>
+</table>
+
+<h2 id="s1-3">1.3　未决项对结论的压制关系</h2>
+<p>未决项不是"待办清单"，它会<strong>压制</strong>相关结论的等级。规则如下：</p>
+<pre><code>若某结论依赖 UNK-k，则：
+  该结论 Grade := min( 原 Grade , UNKNOWN 的上限 = PARTIAL )
+  且必须在交付判定中计入"未关闭项"</code></pre>
+<table>
+<tr><th>未决项</th><th>被压制的结论</th><th>压制前</th><th>压制后</th></tr>
+<tr><td>EV-UNK-01</td><td>ZVS 电荷余量 margin = 10.01</td><td><code>PARTIAL</code></td><td><code>APPROXIMATION</code></td></tr>
+<tr><td>EV-UNK-02</td><td>效率 η = 98.6%</td><td><code>ESTIMATED</code></td><td><code>ESTIMATED</code>（已到底）</td></tr>
+<tr><td>EV-UNK-03</td><td>副边损耗 9.64 W</td><td><code>ESTIMATED</code></td><td><code>ESTIMATED</code></td></tr>
+<tr><td>EV-UNK-04</td><td>输出低频纹波</td><td><code>PARTIAL</code></td><td><code>UNKNOWN</code></td></tr>
+<tr><td>EV-UNK-05</td><td>实际 <code>fr</code> 与设计值的一致性</td><td><code>ALIVE</code></td><td><code>PARTIAL</code></td></tr>
+</table>
+<p>这张表是交付判定的直接输入：<code>EV-UNK-04</code> 把输出纹波压到 <code>UNKNOWN</code>，所以整机交付只能是"条件通过"，不能是"通过"。</p>
+
+<h1 id="section-2">第 2 章　模型适用域声明</h1>
+
+<h2 id="s2-1">2.1　FHA 的四条前提</h2>
+<p>FHA 不是"近似一下"，它建立在四条明确假设上。任何一条被破坏，结论就要降级。</p>
+<table>
+<tr><th>#</th><th>前提</th><th>本设计是否满足</th><th>破坏后的表现</th></tr>
+<tr><td>P1</td><td>谐振腔电流接近正弦（工作点靠近 <code>fr</code>）</td><td>满足（<code>fs/fr = 1.11</code>）</td><td>峰值电流低估、增益偏差 &gt; 10%</td></tr>
+<tr><td>P2</td><td>整流网络可等效为纯电阻 <code>Rac = 8n²Ro/π²</code></td><td>满足（全波整流、电流连续）</td><td>轻载断续时 <code>Rac</code> 失真</td></tr>
+<tr><td>P3</td><td>开关网络只输出基波</td><td>满足（占空比 50% 对称）</td><td>占空比不对称时出现偶次谐波</td></tr>
+<tr><td>P4</td><td>死区足够短，换流过程不影响主波形</td><td><strong>部分满足</strong>（<code>t_dead/Ts = 2.7%</code>）</td><td>ZVS 过程被 FHA 完全忽略</td></tr>
+</table>
+<p>P4 是"部分满足"，这一条直接决定了：<strong>凡涉及死区、ZVS、开关损耗的结论，最高等级只能是 <code>PARTIAL</code></strong>。这不是保守，而是模型边界。</p>
+
+<h2 id="s2-2">2.2　FHA 明确不能声称的六件事</h2>
+<ol>
+<li><strong>不能声称 ZVS 有精确余量</strong>。FHA 给的 <code>Im</code> 是基波幅值，真实换流电流是三角波加无功分量，两者差 20% 以上。只能声称"按电荷判据估算，余量充足/不足"。</li>
+<li><strong>不能声称无振铃、无过冲</strong>。振铃来自寄生电感与 <code>Coss</code>，FHA 里根本没有这些元件。</li>
+<li><strong>不能声称开关损耗</strong>。ZVS 开通损耗近似为零是<em>假设</em>，不是<em>结论</em>；关断损耗需要电流波形与 <code>Coss</code> 非线性，FHA 给不了。</li>
+<li><strong>不能声称 SR 应力</strong>。副边电流的换向尖峰、反向恢复都在 FHA 之外。</li>
+<li><strong>不能声称轻载/空载行为</strong>。<code>Rac → ∞</code> 时 FHA 退化为空载增益曲线，与实际跳频、burst 模式无关。</li>
+<li><strong>不能声称瞬态与保护</strong>。启动冲击、短路、母线跌落过程全部在 FHA 之外。</li>
+</ol>
+<div class="note"><p><strong>这条清单的用法</strong>：写报告时如果出现"ZVS 可靠实现"、"损耗低"、"无振荡"这类判断，回头查它落在哪一条里。落在 1～6 里的，必须补一句"以上为 FHA 估算，未经时域验证"。</p></div>
+
+<h2 id="s2-3">2.3　模型选择表</h2>
+<table>
+<tr><th>要回答的问题</th><th>最低可用模型</th><th>本册是否覆盖</th></tr>
+<tr><td>需要多大 <code>Lr/Cr/Lm</code> 才能在 380 V 出 48 V</td><td>L0 FHA</td><td>是（推导册第 5～7 章）</td></tr>
+<tr><td>增益曲线峰值在哪、够不够</td><td>L0 FHA（满载 Qmax 扫描）</td><td>是（C-01/C-03）</td></tr>
+<tr><td>ZVS 能不能保住</td><td>L0 电荷判据 → L2 时域确认</td><td><strong>仅 L0</strong>，故结论降级</td></tr>
+<tr><td>谐振电容耐压够不够</td><td>L0（<code>VCr = VCr_dc + I/(wC)</code>）</td><td>是（C-07）</td></tr>
+<tr><td>输出纹波多大</td><td>L2 或数值积分单瓣</td><td>部分（容性项有，ESR 项缺 <code>UNK</code>）</td></tr>
+<tr><td>效率多少</td><td>L4 + 热模型</td><td><strong>否</strong>，只能给 <code>ESTIMATED</code></td></tr>
+<tr><td>会不会有寄生振荡</td><td>L3/L4</td><td><strong>否</strong>，<code>UNKNOWN</code></td></tr>
+</table>
+
+<h1 id="section-3">第 3 章　计算内核与口径台账</h1>
+
+<h2 id="s3-1">3.1　内核公式（引用，不推导）</h2>
+<p>以下公式的推导过程见《半桥 LLC 谐振变换器计算书 V1.1》第 3、5、6 章，本册只登记其<strong>身份</strong>与<strong>口径</strong>。</p>
+<pre><code>Rac   := (8/pi^2) * n^2 * Vt^2 / Pt        // Vt = Vo+Vf, Pt = Po*Vt/Vo
+Z0    := Qmax * Rac
+Lr    := Z0 / (2*pi*fr)
+Cr    := 1 / (2*pi*fr*Z0)
+Lm    := Kratio * Lr
+Zr(f) := 1i*(2*pi*f*Lr - 1/(2*pi*f*Cr))
+Zp(f) := 1i*2*pi*f*Lm*Rac / (1i*2*pi*f*Lm + Rac)
+Zin(f):= Zr(f) + Zp(f)
+H(f)  := Zp(f) / Zin(f)
+M(f)  := |H(f)|
+phi(f):= arg(Zin(f))                        // 注意：不是 arg(H)</code></pre>
+<div class="note"><p><strong><code>phi</code> 的定义是口径问题，不是笔误问题</strong>。取 <code>arg(Zin)</code> 得 +20.35°（感性），取 <code>arg(H)</code> 得 −5.95°（数值上像容性）。若用后者，第 6 章的 C-04/C-05 会被判成"工作在容性区"，整台机器被误判为不可用。这就是 0.5 节要求给每个量编 <code>CAL</code> 号的原因。</p></div>
+
+<h2 id="s3-2">3.2　工作点求解策略</h2>
+<p>增益曲线非单调，单区间求根会漏解。本设计与工具的求解策略对照：</p>
+<table>
+<tr><th>环节</th><th>工具的做法</th><th>本册的做法</th><th>差异后果</th></tr>
+<tr><td>找根</td><td><code>geomspace</code> 1600 点扫描 + 逐区间 <code>brentq</code>，取<strong>全部</strong>根</td><td>按 <code>M_req</code> 与 1 的大小分两支二分</td><td>工具更稳（不漏解），本册更快（适合手算/录入）</td></tr>
+<tr><td>过滤</td><td>保留 <code>input_phase_deg >= 3.0°</code></td><td>保留 <code>phi > 0</code></td><td>工具的 3° 死区更保守，能挡住"刚好在容性边界"的解</td></tr>
+<tr><td>选支</td><td><code>M_req <= 1</code> 走 <code>above_resonance</code>，否则 <code>boost_inductive</code></td><td>同上</td><td>一致</td></tr>
+<tr><td>不可达</td><td>抛 <code>GainNotReachable</code></td><td>返回 <code>NaN</code> + 判据拦截</td><td>工具显式异常，本册靠约束 C-02 拦截</td></tr>
+</table>
+<p><strong>证据判定</strong>：两种策略在 400 V / 380 V / 420 V 三点给出完全一致的频率（133.54 / 112.05 / 153.60 kHz），互验通过，登记为 <code>EV-CALC-01</code>，等级 <code>ALIVE</code>。</p>
+
+<h2 id="s3-3">3.3　口径台账（CAL）</h2>
+<p>每个可能有两种以上算法的量，必须在此登记"本设计用的是哪一种"。口径不一致是 B 类与 C 类失败的主要来源。</p>
+<table>
+<tr><th>编号</th><th>量</th><th>本设计口径</th><th>另一种口径</th><th>不一致时的偏差</th></tr>
+<tr><td>EV-CAL-01</td><td>励磁电流 <code>Im</code></td><td>三角波真实峰值 <code>n*Vt/(4*Lm*fs)</code></td><td>基波幅值 <code>√2*|Vp|/(ωLm)</code></td><td><strong>1.234 倍</strong>（= π²/8）</td></tr>
+<tr><td>EV-CAL-02</td><td>谐振电流峰值</td><td>基波峰值 <code>V1/|Zin|</code>，再乘 1.1 设计系数</td><td>时域真实峰值</td><td>FHA 偏低 5～15%</td></tr>
+<tr><td>EV-CAL-03</td><td>等效负载 <code>Rac</code></td><td>含 <code>Vf</code>：<code>8n²Vt²/(π²Pt)</code></td><td>裸 <code>Vo/Po</code>：<code>8n²Ro/π²</code></td><td><code>Rac</code> 偏小 0.83%</td></tr>
+<tr><td>EV-CAL-04</td><td>相角 <code>phi</code></td><td><code>arg(Zin)</code>，感性为正</td><td><code>arg(H)</code></td><td>符号相反，量级差 26°</td></tr>
+<tr><td>EV-CAL-05</td><td>桥臂因子</td><td>半桥 0.5（<code>V1 = 2Vbus/π</code>）</td><td>全桥 1.0（<code>4Vbus/π</code>）</td><td>增益差 2 倍，频率全错</td></tr>
+<tr><td>EV-CAL-06</td><td>换流电流</td><td><code>max(0.75*Im, |I1_peak*sin(phi)|)</code></td><td>只用 <code>Im</code></td><td>低估 34%（本例）</td></tr>
+<tr><td>EV-CAL-07</td><td>损耗是否含驱动</td><td>含（<code>P_drv</code> 单列）</td><td>不含</td><td>约 0.1 W，量级小但会漏项</td></tr>
+</table>
+
+<h2 id="s3-4">3.4　口径不一致的量化后果</h2>
+<p>把 <code>EV-CAL-01</code> 的两种口径各算一遍，直接看差多少：</p>
+<table>
+<tr><th>口径</th><th>公式</th><th>本设计数值</th><th>用途</th></tr>
+<tr><td>三角峰值</td><td><code>n*Vt/(4*Lm*fs)</code></td><td>7.774 A</td><td>应力、<code>kIm</code>、ZVS</td></tr>
+<tr><td>基波幅值</td><td><code>√2*|Vp|/(2π*fs*Lm)</code>，<code>|Vp| = I1_peak*|Zp|</code></td><td>6.303 A</td><td>与 FHA 工具/仿真对账</td></tr>
+<tr><td>比值</td><td><code>Im / Im_fha</code></td><td><strong>1.234</strong></td><td>换算系数</td></tr>
+</table>
+<div class="note"><p><strong>常见错法</strong>：写成 <code>√2*|Zp|/(2π*fs*Lm)</code>，漏了 <code>I1_peak</code>。量纲上像"电压除以阻抗"，实际等于假设输入电流为 1 A，结果只有 0.35 A，比值变成 22 倍。<strong>校验办法</strong>：算完就除一下，比值应当≈1.234；不是就说明公式漏项。</p></div>
+
+<h1 id="section-4">第 4 章　FHA 与 TD 的有效性闸门</h1>
+<p>FHA 是近似，问题是<strong>什么时候这个近似失效</strong>。靠"经验感觉"判断不行，必须给出可执行的阈值。本章采用与工具一致的三指标、双阈值（警告 / 失败）体系。</p>
+
+<h2 id="s4-1">4.1　阈值表</h2>
+<table>
+<tr><th>指标</th><th>比较对象</th><th>警告阈值</th><th>失败阈值</th><th>类型</th></tr>
+<tr><td>增益偏差</td><td>FHA <code>M(fs)</code> vs 时域 <code>Vo/Vin</code></td><td>8%</td><td>20%</td><td>相对</td></tr>
+<tr><td>频率偏差</td><td>FHA 求得 <code>fs</code> vs 时域收敛 <code>fs</code></td><td>5%</td><td>12%</td><td>相对</td></tr>
+<tr><td>相位偏差</td><td><code>arg(Zin)</code> vs 时域电流过零角</td><td>8°</td><td>20°</td><td><strong>绝对</strong>（度）</td></tr>
+</table>
+<pre><code>WARN_GAIN := 0.08    FAIL_GAIN := 0.20
+WARN_FREQ := 0.05    FAIL_FREQ := 0.12
+WARN_PHASE:= 8.0     FAIL_PHASE:= 20.0     // 单位：度，不是百分比</code></pre>
+<div class="note"><p><strong>相位用绝对度数，不用百分比</strong>。这一点最容易错：<code>phi</code> 在轻载时可以到 70°，用百分比会给出荒谬的阈值。<strong>8° / 20°</strong> 的含义是"电流过零时刻偏了 8 度 / 20 度"，对应死区时间窗口的占用量。</p></div>
+
+<h2 id="s4-2">4.2　判定逻辑</h2>
+<pre><code>status(dev, warn, fail) :=
+  if  |dev| >= fail  -> "FAIL"
+  else if |dev| >= warn -> "WARN"
+  else -> "PASS"
+
+gate := worst( status_gain, status_freq, status_phase )
+  // worst: FAIL > WARN > PASS，任一 FAIL 即整闸 FAIL</code></pre>
+<p>三指标<strong>取最差</strong>，不做加权。理由：三个指标测的是同一件事（FHA 是否还成立）的不同侧面，任何一个崩了都说明模型不能用，加权平均会把崩塌平均掉。</p>
+
+<h2 id="s4-3">4.3　关键案例：闸门正确、口径错误</h2>
+<p>这是本册最重要的一节，值得完整复盘。</p>
+<p><strong>背景</strong>：用工具跑一台 400 V → 53 V / 3 kW 的<strong>全桥</strong> LLC，优化器给出 4 个候选，参数看着都合理（<code>Lr = 23.78 µH</code>、<code>Cr = 106.51 nF</code>、<code>Lm = 118.91 µH</code>、<code>fs = 99.69 kHz</code>），但<strong>4 个全部被闸门拒绝</strong>，失败项都是同一条：</p>
+<pre><code>magnetizing_current_peak_a : FAIL
+偏差范围 20.3% ～ 27%</code></pre>
+<p><strong>直觉判断</strong>：20%～27% 的偏差，超过 20% 的失败阈值，看起来是"FHA 在这个工作点不成立"，于是结论会是"这个设计点太靠近容性区，要改 K"。</p>
+<p><strong>真实原因</strong>：闸门比较的是<strong>两个不同口径</strong>的励磁电流——FHA 侧给的是基波幅值，时域侧给的是三角波峰值。两者的理论比值是：</p>
+<pre><code>Im_tri / Im_fha = pi^2 / 8 = 1.2337   ->   偏差 23.4%</code></pre>
+<p>23.4% 正好落在观测到的 20.3%～27% 区间中央。<strong>这不是模型失效，是口径不一致。</strong></p>
+<table>
+<tr><th>判读</th><th>闸门输出</th><th>实际含义</th><th>正确处置</th></tr>
+<tr><td>表面</td><td><code>FAIL</code>（偏差 &gt; 20%）</td><td>"FHA 不成立"</td><td>改 K、改 Qmax、放弃该点</td></tr>
+<tr><td>实际</td><td><code>FAIL</code>（偏差 &gt; 20%）</td><td>"两个数不是同一个东西"</td><td><strong>统一口径后重跑</strong>，不要改设计</td></tr>
+</table>
+<div class="note"><p><strong>证据链教训</strong>：闸门只能报告"两边不一致"，<strong>无法区分"模型失效"和"口径不同"</strong>。所以闸门旁边必须挂着口径台账（3.3 节）。没有台账的闸门，会把好设计误杀，而且误杀的理由看起来很专业——这比漏判更危险。</p>
+<p><strong>反推</strong>：如果 4 个候选的偏差都在 23% 附近且高度一致，基本可以断定是口径问题；如果偏差散布在 5%～40% 之间，才是真的模型失效。</p></div>
+<p><strong>本设计的处置</strong>：登记 <code>EV-GATE-01</code>，把换算系数 <code>1.234</code> 写进 <code>EV-CAL-01</code>，闸门两侧都换算到三角峰值口径后再比较。换算后本设计在 400 V 满载点的励磁电流偏差为 <strong>0%</strong>（同口径同公式），闸门自然通过。</p>
+
+<h2 id="s4-4">4.4　闸门 FAIL 的三条处置</h2>
+<ol>
+<li><strong>先查口径，再查模型</strong>。按 3.3 节逐条比对：励磁电流（π²/8）、<code>Rac</code>（含不含 <code>Vf</code>）、相角（<code>Zin</code> 还是 <code>H</code>）、桥臂因子（0.5 还是 1）。这四项能解释 90% 的"莫名偏差"。</li>
+<li><strong>口径一致后仍 FAIL，才动设计</strong>。此时按 2.2 节的清单确认是哪条前提被破坏，通常是 P1（离 <code>fr</code> 太远）或 P2（轻载断续）。</li>
+<li><strong>不许"调参救活"</strong>。见 10.3：不允许为了让闸门通过而微调 <code>Rac</code>、<code>fs</code> 或 <code>Im</code> 的取值。允许的只有"统一口径后重跑"并登记。</li>
+</ol>
+
+<h1 id="section-5">第 5 章　稳态闸门</h1>
+
+<h2 id="s5-1">5.1　收敛判据</h2>
+<p>时域模型给出的"稳态值"只有在<strong>确实进入稳态</strong>后才有意义。判据：相邻两个开关周期的状态量残差小于阈值。</p>
+<pre><code>converged := max| x[n+1] - x[n] | &lt; tol
+  其中 x = [i_Lr, v_Cr, i_Lm, v_Co]
+  tol 取 1e-3（相对量）</code></pre>
+<table>
+<tr><th>状态</th><th>含义</th><th>对结论的影响</th></tr>
+<tr><td><code>converged = true</code></td><td>已进入周期稳态</td><td>可用该结果做闸门比较</td></tr>
+<tr><td><code>converged = false</code></td><td>仍在暂态，或存在次谐波振荡</td><td><strong>所有基于该结果的结论最高 <code>UNKNOWN</code></strong></td></tr>
+</table>
+
+<h2 id="s5-2">5.2　未收敛时的结论上限</h2>
+<p>未收敛的三种原因与处置：</p>
+<table>
+<tr><th>原因</th><th>特征</th><th>处置</th></tr>
+<tr><td>仿真时长不够</td><td>残差单调下降但未达标</td><td>延长仿真周期数（通常 200 周期够）</td></tr>
+<tr><td>存在次谐波/分岔</td><td>残差在两个值之间跳</td><td><strong>这是真实物理</strong>，不是数值问题；该工作点不可用，进 <code>FAIL</code></td></tr>
+<tr><td>burst 模式</td><td>轻载时周期性停振</td><td>该点不在连续调频区，FHA 完全不适用</td></tr>
+</table>
+<div class="note"><p><strong>规则</strong>：<code>converged = false</code> 时，<strong>不许</strong>取"最后几个周期的平均值"当稳态值。这条在工程上被违反得最多——取平均看起来"平滑了"，实际上把暂态尾巴当成了稳态。</p></div>
+
+<h1 id="section-6">第 6 章　约束引擎</h1>
+
+<h2 id="s6-1">6.1　约束登记表</h2>
+<p>每条约束必须有：编号、判据、依赖的证据、判定状态。没有编号的约束等于没有约束——它不会被检查，也不会被交付时想起。</p>
+<table>
+<tr><th>编号</th><th>约束</th><th>判据</th><th>依赖证据</th></tr>
+<tr><td>C-01</td><td>增益可达（最低母线）</td><td><code>M_req(Vbus_min) &lt;= M_peak</code></td><td><code>EV-CALC-01</code></td></tr>
+<tr><td>C-02</td><td>保持时间可达</td><td><code>not isnan(fs_op(M_holdup))</code></td><td><code>EV-SPEC-03</code></td></tr>
+<tr><td>C-03</td><td>峰值增益余量</td><td><code>M_peak &gt;= 1.05 * max(M_max, M_holdup)</code></td><td><code>EV-CALC-01</code></td></tr>
+<tr><td>C-04</td><td>ZVS 电荷余量（额定点）</td><td><code>Q_avail &gt;= 1.2 * Q_req</code></td><td><code>EV-ZVS-01/02</code></td></tr>
+<tr><td>C-05</td><td>ZVS 最差角余量</td><td><code>margin_w &gt;= 0.2</code></td><td><code>EV-ZVS-03</code></td></tr>
+<tr><td>C-06</td><td>死区窗口</td><td><code>2*t_swing &lt;= t_dead &lt; 0.05/fs_nom</code></td><td><code>EV-ZVS-01</code></td></tr>
+<tr><td>C-07</td><td>谐振电容耐压</td><td><code>VCr_peak &lt; 0.8 * VCr_rated</code></td><td><code>EV-CALC-02</code></td></tr>
+<tr><td>C-08</td><td>循环电流</td><td><code>0.25 &lt; kIm &lt; 0.45</code></td><td><code>EV-CAL-01</code></td></tr>
+<tr><td>C-09</td><td>最高频率不超限</td><td><code>fs_max_op &lt; fs_max</code></td><td><code>EV-CALC-01</code></td></tr>
+<tr><td>C-10</td><td>分压电容纹波电流</td><td><code>Irms_div &lt; 0.8 * Iripple_rated</code></td><td><code>EV-CALC-03</code></td></tr>
+<tr><td>C-11</td><td>输出纹波</td><td><code>DeltaV_out &lt; 1% Vo</code></td><td><code>EV-LOSS-04</code>、<code>EV-UNK-04</code></td></tr>
+<tr><td>C-12</td><td>FHA 有效性</td><td>第 4 章闸门 <code>PASS</code> 或 <code>WARN</code></td><td><code>EV-GATE-01</code></td></tr>
+</table>
+
+<h2 id="s6-2">6.2　四态语义与升级禁令</h2>
+<table>
+<tr><th>状态</th><th>定义</th><th>能否进入交付</th></tr>
+<tr><td><code>PASS</code></td><td>判据满足，且证据等级 ≥ 该约束要求的等级</td><td>可以</td></tr>
+<tr><td><code>WARN</code></td><td>判据满足但余量小于 5%，或证据等级不足一档</td><td>可以，须列出</td></tr>
+<tr><td><code>FAIL</code></td><td>判据不满足</td><td><strong>不可以</strong></td></tr>
+<tr><td><code>UNKNOWN</code></td><td>无法判定（缺数据/模型不覆盖）</td><td><strong>不可以</strong>，须进未决项</td></tr>
+</table>
+<p><strong>升级禁令</strong>：状态只能由证据推动，不能由"经验"或"进度压力"推动。具体地：</p>
+<pre><code>允许：UNKNOWN -> PASS     （补了证据）
+允许：FAIL    -> PASS     （改了设计，且留痕）
+允许：PASS    -> WARN     （新证据显示余量更小）
+禁止：FAIL    -> WARN     （"其实问题不大"）
+禁止：UNKNOWN -> WARN     （"先按没问题处理"）</code></pre>
+
+<h2 id="s6-3">6.3　"不可达"算 FAIL 还是 UNKNOWN</h2>
+<p>本设计的 C-02（330 V 保持时间）返回 <code>NaN</code>。这属于哪一态？</p>
+<table>
+<tr><th>判读</th><th>是否成立</th><th>理由</th></tr>
+<tr><td><code>UNKNOWN</code>（"算不出来，可能是求解器问题"）</td><td><strong>不成立</strong></td><td>已独立验证：全频段峰值 1.0905，需求 1.1733，数学上确定不存在解。不是求解器无能。</td></tr>
+<tr><td><code>FAIL</code>（"该工况确实做不到"）</td><td><strong>成立</strong></td><td>增益上限由 <code>K</code> 与 <code>Qmax</code> 唯一决定，与算法无关。</td></tr>
+</table>
+<div class="note"><p><strong>区分方法</strong>：把"不可达"拆成两步验证——① 扫全频段确认峰值确实小于需求（这一步排除求解器漏解）；② 检查峰值是否被 <code>Qmax</code> 的取值决定（这一步确认是设计问题不是数值问题）。两步都过了，就是 <code>FAIL</code>，不许挂 <code>UNKNOWN</code> 拖着。</p>
+<p>反过来，如果只跑了一次求解器就报 <code>NaN</code>，那确实是 <code>UNKNOWN</code>——因为 7.1 节说过，单区间求根会漏解，<code>NaN</code> 可能只是"没搜到"。</p></div>
+
+<h2 id="s6-4">6.4　本设计约束矩阵</h2>
+<table>
+<tr><th>编号</th><th>约束</th><th>实测值</th><th>状态</th><th>证据等级</th></tr>
+<tr><td>C-01</td><td>增益可达（380 V）</td><td>1.0189 ≤ 1.0905</td><td><code>PASS</code></td><td><code>ALIVE</code></td></tr>
+<tr><td>C-02</td><td>保持时间可达（330 V）</td><td>1.1733 &gt; 1.0905，无解</td><td><strong><code>FAIL</code></strong></td><td><code>ALIVE</code></td></tr>
+<tr><td>C-03</td><td>峰值增益余量</td><td>1.0905 / 1.1733 = 0.929（按保持）；按 380 V 为 1.070</td><td><strong><code>FAIL</code></strong>（若含保持）/ <code>WARN</code>（若不含）</td><td><code>ALIVE</code></td></tr>
+<tr><td>C-04</td><td>ZVS 电荷余量</td><td>Q_avail 1.76 µC / Q_req 0.160 µC，margin 10.01</td><td><code>PASS</code></td><td><code>APPROXIMATION</code></td></tr>
+<tr><td>C-05</td><td>ZVS 最差角</td><td>margin_w = 4.37（5% 负载 / 420 V）</td><td><code>PASS</code></td><td><code>APPROXIMATION</code></td></tr>
+<tr><td>C-06</td><td>死区窗口</td><td>36.4 ns ≤ 200 ns &lt; 374 ns</td><td><code>PASS</code></td><td><code>PARTIAL</code></td></tr>
+<tr><td>C-07</td><td>谐振电容耐压</td><td>314.3 V &lt; 360 V（450 V 档）</td><td><code>PASS</code></td><td><code>PARTIAL</code></td></tr>
+<tr><td>C-08</td><td>循环电流</td><td>kIm = 0.307</td><td><code>PASS</code></td><td><code>ALIVE</code></td></tr>
+<tr><td>C-09</td><td>最高频率</td><td>153.60 &lt; 200 kHz</td><td><code>PASS</code></td><td><code>ALIVE</code></td></tr>
+<tr><td>C-10</td><td>分压电容纹波电流</td><td>8.96 A @ 133 kHz（选 ≥10 A 薄膜）</td><td><code>PASS</code></td><td><code>PARTIAL</code></td></tr>
+<tr><td>C-11</td><td>输出纹波</td><td>容性项 29.3 mV；ESR 项缺数据</td><td><strong><code>UNKNOWN</code></strong></td><td><code>UNKNOWN</code></td></tr>
+<tr><td>C-12</td><td>FHA 有效性</td><td>口径统一后三指标均 &lt; 8%</td><td><code>PASS</code></td><td><code>PARTIAL</code></td></tr>
+</table>
+<p><strong>汇总</strong>：12 条中 9 条 <code>PASS</code>、1 条 <code>FAIL</code>（C-02）、1 条 <code>UNKNOWN</code>（C-11），C-03 视是否含保持时间要求而定。这个矩阵<strong>不允许</strong>被简化成"设计通过"——两条非 PASS 必须原样带到交付结论里（12.3）。</p>
+
+<h1 id="section-7">第 7 章　工作包络与容差角点</h1>
+
+<h2 id="s7-1">7.1　角点维度</h2>
+<p>单点校核没有意义，必须扫包络。维度如下（组合数 = 4 × 5 × 3 = 60，可裁剪）：</p>
+<table>
+<tr><th>维度</th><th>取值</th><th>来源</th></tr>
+<tr><td>母线电压</td><td>380 / 400 / 420 / 330（保持）V</td><td><code>EV-SPEC-02/03</code></td></tr>
+<tr><td>负载率</td><td>100 / 50 / 30 / 20 / 5 %</td><td>运行包络</td></tr>
+<tr><td>容差</td><td><code>Lr</code> ±5%、<code>Cr</code> ±5%、<code>Lm</code> ±8%</td><td>元件公差</td></tr>
+</table>
+<p><strong>容差怎么扫</strong>：不需要 3³ 全组合。经验上只需扫"增益最低"与"电流最大"两个极值组合：</p>
+<pre><code>最不利增益组合：Lr +5%, Cr +5%, Lm -8%   （峰值增益最低）
+最不利电流组合：Lr -5%, Cr -5%, Lm +8%   （Z0 最低，电流最大）</code></pre>
+
+<h2 id="s7-2">7.2　角点扫描表</h2>
+<p>母线 420 V 逐负载率（ZVS 最恶劣方向），以及三个关键母线点：</p>
+<table>
+<tr><th>Vbus</th><th>负载率</th><th>fs</th><th>M</th><th>phi</th><th>Im</th><th>margin</th><th>状态</th></tr>
+<tr><td>420 V</td><td>100%</td><td>153.60 kHz</td><td>0.9219</td><td>25.9°</td><td>6.76 A</td><td>12.06</td><td><code>PASS</code></td></tr>
+<tr><td>420 V</td><td>50%</td><td>168.81 kHz</td><td>0.9219</td><td>31.3°</td><td>6.15 A</td><td>7.20</td><td><code>PASS</code></td></tr>
+<tr><td>420 V</td><td>20%</td><td>182.73 kHz</td><td>0.9219</td><td>47.8°</td><td>5.68 A</td><td>4.93</td><td><code>PASS</code></td></tr>
+<tr><td>420 V</td><td>5%</td><td>187.69 kHz</td><td>0.9219</td><td>75.9°</td><td>5.53 A</td><td><strong>4.37</strong></td><td><code>PASS</code>（最差）</td></tr>
+<tr><td>400 V</td><td>100%</td><td>133.54 kHz</td><td>0.9680</td><td>20.4°</td><td>7.77 A</td><td>10.01</td><td><code>PASS</code></td></tr>
+<tr><td>380 V</td><td>100%</td><td>112.05 kHz</td><td>1.0189</td><td>13.0°</td><td>9.27 A</td><td>—</td><td><code>PASS</code>（升压区）</td></tr>
+<tr><td>330 V</td><td>100%</td><td><strong>无解</strong></td><td>1.1733</td><td>—</td><td>—</td><td>—</td><td><strong><code>FAIL</code></strong></td></tr>
+</table>
+
+<h2 id="s7-3">7.3　三个不同的"最恶劣"</h2>
+<p>这是单目标优化器最容易漏掉的一点：<strong>"最恶劣"不是一个点，是三个点，而且它们互相冲突。</strong></p>
+<table>
+<tr><th>最恶劣类型</th><th>角点</th><th>主导量</th><th>本设计表现</th></tr>
+<tr><td>增益最恶劣</td><td>330 V / 100% 负载</td><td><code>M_req</code> 最大</td><td><strong>FAIL</strong>（1.1733 &gt; 1.0905）</td></tr>
+<tr><td>ZVS 最恶劣</td><td>420 V / 5% 负载</td><td><code>Im</code> 最小、<code>Q_req</code> 最大</td><td><code>PASS</code>（margin 4.37）</td></tr>
+<tr><td>损耗最恶劣</td><td>380 V / 100% 负载</td><td><code>I1_rms</code> 最大（频率最低）</td><td>未计算（<code>ESTIMATED</code>）</td></tr>
+</table>
+<div class="note"><p><strong>为什么必须分开</strong>：把三个最恶劣混成一个"综合最恶劣角"，会出现两种错：① 用 ZVS 最恶劣点去判断增益（会得出"增益很够"的错误结论，因为 420 V 的 <code>M_req</code> 只有 0.92）；② 用增益最恶劣点去判断 ZVS（会得出"ZVS 余量很大"的错误结论，因为 330 V 满载时 <code>I1_peak</code> 最大）。</p>
+<p>本设计真正卡住的是<strong>增益最恶劣点</strong>，而 ZVS 在全部 60 个角点上都富余——这个结论只有分开算才能得出。合成一个点算，就会得到"两项都通过"或"两项都不通过"的假象。</p></div>
+
+<h1 id="section-8">第 8 章　损耗的证据分级</h1>
+
+<h2 id="s8-1">8.1　LossTerm 结构</h2>
+<p>每个损耗项不是一个数字，是一个四元组。少了后三项，这个数字就不能进结论。</p>
+<pre><code>LossTerm := {
+  P_w          : 数值
+  grade        : ALIVE | PARTIAL | APPROXIMATION | ESTIMATED | UNKNOWN
+  confidence   : DATASHEET | MEASURED | DERIVED | ASSUMED | MISSING
+  source       : 公式编号 或 数据出处
+}</code></pre>
+
+<h2 id="s8-2">8.2　三项不许填零</h2>
+<table>
+<tr><th>项</th><th>常见"填零"做法</th><th>实际量级</th><th>后果</th></tr>
+<tr><td><code>Rds(on)@Tj</code></td><td>用 25°C 值，或直接填 0</td><td>100°C 时比 25°C 高 40～60%</td><td>导通损耗低估 40%，结温估算偏低，热设计失效</td></tr>
+<tr><td><code>Eoss</code></td><td>ZVS 就认为开通损耗为 0</td><td>仍有 <code>Coss</code> 储能回灌损耗</td><td>本例 <code>P_off = 4.27 W</code>，占总额 10%</td></tr>
+<tr><td><code>Qrr</code>（SR 体二极管）</td><td>同步整流就认为无反向恢复</td><td>死区期间体二极管导通，有 <code>Qrr</code></td><td>尖峰电压、额外损耗、EMI</td></tr>
+</table>
+<div class="note"><p><strong>为什么这三项总被填零</strong>：因为它们"看不见"——ZVS 听起来就没有开通损耗，同步整流听起来就没有二极管损耗，25°C 的 <code>Rds(on)</code> 就在手册第一页。填零不需要查任何资料，而查资料要花时间。证据链的作用就是让"省事"这件事留下痕迹：填零必须写成 <code>ASSUMED</code>，交付时会被点名。</p></div>
+
+<h2 id="s8-3">8.3　电热迭代</h2>
+<p>损耗依赖结温，结温依赖损耗，必须迭代到不动点：</p>
+<pre><code>Tj[0] := 25 C
+repeat:
+   P[k]  := sum( LossTerm(Tj[k]) )
+   Tj[k+1] := Tamb + P[k] * Rth_total
+until |Tj[k+1] - Tj[k]| &lt; 1 C
+收敛后：所有 LossTerm 的 grade 升一级（因为用了自洽的 Tj）</code></pre>
+<p><strong>不迭代的后果</strong>：用 25°C 的 <code>Rds(on)</code> 算出的损耗偏低，算出的 <code>Tj</code> 偏低，于是"验证"了 25°C 的假设——这是一个自我印证的循环，永远收敛不到真实值。典型的偏差是结温低估 20～30°C。</p>
+
+<h2 id="s8-4">8.4　本设计损耗台账</h2>
+<p>假定值：<code>Rdson = 30 mΩ</code>、<code>Rdson_sr = 2 mΩ</code>、<code>Rcu_p = 8 mΩ</code>、<code>Rcu_s = 1.5 mΩ</code>、<code>Pcore = 8 W</code>、<code>ESR_div = 3 mΩ</code>。全部为 <code>ASSUMED</code>。</p>
+<table>
+<tr><th>项</th><th>公式</th><th>数值</th><th>Grade</th><th>Confidence</th></tr>
+<tr><td>原边导通</td><td><code>Rdson * I1_rms^2</code></td><td>9.63 W</td><td><code>ESTIMATED</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td>原边 <code>Coss</code> 储能</td><td><code>0.5*Coss*Vbus^2*fs*2</code></td><td>4.27 W</td><td><code>APPROXIMATION</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td>驱动</td><td><code>2*Qg*Vgs*fs</code></td><td>0.10 W</td><td><code>APPROXIMATION</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td>绕组铜损</td><td><code>I1_rms^2*Rcu_p + Isec_rms^2*Rcu_s</code></td><td>9.80 W</td><td><code>ESTIMATED</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td>磁芯</td><td>经验值</td><td>8.00 W</td><td><code>ESTIMATED</code></td><td><code>MISSING</code></td></tr>
+<tr><td>副边同步整流</td><td><code>2*Rdson_sr*(Isec_rms/√2)^2</code></td><td>9.64 W</td><td><code>ESTIMATED</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td>分压电容 ESR</td><td><code>2*Irms_div^2*ESR</code></td><td>0.48 W</td><td><code>APPROXIMATION</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td><strong>合计</strong></td><td>—</td><td><strong>41.9 W</strong></td><td><code>ESTIMATED</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td><strong>效率</strong></td><td><code>Po/(Po+P)</code></td><td><strong>98.62%</strong></td><td><code>ESTIMATED</code></td><td><code>ASSUMED</code></td></tr>
+</table>
+<div class="note"><p><strong>这个 98.62% 不能写进规格书</strong>。它建立在 6 个 <code>ASSUMED</code> 参数上，任一项改 50% 结果就变 0.3 个百分点以上。它的<strong>唯一合法用途是相对比较</strong>：比 K = 7 与 K = 4 谁更省、比 Qmax = 0.5 与 0.35 谁更省。绝对效率必须等实测。</p>
+<p>如果一定要给区间，按各项 ±50% 的不确定度传播，得到 <strong>97.9% ～ 99.1%</strong>。这个区间宽到没有工程意义——这本身就是一条重要结论：<strong>当前证据不足以支持任何效率承诺</strong>。</p></div>
+
+<h1 id="section-9">第 9 章　ZVS 的电荷证据</h1>
+
+<h2 id="s9-1">9.1　换流电流的三种口径</h2>
+<p>同一个"换流电流"，三种算法差 40% 以上。必须登记用哪一种。</p>
+<table>
+<tr><th>口径</th><th>公式</th><th>本设计数值</th><th>适用</th><th>偏差</th></tr>
+<tr><td>只用励磁电流（三角峰值）</td><td><code>Im = n*Vt/(4*Lm*fs)</code></td><td>7.77 A</td><td>仅当 <code>phi ≈ 0</code>（恰在谐振点）</td><td><strong>低估 34%</strong></td></tr>
+<tr><td>只用谐振电流无功分量</td><td><code>|I1_peak*sin(phi)|</code></td><td>8.81 A</td><td>远离谐振点、重载</td><td>轻载时低估（<code>Im</code> 占比上升）</td></tr>
+<tr><td><strong>取两者较大</strong>（本设计采用）</td><td><code>max(0.75*Im, |I1_peak*sin(phi)|)</code></td><td><strong>8.81 A</strong></td><td>全工况</td><td>经验上偏保守，可接受</td></tr>
+</table>
+<p><code>0.75</code> 这个系数的含义：励磁电流在死区开始时并不在峰值（三角波在峰值附近停留很短），取 0.75 作为保守估计。它不是物理常数，是工程折中，必须标注为 <code>APPROXIMATION</code>。</p>
+<div class="note"><p><strong>为什么不直接用"两者相加"</strong>：<code>Im</code> 与 <code>I1_peak*sin(phi)</code> 在换流时刻<strong>方向相反</strong>——励磁电流此时正把中点往一个方向推，谐振电流的无功分量往另一个方向推，真实换流电流是两者之差。取 <code>max</code> 是"宁可高估"的保守做法；取和会高估得更多，取差会在某些角点变成负值（物理上意味着 ZVS 已经丢了）。</p></div>
+
+<h2 id="s9-2">9.2　Qoss 来源分级</h2>
+<p><code>Qoss</code> 的来源直接决定这条约束的证据等级，必须显式登记：</p>
+<table>
+<tr><th>ModelSource</th><th>来源</th><th>该约束最高等级</th></tr>
+<tr><td><code>DATASHEET_QOSS</code></td><td>器件手册的 <code>Qoss(Vds)</code> 曲线，按实际 <code>Vbus</code> 读取</td><td><code>PARTIAL</code>（仍受 FHA 限制）</td></tr>
+<tr><td><code>COSS_APPROXIMATION</code></td><td><code>Qoss ≈ Coss*Vbus</code> 线性近似</td><td><code>APPROXIMATION</code></td></tr>
+<tr><td><code>UNKNOWN</code></td><td>无数据</td><td><code>UNKNOWN</code>，该约束不得判 PASS</td></tr>
+</table>
+<p>本设计用 <code>COSS_APPROXIMATION</code>（<code>Coss = 200 pF</code>，<code>Vbus = 400 V</code> → <code>Qoss_dev = 80 nC</code>），所以 C-04/C-05 的最高等级是 <code>APPROXIMATION</code>，不能写"ZVS 已验证"。</p>
+<div class="note"><p><strong>线性近似的误差方向</strong>：<code>Coss</code> 随 <code>Vds</code> 下降而显著增大，所以 <code>Qoss = ∫Coss dV</code> 的真实值<strong>大于</strong> <code>Coss(400V)*400V</code>。<code>Coss_APPROXIMATION</code> 系统性<strong>低估</strong>需求电荷，即余量被高估。这是"误差方向已知"的典型例子——按 0.3 节，可以进结论，但必须写明方向。</p></div>
+
+<h2 id="s9-3">9.3　余量与结论等级</h2>
+<table>
+<tr><th>项</th><th>数值</th><th>Grade</th><th>Confidence</th></tr>
+<tr><td><code>I_comm</code>（额定点）</td><td>8.81 A</td><td><code>APPROXIMATION</code></td><td><code>DERIVED</code></td></tr>
+<tr><td><code>Q_avail = I_comm * t_dead</code></td><td>1.76 µC</td><td><code>APPROXIMATION</code></td><td><code>DERIVED</code></td></tr>
+<tr><td><code>Q_req = 2*Npar*Qoss_dev</code></td><td>0.160 µC</td><td><code>APPROXIMATION</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td><code>margin = Q_avail/Q_req - 1</code></td><td>10.01</td><td><code>APPROXIMATION</code></td><td>—</td></tr>
+<tr><td>最差角 <code>margin_w</code>（5% 负载 / 420 V）</td><td>4.37</td><td><code>APPROXIMATION</code></td><td>—</td></tr>
+</table>
+<p><strong>结论的正确写法</strong>：</p>
+<blockquote><p>按电荷判据估算，ZVS 余量充足（额定 10.0 倍，最差角 4.4 倍）。<code>Qoss</code> 用线性近似，真实需求电荷更大，故实际余量略低于上述值。<strong>该结论未经时域验证，不构成"ZVS 可靠实现"的证明。</strong></p></blockquote>
+<p><strong>错误的写法</strong>（常见）："ZVS 余量 10 倍，可靠实现。" —— 省略了近似来源与模型边界，把一个 <code>APPROXIMATION</code> 级的结论说成了 <code>ALIVE</code> 级。</p>
+
+<h1 id="section-10">第 10 章　两阶段优化器</h1>
+
+<h2 id="s10-1">10.1　Stage A：FHA 网格粗筛</h2>
+<p>先用便宜模型扫大范围，把不可能的区域剪掉。目标是<strong>不漏掉可行域</strong>，不是精确。</p>
+<pre><code>for K in 3..15 step 1:
+  for Qmax in 0.25..0.60 step 0.05:
+     Lr,Cr,Lm := solve_tank(K, Qmax)
+     M_peak   := scan_peak(K, Qmax, Rac_full)
+     keep if M_peak >= M_required * 1.05</code></pre>
+<p>本设计 Stage A 输出（<code>M_required = 1.1733</code>，含保持时间）：</p>
+<table>
+<tr><th>K</th><th>Qmax = 0.30</th><th>0.35</th><th>0.40</th><th>0.45</th><th>0.50</th><th>0.60</th></tr>
+<tr><td>4</td><td>1.967</td><td>1.721</td><td>1.543</td><td>1.411</td><td>1.312</td><td>1.183</td></tr>
+<tr><td>5</td><td>1.747</td><td>1.537</td><td>1.388</td><td>1.280</td><td>1.202</td><td>1.110</td></tr>
+<tr><td>6</td><td>1.594</td><td>1.410</td><td>1.283</td><td>1.194</td><td>1.134</td><td>1.070</td></tr>
+<tr><td>7</td><td>1.481</td><td>1.318</td><td>1.209</td><td>1.136</td><td><strong>1.091</strong></td><td>1.047</td></tr>
+<tr><td>8</td><td>1.393</td><td>1.249</td><td>1.155</td><td>1.096</td><td>1.063</td><td>1.034</td></tr>
+</table>
+<p>粗筛保留：<code>(4,0.50)</code>、<code>(5,0.50)</code>、<code>(6,0.40~0.50)</code>、<code>(7,0.35~0.40)</code>、<code>(8,0.30~0.35)</code>。注意 <code>(7,0.50)</code>——也就是原始设计点——<strong>在粗筛就被剪掉了</strong>。</p>
+
+<h2 id="s10-2">10.2　Stage B：Top-N 高保真复核</h2>
+<p>Stage A 的排名按什么？不能只按增益余量，否则会选出 <code>K = 4</code>（<code>kIm = 0.523</code>，循环电流爆表）。建议的多目标排序：</p>
+<pre><code>score := w1*normalize(M_margin)
+       - w2*normalize(kIm)
+       - w3*normalize(I1_peak)
+       - w4*normalize(1 - Eta_estimated)</code></pre>
+<table>
+<tr><th>候选</th><th>M_peak</th><th>保持余量</th><th>kIm</th><th>I1_peak</th><th>ZVS 最差</th><th>结论</th></tr>
+<tr><td>(K=4, Q=0.50)</td><td>1.312</td><td>+12%</td><td><strong>0.523</strong></td><td>27.10 A</td><td>10.89</td><td>被 <code>kIm</code> 否决</td></tr>
+<tr><td>(K=5, Q=0.50)</td><td>1.202</td><td>+2.5%</td><td>0.427</td><td>26.16 A</td><td>7.90</td><td>余量不足</td></tr>
+<tr><td>(K=7, Q=0.40)</td><td>1.209</td><td>+3.0%</td><td>0.375</td><td>25.76 A</td><td>5.69</td><td>余量不足</td></tr>
+<tr><td><strong>(K=8, Q=0.35)</strong></td><td><strong>1.249</strong></td><td><strong>+6.4%</strong></td><td>0.369</td><td>25.72 A</td><td>4.97</td><td><strong>推荐</strong></td></tr>
+<tr><td>(K=7, Q=0.50)</td><td>1.091</td><td><strong>−7.1%</strong></td><td>0.307</td><td>25.34 A</td><td>4.37</td><td><strong>FAIL</strong>（原始设计）</td></tr>
+</table>
+
+<h2 id="s10-3">10.3　拒绝规则</h2>
+<p>这是证据链最容易被破坏的环节。规则：</p>
+<ol>
+<li><strong>FAIL 候选不得通过"微调参数"救活</strong>。允许的只有两种：① 发现口径错误，统一后重跑（须登记，见 4.3）；② 换设计点重新进入 Stage A。</li>
+<li><strong>不得对判据做"合理性调整"</strong>。例如把 <code>kIm</code> 上限从 0.45 放宽到 0.55 以接受 <code>K = 4</code>——如果要放宽，必须作为<strong>独立决策</strong>记录，说明理由与代价，不能在优化器里悄悄改。</li>
+<li><strong>不得用加权分数掩盖单项 FAIL</strong>。综合分高的候选如果某一项 <code>FAIL</code>，仍然出局。加权只能用于排序 <code>PASS</code> 候选，不能用于"平均掉"失败项。</li>
+</ol>
+<div class="note"><p><strong>工具的实践</strong>：工具的两阶段优化器在 Stage B 里对 <code>FAIL</code> 候选<strong>直接拒绝</strong>，不做加权补偿。这个设计是对的，也是它最值得借鉴的地方之一。代价是会出现"4 个候选全被拒"的情况（4.3 节的案例）——但那是口径问题，不是拒绝规则的问题。</p></div>
+
+<h1 id="section-11">第 11 章　工具缺口与本册补全</h1>
+<p>本设计对照的工具（<code>llc_design_tool_v1</code>）在模型分级、闸门、优化器三方面做得比一般计算书严谨，但有 5 处结构性缺口。本章逐条登记，并说明本册如何补。</p>
+
+<h2 id="s11-1">11.1　缺口清单（G）</h2>
+<table>
+<tr><th>编号</th><th>缺口</th><th>工具现状</th><th>后果</th><th>严重度</th></tr>
+<tr><td>EV-GAP-01</td><td>半桥中点分压电容</td><td>只有母线电容的<strong>能量法保持时间</strong>计算（<code>0.5*C*(V1²-V2²)</code>），<strong>没有中点分压设计、没有直流偏置分析</strong></td><td>半桥拓扑缺一条关键约束；照搬正激公式会把容值算大约 2500 倍</td><td><strong>高</strong></td></tr>
+<tr><td>EV-GAP-02</td><td>100 Hz 母线纹波到输出的传递</td><td>只有<strong>输出电容纹波</strong>（数值积分一个整流瓣，算容性 + ESR）</td><td>母线低频纹波怎么传到输出，完全没有模型；容易误用 <code>H(100Hz)</code></td><td><strong>高</strong></td></tr>
+<tr><td>EV-GAP-03</td><td>K 选择的可读理由</td><td>优化器输出一串数字（<code>ln_ratio=5.0</code> 之类），没有"为什么是这个值"</td><td>换规格时无法迁移，只能重跑；也无法人工复核</td><td>中</td></tr>
+<tr><td>EV-GAP-04</td><td>口径台账</td><td>没有。各模块各自定义 <code>Im</code>、<code>Ir_peak</code>、<code>input_phase</code></td><td><strong>导致自我误判</strong>：4 个候选被自己的闸门误杀（4.3 节）</td><td><strong>高</strong></td></tr>
+<tr><td>EV-GAP-05</td><td>半桥 / 全桥电流口径</td><td>记录里按全桥给 <code>Ir_peak = 9.68 A</code></td><td>同规格半桥实测 <code>I1_peak = 25.34 A</code>，差 <strong>2.6 倍</strong>；直接套用会严重低估器件应力</td><td><strong>高</strong></td></tr>
+</table>
+
+<h2 id="s11-2">11.2　补全的证据项</h2>
+<table>
+<tr><th>编号</th><th>补全内容</th><th>判据</th><th>本设计结果</th><th>Grade</th></tr>
+<tr><td>EV-CALC-03</td><td>中点电容按"职责"定容：<code>C_div >= I1_peak/(4π*fs*ΔV_mid)</code>，按 <code>I1_rms/2</code> 定纹波电流</td><td><code>C_div >= 3.78 µF</code>，<code>Irms_div = 8.96 A</code></td><td>2×4.7 µF/450 V 薄膜</td><td><code>PARTIAL</code></td></tr>
+<tr><td>EV-CALC-04</td><td>100 Hz 母线纹波用<strong>包络</strong>传递：边带在 <code>fs±100Hz</code>，增益取 <code>M(fs)</code>，<strong>不用</strong> <code>H(100Hz)</code></td><td><code>DeltaVo_100Hz = DeltaVbus * M(fs)/2</code></td><td>ΔVbus ±5 V → ΔVo ≈ ±2.4 V（未实测）</td><td><code>UNKNOWN</code>（<code>EV-UNK-04</code>）</td></tr>
+<tr><td>EV-CALC-05</td><td>K 的三判据可读化：增益范围 / ZVS 电荷 / 循环电流，三条同时满足才算可行</td><td>见 10.2 表</td><td>K=8, Q=0.35</td><td><code>ALIVE</code></td></tr>
+<tr><td>EV-CAL-01~07</td><td>口径台账（3.3 节）</td><td>每个双口径量登记一种</td><td>7 项全部登记</td><td><code>ALIVE</code></td></tr>
+<tr><td>EV-CALC-06</td><td>半桥电流口径：<code>V1 = 2*Vbus/π</code>，<code>n_ideal = Vbus/(2*Vt)</code></td><td>与全桥差 2 倍因子</td><td><code>I1_peak = 25.34 A</code>（半桥）</td><td><code>ALIVE</code></td></tr>
+</table>
+<div class="note"><p><strong>关于 <code>EV-GAP-01</code> 的具体纠正</strong>：工具（以及很多计算书）用的 <code>C_div >= Po*T_line/(2*Eta*Vbus*DeltaV)</code> 来自<strong>半桥正激</strong>——那里分压电容确实要给负载供能。LLC 不是：<code>Cr</code> 已在谐振腔里隔直（<code>VCr_dc = Vbus/2</code>），负载电流走"母线 → 上管 → 谐振腔 → 下管 → 地"，<strong>不经过分压电容</strong>，<code>i_r</code> 无直流分量，分压电容净平均电流为零。按正激公式算得 4.9 mF，按职责算得 3.78 µF，差 2500 倍。</p>
+<p>同样，纹波电流不是 <code>Iin/2 = 3.9 A @ 100 Hz</code>，而是 <code>I1_rms/2 = 8.96 A @ 133 kHz</code>。频率错了 1300 倍，薄膜电容的允许纹波电流在这个频段完全不是手册首页那个数。</p></div>
+
+<h2 id="s11-3">11.3　补全后约束矩阵的变化</h2>
+<table>
+<tr><th>约束</th><th>补全前</th><th>补全后</th><th>说明</th></tr>
+<tr><td>C-10 分压电容纹波电流</td><td><strong>不存在</strong>（工具无此约束）</td><td><code>PASS</code>（8.96 A，选 ≥10 A）</td><td>新增，<code>EV-GAP-01</code></td></tr>
+<tr><td>C-11 输出纹波</td><td>只有容性项</td><td><code>UNKNOWN</code>（ESR 项缺）</td><td>新增低频项，但数据缺，故降级</td></tr>
+<tr><td>C-08 循环电流</td><td>有 <code>ln_ratio</code> 但无判据</td><td><code>PASS</code>（<code>kIm = 0.307</code>）</td><td>补判据区间 0.25～0.45</td></tr>
+<tr><td>C-12 FHA 有效性</td><td>有闸门但口径混乱</td><td><code>PASS</code>（口径统一后）</td><td><code>EV-GAP-04</code></td></tr>
+</table>
+<p><strong>净效果</strong>：约束从 10 条增到 12 条，其中 1 条新增 <code>PASS</code>、1 条新增 <code>UNKNOWN</code>。看起来"更差"了，实际上是<strong>把原来隐藏的风险显性化</strong>——这正是证据链的价值：不是让结论更好看，而是让结论更真实。</p>
+
+<h1 id="section-12">第 12 章　证据台账与交付判定</h1>
+
+<h2 id="s12-1">12.1　证据台账总表</h2>
+<table>
+<tr><th>编号</th><th>内容</th><th>数值 / 结论</th><th>Grade</th><th>Confidence</th></tr>
+<tr><td>EV-SPEC-01~08</td><td>规格冻结（8 项）</td><td>见 1.1</td><td><code>ALIVE</code></td><td>混合</td></tr>
+<tr><td>EV-UNK-01~05</td><td>未决项（5 项）</td><td>见 1.2</td><td><code>UNKNOWN</code></td><td><code>MISSING</code></td></tr>
+<tr><td>EV-CAL-01~07</td><td>口径台账（7 项）</td><td>见 3.3</td><td><code>ALIVE</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-CALC-01</td><td>工作点（三点互验）</td><td>133.54 / 112.05 / 153.60 kHz</td><td><code>ALIVE</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-CALC-02</td><td>谐振电容最高电压</td><td>314.3 V</td><td><code>PARTIAL</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-CALC-03</td><td>中点电容定容与纹波电流</td><td>3.78 µF / 8.96 A</td><td><code>PARTIAL</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-CALC-04</td><td>100 Hz 包络传递</td><td>ΔVo ≈ ±2.4 V（假定 ΔVbus）</td><td><code>UNKNOWN</code></td><td><code>MISSING</code></td></tr>
+<tr><td>EV-CALC-05</td><td>K 三判据可行域</td><td>K=8, Q=0.35 推荐</td><td><code>ALIVE</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-CALC-06</td><td>半桥电流口径</td><td><code>I1_peak = 25.34 A</code></td><td><code>ALIVE</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-GATE-01</td><td>FHA↔TD 闸门与口径换算</td><td>换算系数 1.234，闸门 <code>PASS</code></td><td><code>PARTIAL</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-ZVS-01</td><td>换流电流</td><td>8.81 A（<code>max</code> 判据）</td><td><code>APPROXIMATION</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-ZVS-02</td><td>Qoss 需求电荷</td><td>0.160 µC（<code>Coss*V</code> 近似）</td><td><code>APPROXIMATION</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td>EV-ZVS-03</td><td>全工况 ZVS 余量</td><td>最差 4.37（5% / 420 V）</td><td><code>APPROXIMATION</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-LOSS-01</td><td>原边导通 + <code>Coss</code> + 驱动</td><td>14.00 W</td><td><code>ESTIMATED</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td>EV-LOSS-02</td><td>绕组 + 磁芯</td><td>17.80 W</td><td><code>ESTIMATED</code></td><td><code>MISSING</code></td></tr>
+<tr><td>EV-LOSS-03</td><td>副边同步整流</td><td>9.64 W</td><td><code>ESTIMATED</code></td><td><code>ASSUMED</code></td></tr>
+<tr><td>EV-LOSS-04</td><td>输出纹波（容性项）</td><td>29.3 mV</td><td><code>APPROXIMATION</code></td><td><code>DERIVED</code></td></tr>
+<tr><td>EV-GAP-01~05</td><td>工具缺口（5 项）</td><td>见 11.1</td><td>—</td><td>—</td></tr>
+</table>
+
+<h2 id="s12-2">12.2　UNKNOWN 关闭计划</h2>
+<table>
+<tr><th>未决项</th><th>关闭动作</th><th>责任阶段</th><th>关闭后能升级的结论</th></tr>
+<tr><td>EV-UNK-01</td><td>选定 MOS 后查 <code>Qoss(Vds)</code> 曲线</td><td>选型</td><td>C-04/C-05 → <code>PARTIAL</code></td></tr>
+<tr><td>EV-UNK-02</td><td>查磁芯手册 <code>k_st/alpha/beta</code> 或厂家损耗曲线</td><td>磁设计</td><td>效率 → <code>APPROXIMATION</code></td></tr>
+<tr><td>EV-UNK-03</td><td>定 SR 管 + 电热迭代收敛</td><td>选型 + 热设计</td><td>副边损耗 → <code>APPROXIMATION</code></td></tr>
+<tr><td>EV-UNK-04</td><td>PFC 联调实测 <code>DeltaVbus</code></td><td>系统联调</td><td>C-11 → <code>PASS/WARN</code></td></tr>
+<tr><td>EV-UNK-05</td><td>打样后测短路电感，反推实际 <code>Lr</code></td><td>打样</td><td>实际 <code>fr</code> 一致性 → <code>ALIVE</code></td></tr>
+</table>
+
+<h2 id="s12-3">12.3　交付判定</h2>
+<p>判定规则（按严格程度递增）：</p>
+<pre><code>PASS               : 全部约束 PASS，且无 UNKNOWN
+CONDITIONAL PASS   : 无 FAIL，但有 WARN 或 UNKNOWN（须列清单 + 关闭计划）
+REJECT             : 任一约束 FAIL，且该 FAIL 未通过改设计消除</code></pre>
+<p>本设计：</p>
+<table>
+<tr><th>判定要素</th><th>状态</th><th>说明</th></tr>
+<tr><td>C-02 保持时间可达</td><td><strong><code>FAIL</code></strong></td><td>1.1733 &gt; 1.0905，方案 A 做不到 330 V</td></tr>
+<tr><td>C-03 峰值增益余量</td><td><code>FAIL</code> / <code>WARN</code></td><td>含保持时间要求时 <code>FAIL</code>；不含时 <code>WARN</code>（余量 1.9%）</td></tr>
+<tr><td>C-11 输出纹波</td><td><strong><code>UNKNOWN</code></strong></td><td>ESR 项缺数据，且 100 Hz 包络项未实测</td></tr>
+<tr><td>其余 9 条</td><td><code>PASS</code></td><td>—</td></tr>
+</table>
+<div class="note"><p><strong>交付结论：<code>CONDITIONAL PASS</code>（条件通过）——但附两个硬条件。</strong></p>
+<ol>
+<li><strong>方案 A 不得用于有 330 V 保持时间要求的场合。</strong>若该要求存在，必须改用方案 D（<code>Qmax = 0.35</code>、<code>K = 8</code>，<code>M_peak = 1.249</code>，保持余量 6.4%），此时 C-02 转为 <code>PASS</code>、C-03 转为 <code>PASS</code>。</li>
+<li><strong>C-11 必须关闭后才能出规格书。</strong>关闭方式：实测母线纹波 + 确认输出电容 ESR。</li>
+</ol>
+<p>在两条硬条件满足前，本设计<strong>不具备打样条件</strong>。这不是保守，是 6.2 节的升级禁令：<code>FAIL</code> 不能降级为 <code>WARN</code>，<code>UNKNOWN</code> 不能当成"应该没问题"。</p></div>
+
+<h2 id="s12-4">12.4　与推导型计算书的边界</h2>
+<p>本册与《半桥 LLC 谐振变换器计算书 V1.1》是<strong>两本并行的文档</strong>，不合并、不互相引用数值作为"证明"。</p>
+<table>
+<tr><th>问题</th><th>看哪一本</th></tr>
+<tr><td><code>Rac</code> 怎么推出来的</td><td>推导册 3.1</td></tr>
+<tr><td><code>Rac</code> 这个数可信吗、证据等级多少</td><td>本册 <code>EV-CAL-03</code> / 3.3</td></tr>
+<tr><td>增益公式怎么写、Mathcad 怎么录</td><td>推导册第 6 章</td></tr>
+<tr><td>增益结论在哪些工况下失效</td><td>本册第 4 章闸门 + 第 7 章角点</td></tr>
+<tr><td>K 怎么算出来</td><td>推导册第 4 章</td></tr>
+<tr><td>K 的选择是否成立、谁否决了它</td><td>本册 10.2 候选表</td></tr>
+<tr><td>损耗公式</td><td>推导册第 14 章</td></tr>
+<tr><td>损耗能不能进规格书</td><td>本册 8.4</td></tr>
+<tr><td>分压电容怎么定容</td><td>推导册 10.1（已修正）</td></tr>
+<tr><td>为什么工具原来的算法错 2500 倍</td><td>本册 <code>EV-GAP-01</code></td></tr>
+</table>
+<div class="note"><p><strong>为什么不合并</strong>：推导册的目标是"把公式写对、能录入、能复现"，本册的目标是"每个数字凭什么可信、什么时候不可信"。两者混在一本里，会出现"公式推导到一半插入状态码"的断裂，也会让读者误以为"公式对了结论就对了"——这正是 B 类失败的根源。<strong>分开写，才能分开审。</strong></p></div>
+
+<h1 id="section-13">附录 A　状态码速查</h1>
+<table>
+<tr><th>码</th><th>类别</th><th>含义</th><th>可否进交付</th></tr>
+<tr><td><code>ALIVE</code></td><td>Grade</td><td>模型通过闸门且数据可靠</td><td>可以</td></tr>
+<tr><td><code>PARTIAL</code></td><td>Grade</td><td>部分覆盖或有一项假定</td><td>可以，带限定语</td></tr>
+<tr><td><code>APPROXIMATION</code></td><td>Grade</td><td>明确近似，误差方向已知</td><td>可以，标方向</td></tr>
+<tr><td><code>ESTIMATED</code></td><td>Grade</td><td>仅数量级可信</td><td>仅相对比较</td></tr>
+<tr><td><code>UNKNOWN</code></td><td>Grade</td><td>无证据</td><td><strong>不可以</strong></td></tr>
+<tr><td><code>DATASHEET</code></td><td>Confidence</td><td>手册数据</td><td>—</td></tr>
+<tr><td><code>MEASURED</code></td><td>Confidence</td><td>实测</td><td>—</td></tr>
+<tr><td><code>DERIVED</code></td><td>Confidence</td><td>可追推导</td><td>—</td></tr>
+<tr><td><code>ASSUMED</code></td><td>Confidence</td><td>工程假定</td><td>—</td></tr>
+<tr><td><code>MISSING</code></td><td>Confidence</td><td>应有未有</td><td>—</td></tr>
+<tr><td><code>PASS</code></td><td>Status</td><td>判据满足</td><td>可以</td></tr>
+<tr><td><code>WARN</code></td><td>Status</td><td>满足但余量 &lt; 5% 或等级不足</td><td>可以，须列出</td></tr>
+<tr><td><code>FAIL</code></td><td>Status</td><td>判据不满足</td><td><strong>不可以</strong></td></tr>
+<tr><td><code>CONDITIONAL PASS</code></td><td>Verdict</td><td>无 FAIL 但有 WARN/UNKNOWN</td><td>附条件</td></tr>
+</table>
+
+<h1 id="section-14">附录 B　两册的分工边界</h1>
+<table>
+<tr><th>维度</th><th>推导型计算书 V1.1</th><th>本册（证据链）</th></tr>
+<tr><td>回答的问题</td><td>"怎么算"</td><td>"凭什么可信"</td></tr>
+<tr><td>主体内容</td><td>公式、推导、Mathcad 录入、数值</td><td>模型分级、闸门、状态码、台账</td></tr>
+<tr><td>读者</td><td>设计工程师（要动手算）</td><td>评审 / 复核 / 项目负责人</td></tr>
+<tr><td>失败模式</td><td>A 类：算错</td><td>B/C 类：模型不适用、没算当算过</td></tr>
+<tr><td>交付物</td><td>可复现的计算过程</td><td>可审计的证据链 + 交付判定</td></tr>
+<tr><td>是否含数值</td><td>含，且是主内容</td><td>含，但只作为"证据项"引用</td></tr>
+<tr><td>是否含公式</td><td>含，完整推导</td><td><strong>不含</strong>，只登记口径</td></tr>
+<tr><td>改动时</td><td>改公式即改全文数值</td><td>改证据即改状态，须留痕</td></tr>
+</table>
+<p><strong>使用顺序</strong>：先用推导册算出参数 → 再用本册逐条判状态 → 状态不通过时回推导册改设计或回本册补证据。两册交替使用，但<strong>任何一册单独交付都是不完整的</strong>：只有推导册，读者不知道结论的边界；只有本册，读者无法复现数值。</p>
+
+</section>
+</body>
+</html>
+
+
